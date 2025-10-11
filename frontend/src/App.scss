@@ -1,0 +1,39 @@
+body {
+    font-family: "DM Serif Text", serif;
+    font-weight: 400;
+    font-style: normal;
+    background-color: var(--primary-color);
+}
+/* Google Fonts: DM Serif Text */
+.dm-serif-text-regular {
+    font-family: "DM Serif Text", serif;
+    font-weight: 400;
+    font-style: normal;
+}
+
+.dm-serif-text-regular-italic {
+    font-family: "DM Serif Text", serif;
+    font-weight: 400;
+    font-style: italic;
+}
+#root
+{
+    width: 100%;
+}
+
+:root
+{
+    --primary-color: #101502;
+    --secundary-color: #D52B1E;
+    --tertiary-color: #EEEEEE;
+    --background-header-footer: rgb(17, 17, 17);
+    --color-header-footer: rgb(214, 214, 214);
+}
+
+.App
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
