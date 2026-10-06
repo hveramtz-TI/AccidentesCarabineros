@@ -1,0 +1,37 @@
+# Dependencies
+**/node_modules/
+
+# Build and test output
+**/dist/
+**/dist-ssr/
+**/build/
+**/coverage/
+**/.vite/
+**/*.tsbuildinfo
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Editor and operating-system files
+.DS_Store
+.idea/
+.vscode/
+
+# Machine-local assistant indexes and generated registry
+/.atl/
+/.codegraph/
+
+# Untracked source datasets and image; commit only after an explicit decision
+/Personas_2025(1).xlsx
+/Siniestros_2025(1).xlsx
+/Vehiculos_2025(1).xlsx
+/carabineros_de_chile.png
