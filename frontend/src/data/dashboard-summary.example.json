@@ -1,0 +1,103 @@
+{
+  "source": "example-synthetic",
+  "synthetic": true,
+  "periodLabel": "Synthetic 12-month period — generic labels, not official statistics",
+  "kpis": {
+    "accidents": 30289,
+    "fatalities": 437,
+    "injuries": 18934,
+    "activeCases": 1999
+  },
+  "monthlyTrend": [
+    {
+      "month": "Jan",
+      "accidents": 2712,
+      "fatalities": 39,
+      "injuries": 1696
+    },
+    {
+      "month": "Feb",
+      "accidents": 2813,
+      "fatalities": 41,
+      "injuries": 1758
+    },
+    {
+      "month": "Mar",
+      "accidents": 2637,
+      "fatalities": 38,
+      "injuries": 1648
+    },
+    {
+      "month": "Apr",
+      "accidents": 2461,
+      "fatalities": 36,
+      "injuries": 1539
+    },
+    {
+      "month": "May",
+      "accidents": 2311,
+      "fatalities": 33,
+      "injuries": 1444
+    },
+    {
+      "month": "Jun",
+      "accidents": 2210,
+      "fatalities": 32,
+      "injuries": 1382
+    },
+    {
+      "month": "Jul",
+      "accidents": 2260,
+      "fatalities": 33,
+      "injuries": 1413
+    },
+    {
+      "month": "Aug",
+      "accidents": 2386,
+      "fatalities": 34,
+      "injuries": 1492
+    },
+    {
+      "month": "Sep",
+      "accidents": 2512,
+      "fatalities": 36,
+      "injuries": 1570
+    },
+    {
+      "month": "Oct",
+      "accidents": 2662,
+      "fatalities": 38,
+      "injuries": 1664
+    },
+    {
+      "month": "Nov",
+      "accidents": 2763,
+      "fatalities": 40,
+      "injuries": 1727
+    },
+    {
+      "month": "Dec",
+      "accidents": 2562,
+      "fatalities": 37,
+      "injuries": 1601
+    }
+  ],
+  "severityDistribution": [
+    {
+      "severity": "Fatal",
+      "count": 437
+    },
+    {
+      "severity": "Serious injuries",
+      "count": 8710
+    },
+    {
+      "severity": "Minor injuries",
+      "count": 10224
+    },
+    {
+      "severity": "Property damage",
+      "count": 10918
+    }
+  ]
+}

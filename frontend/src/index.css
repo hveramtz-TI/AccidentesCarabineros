@@ -1,113 +1,246 @@
+/* Inter and JetBrains Mono load from Google Fonts; the @theme stacks below
+   carry full system fallbacks so the UI degrades gracefully offline.
+   Remote @import must precede all other rules (including bundled imports). */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap");
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
 
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+@custom-variant dark (&:is(.dark *));
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+/* Dark-only theme: DESIGN.md "Obsidian Telemetry".
+   Both :root and .dark carry the dark values so the theme holds even if the
+   .dark class is ever missing. */
+:root,
+.dark {
+  color-scheme: dark;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --background: #0a0b0d;
+  --foreground: #e4f1eb;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
+  --card: #121316;
+  --card-foreground: #e4f1eb;
+
+  --popover: #18191b;
+  --popover-foreground: #e4f1eb;
+
+  --primary: #00e599;
+  --primary-foreground: #003822;
+
+  --secondary: #00e3fd;
+  --secondary-foreground: #00363d;
+
+  --muted: #18191b;
+  --muted-foreground: rgba(228, 241, 235, 0.6);
+
+  --accent: rgba(255, 178, 36, 0.12);
+  --accent-foreground: #ffb224;
+
+  --destructive: #ff385c;
+  --destructive-foreground: #28000a;
+
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #00e599;
+
+  --chart-1: #00e599; /* emerald   – accidents */
+  --chart-2: #00e3fd; /* cyan      – telemetry */
+  --chart-3: #ffb224; /* amber     – hazard    */
+  --chart-4: #ff385c; /* crimson   – incident  */
+  --chart-5: #e4f1eb; /* icy mint  – neutral series */
+
+  --radius: 0.5rem;
+
+  --sidebar: #0a0b0d;
+  --sidebar-foreground: #e4f1eb;
+  --sidebar-primary: #00e599;
+  --sidebar-primary-foreground: #003822;
+  --sidebar-accent: #18191b;
+  --sidebar-accent-foreground: #e4f1eb;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #00e599;
+}
+
+@theme inline {
+  --font-sans: "Inter", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-heading: "Geist Variable", "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", "Roboto Mono",
+    Consolas, monospace;
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+
+  /* DESIGN.md edge language: 4px interactive, 8px containers */
+  --radius-sm: 0.125rem;
+  --radius-md: 0.25rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.02em;
+  }
+
+  /* DESIGN.md: tabular figures are mandatory on all monospace telemetry */
+  code,
+  kbd,
+  samp,
+  pre,
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    background: rgba(0, 229, 153, 0.25);
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+@layer components {
+  /* Telemetry micro-label: JetBrains Mono 10px, tracked, uppercase */
+  .metric-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 14px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
   }
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+  /* Large metric readout */
+  .metric-value {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  /* Glass card: surface at 85% with backdrop blur and hairline edge */
+  .glass-card {
+    background-color: rgba(18, 19, 22, 0.85);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-lg);
+  }
+
+  /* Emerald atmospheric halo for primary actions (DESIGN.md buttons) */
+  .glow-primary:hover {
+    box-shadow: 0 0 16px rgba(0, 229, 153, 0.4);
+  }
+
+  .glow-primary:active {
+    transform: scale(0.98);
+  }
+
+  /* Focused inputs swap border to emerald with an ambient glow */
+  .focus-glow:focus-visible {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow:
+      0 0 0 1px var(--primary),
+      0 0 12px rgba(0, 229, 153, 0.2);
+  }
+
+  /* Optional 1px dot-grid canvas overlay from DESIGN.md elevation model */
+  .dot-grid {
+    background-image: radial-gradient(
+      rgba(255, 255, 255, 0.04) 1px,
+      transparent 1px
+    );
+    background-size: 24px 24px;
+  }
+
+  /* Status chip (healthy / warning / critical) */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 20px;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .chip-healthy {
+    color: var(--primary);
+    background: rgba(0, 229, 153, 0.08);
+    border: 1px solid rgba(0, 229, 153, 0.2);
+  }
+
+  .chip-warning {
+    color: var(--accent-foreground);
+    background: rgba(255, 178, 36, 0.08);
+    border: 1px solid rgba(255, 178, 36, 0.2);
+  }
+
+  .chip-critical {
+    color: var(--destructive);
+    background: rgba(255, 56, 92, 0.08);
+    border: 1px solid rgba(255, 56, 92, 0.2);
   }
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-}
-
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
 }
