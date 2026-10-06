@@ -71,5 +71,5 @@ Delegated direct (writer trigger: 2+ non-trivial files). No test runner exists �
 
 ## Next step
 
-- Parent: commit this slice as one work unit — `feat(frontend): main dashboard design with shadcn and charts` (stage `frontend/` + this doc; frontend/ is untracked so verify no `node_modules`/`dist` enter the index; datasets stay out).
+- DONE: committed as work unit `e48d918` on `development` — `feat(frontend): main dashboard design with shadcn and charts` (41 files; node_modules verified ignored; datasets stayed out). Independent verification: verified, no critical/major findings.
 - Follow-ups: recharts chunk-splitting with routing; wire real backend into `src/lib/data.ts` (isolated join point); Maps/Reports nav; user dev server on 5173 needs a restart.
