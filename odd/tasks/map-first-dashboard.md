@@ -65,6 +65,7 @@ Delegated direct (writer trigger: 5+ non-trivial files including a new component
   - T4: stacking order below `lg` is map → filters → KPIs → charts via single-column grids; `min-w-0` guards on row/column children; no new focus-visible regressions (only non-focusable disabled controls added).
   - T5 evidence: `npm run build` exit 0 (only expected `__dirname` config warning and >500 kB Recharts chunk warning; 771.86 kB JS); `npm run lint` exit 0, no findings.
 - 2026-10-07: work unit committed as `13fd6a7` on `feat/floating-dashboard-header` — `feat(frontend): map-first dashboard layout with reserved map placeholder` (7 files; `frontend/Design/` images deliberately left untracked).
+- 2026-10-07 (user-led desktop iteration, uncommitted): user extracted the first-view row into `frontend/src/components/Sections/containerMapFilter.tsx` (absolute 55/50 split, `h-dvh`, map canvas `min-h-[100dvh]`) and wired it from `dashboard-view.tsx`. Parent adjusted right-column height fill: filters `shrink-0`, KPI wrapper `flex-1 min-h-0`, `KpiCards` section `h-full` with `sm:grid-rows-2` (reset at xl), `CardContent` flex fill, sparkline `min-h-9 flex-1`. Also typed `data` as `DashboardData` and removed dead imports so `tsc`/eslint pass. Verification: `npm run build` exit 0, `npm run lint` exit 0 (only known chunk/`__dirname` warnings). Mobile stacking regression is expected with the absolute desktop container; revisit when the real map slice lands.
 
 ## Next step
 

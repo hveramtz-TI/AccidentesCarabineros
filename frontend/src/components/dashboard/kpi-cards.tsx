@@ -35,8 +35,7 @@ function formatMetric(value: number): string {
   return value.toLocaleString("en-US")
 }
 
-/** Active cases has no monthly series in the contract; scale the accidents
- *  shape (same factor as the fixture) to keep the sparkline honest. */
+
 function sparkSeries(kpis: Kpis, monthlyTrend: MonthlyPoint[]): MonthlyPoint[] {
   const ratio =
     kpis.accidents > 0 ? kpis.activeCases / kpis.accidents : 0
@@ -53,14 +52,14 @@ export default function KpiCards({ kpis, monthlyTrend }: Props) {
   return (
     <section
       aria-label="Key telemetry indicators"
-      className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+      className="grid h-full min-h-0 grid-cols-1 gap-4 sm:grid-cols-2 sm:grid-rows-2 xl:grid-cols-4 xl:grid-rows-1"
     >
       {KPI_SPECS.map((spec) => (
         <Card
           key={spec.key}
           className="glass-card overflow-hidden rounded-lg py-0 shadow-none"
         >
-          <CardContent className="p-0">
+          <CardContent className="flex min-h-0 flex-1 flex-col p-0">
             <div className="px-4 pt-3">
               <div className="metric-label">{spec.label}</div>
               <div className="metric-value mt-1 text-3xl font-semibold leading-tight text-foreground">
@@ -68,7 +67,7 @@ export default function KpiCards({ kpis, monthlyTrend }: Props) {
               </div>
             </div>
             <div
-              className="mt-2 h-9 w-full"
+              className="mt-2 min-h-9 w-full flex-1"
               role="img"
               aria-label={`${spec.label} monthly trend sparkline`}
             >
