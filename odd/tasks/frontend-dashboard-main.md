@@ -16,7 +16,7 @@ Establish the visual/structural foundation early so backend data can be wired la
 
 1. shadcn/ui init for Vite + Tailwind v4 (`@` alias, `components.json`, `lib/utils.ts`, theme tokens mapped to DESIGN.md: obsidian surfaces `#0A0B0D`/`#121316`, emerald `#00E599`, cyan `#00E3FD`, hazard amber `#FFB224`, incident crimson `#FF385C`; fonts Geist/Inter/JetBrains Mono with system fallbacks; dark-only).
 2. Synthetic fixtures in `frontend/src/data/`: `dashboard-summary.example.json` (KPIs, generic-month trend series, severity distribution) and `territorial-ranking.example.json` (per-commune/region counts keyed by identifiers from `oversio-identifiers.json`). Clearly marked synthetic/demo; generic period labels (no real year claims).
-3. Dashboard shell: collapsible left `Sidebar` with `SidebarTrigger` (mobile sheet), header with title + period/region/commune selects (client-side filtering of fixtures), main content area.
+3. Dashboard shell: floating top header with brand, horizontal Dashboard/Maps/Reports navigation, period/region/commune selects (client-side filtering of fixtures), main content area. Maps and Reports remain unavailable until routes exist.
 4. Visualizations via shadcn Charts (Recharts): KPI telemetry cards, monthly trend line chart, severity distribution bar chart, top-territories ranking (horizontal bar + accessible table fallback). Tooltips + legends visible; focus rings visible; no data meaning by color alone.
 5. Replace Vite demo (`App.tsx`/`App.css`), fix `index.html` stylesheet reference, wire `Layout/Header/Footer` sensibly.
 
@@ -39,12 +39,14 @@ Routing library, backend/API integration, real data, maps (MapLibre), auth, test
 - [x] T3 Dashboard shell: Sidebar/Header/filters wired to fixture state
 - [x] T4 Charts + KPI cards + ranking table, a11y (focus, legends, fallbacks)
 - [x] T5 Verification: `npm install`, `npm run build`, `npm run lint`, dev smoke HTTP 200; record evidence (work-unit commit is parent-owned, see Next step)
+- [ ] T6 Replace sidebar shell with floating horizontal header, preserve navigation availability and filters, and verify responsive behavior
 
 ## Acceptance criteria
 
 - `npm run build` and `npm run lint` pass with 0 errors.
 - `/` shows the dark dashboard with KPIs, trend chart, severity chart, territorial ranking, working period/region/commune filters over synthetic data.
-- Keyboard focus visible; sidebar collapsible; layout responsive at 375/768/1024/1440 px.
+- Floating header sits inset from the top and uses DESIGN.md colors, fonts, glass surface, and 8px container radius; horizontal navigation shows Dashboard active and Maps/Reports unavailable.
+- Keyboard focus visible; header, filters, and dashboard remain usable at 375/768/1024/1440 px without horizontal overflow.
 
 ## Checks
 
@@ -57,6 +59,9 @@ Routing library, backend/API integration, real data, maps (MapLibre), auth, test
 
 Delegated direct (writer trigger: 2+ non-trivial files). No test runner exists → test-first exception; functional checks are build/lint/smoke.
 
+- T6 route: delegated direct (2 non-trivial layout files); test-first exception remains because no test runner is configured. Writer runs `npm run build` and `npm run lint` in `frontend/`.
+- Delivery strategy: `ask-on-risk` (default); T6 estimated below the ~400 authored-line slice budget.
+
 ## Progress
 
 - Planned after user confirmed generic-period synthetic fixtures and `oversio-identifiers.json` as canonical territorial catalog. Implementation started 2026-10-06.
@@ -67,9 +72,10 @@ Delegated direct (writer trigger: 2+ non-trivial files). No test runner exists �
 - **T5 done 2026-10-06** (post hook-fix re-run): `npm install` → ok (audit notices only). `npm run lint` → **0 errors, 0 warnings** (exit 0). `npm run build` → tsc -b clean, vite `✓ built` (2588 modules). Dev smoke with fresh server (`vite --port 5199 --strictPort`): `/`, `src/App.tsx`, `src/components/ui/sidebar.tsx`, `src/hooks/use-mobile.ts`, `src/lib/data.ts` (JSON imports resolved) and all dashboard charts → 200. `vite preview --port 5200` → `/`, hashed JS/CSS 200; theme tokens present in built CSS.
   - Port-conflict note: the literal check `http://localhost:5173/` is occupied by a stale dev server started 14:21 (before this task, PID 17165, outside this session) whose cached resolver 500s on new files; restart/close that process to smoke 5173 itself. New HTML was verified served on clean ports.
   - Lint path taken: registry ui files exported non-components (react-refresh) → localized `buttonVariants`/`tabsListVariants`/`useSidebar` exports inside `src/components/ui/**` (no consumers). Remaining `react-hooks/set-state-in-effect` error in CLI-generated `src/hooks/use-mobile.ts` (outside allowed surfaces) → user authorized option A: rewritten with lazy `useState` initializer; effect only subscribes matchMedia (same behavior).
-  - Follow-up (not this slice): single JS chunk is 802 kB (≈245 kB gzip), mostly recharts → route-level code splitting when routing lands.
+- Follow-up (not this slice): single JS chunk is 802 kB (≈245 kB gzip), mostly recharts → route-level code splitting when routing lands.
+- **T6 authorized 2026-10-07**: user requested the header reference as a floating inset surface, then confirmed replacing the left sidebar with horizontal navigation. Preserve the current disabled/coming-soon state for Maps/Reports; do not add a nonfunctional search control. Branch: `feat/floating-dashboard-header`.
 
 ## Next step
 
 - DONE: committed as work unit `e48d918` on `development` — `feat(frontend): main dashboard design with shadcn and charts` (41 files; node_modules verified ignored; datasets stayed out). Independent verification: verified, no critical/major findings.
-- Follow-ups: recharts chunk-splitting with routing; wire real backend into `src/lib/data.ts` (isolated join point); Maps/Reports nav; user dev server on 5173 needs a restart.
+- Follow-ups: T6 floating-header implementation and verification; recharts chunk-splitting with routing; wire real backend into `src/lib/data.ts` (isolated join point); user dev server on 5173 needs a restart.
