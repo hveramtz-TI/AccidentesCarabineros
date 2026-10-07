@@ -64,6 +64,7 @@ Delegated direct (writer trigger: 5+ non-trivial files including a new component
   - T3: `App.tsx` keeps filter state ownership and passes `filters`/`onFiltersChange` to `DashboardView`; `Layout.tsx`/`Header.tsx` toolbar prop and the header's filter-descendant selector block removed; floating brand/nav layout untouched. `dashboard-filters.tsx` now owns its layout (`grid grid-cols-1 sm:grid-cols-3`, full-width triggers) since the header injection is gone; cascade logic (region→commune reset) unchanged.
   - T4: stacking order below `lg` is map → filters → KPIs → charts via single-column grids; `min-w-0` guards on row/column children; no new focus-visible regressions (only non-focusable disabled controls added).
   - T5 evidence: `npm run build` exit 0 (only expected `__dirname` config warning and >500 kB Recharts chunk warning; 771.86 kB JS); `npm run lint` exit 0, no findings.
+- 2026-10-07: work unit committed as `13fd6a7` on `feat/floating-dashboard-header` — `feat(frontend): map-first dashboard layout with reserved map placeholder` (7 files; `frontend/Design/` images deliberately left untracked).
 
 ## Next step
 
