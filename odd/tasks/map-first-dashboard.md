@@ -37,6 +37,9 @@ GeoJSON/TopoJSON, map library, functional zoom, selection sync, export buttons, 
 - [x] T3 Header/Layout/App wiring: drop header toolbar responsibility, pass filters state to view
 - [x] T4 Responsive/a11y pass: stacking below 1024px, no horizontal overflow, focus visible, 44px controls
 - [x] T5 Verification: `npm run build`, `npm run lint` green; record evidence
+- [x] T6 (user-led) Extract desktop first-view container `Sections/containerMapFilter.tsx` + KPI column height fill — committed as `5319af8` after build/lint green
+- [x] T7 SOLID/KISS split: `DashboardStatus` notices component, `Sections/containerDashboardCharts.tsx` charts container, `DashboardView` reduced to orchestration; narrow props (no whole `DashboardData` into leaf sections); reuse existing charts/components; `common/Section.tsx` deliberately not used (forces `h-dvh`) — 2026-10-07 (writer, uncommitted): new `dashboard/dashboard-status.tsx` (`{ synthetic: boolean; emptyScope: boolean }`, imports `syntheticBanner` itself, fragment keeps the three notice blocks as direct `gap-4` flex children), new `Sections/containerDashboardCharts.tsx` (`{ monthlyTrend: MonthlyPoint[]; severityDistribution: SeverityBucket[]; territories: TerritorialRow[]; scopeLabel: string }`, section markup verbatim), `dashboard-view.tsx` now only outer container + `ContainerMapFilter` + the two components; classes/aria/order/copy unchanged; `npm run build` exit 0, `npm run lint` exit 0 (only known `__dirname`/chunk warnings). T8 parent verification pending.
+- [x] T8 Verification for T7: build + lint green, identical rendered structure/behavior, evidence recorded
 
 ## Acceptance criteria
 
@@ -66,6 +69,9 @@ Delegated direct (writer trigger: 5+ non-trivial files including a new component
   - T5 evidence: `npm run build` exit 0 (only expected `__dirname` config warning and >500 kB Recharts chunk warning; 771.86 kB JS); `npm run lint` exit 0, no findings.
 - 2026-10-07: work unit committed as `13fd6a7` on `feat/floating-dashboard-header` — `feat(frontend): map-first dashboard layout with reserved map placeholder` (7 files; `frontend/Design/` images deliberately left untracked).
 - 2026-10-07 (user-led desktop iteration, uncommitted): user extracted the first-view row into `frontend/src/components/Sections/containerMapFilter.tsx` (absolute 55/50 split, `h-dvh`, map canvas `min-h-[100dvh]`) and wired it from `dashboard-view.tsx`. Parent adjusted right-column height fill: filters `shrink-0`, KPI wrapper `flex-1 min-h-0`, `KpiCards` section `h-full` with `sm:grid-rows-2` (reset at xl), `CardContent` flex fill, sparkline `min-h-9 flex-1`. Also typed `data` as `DashboardData` and removed dead imports so `tsc`/eslint pass. Verification: `npm run build` exit 0, `npm run lint` exit 0 (only known chunk/`__dirname` warnings). Mobile stacking regression is expected with the absolute desktop container; revisit when the real map slice lands.
+
+- 2026-10-07 (parent, T7/T8 verified): parent spot-checked `npm run lint` exit 0 after the split and read back all three touched files: `DashboardView` renders `DashboardStatus → ContainerMapFilter → ContainerDashboardCharts` with unchanged Props; `DashboardStatus` returns a fragment preserving the `gap-4` rhythm, same chip/aria/curly-quote copy; charts container markup verbatim. `gentle-ai review assess` (RDD off): 4 paths / 147 lines, `review_due=false (under_budget)`; no independent verifier required at medium for a default-profile writer with green self-verification.
+- 2026-10-07: SOLID/KISS split committed as work unit `f272a0c` on `feat/floating-dashboard-header` (`refactor(frontend): split dashboard view into status and charts sections`). `frontend/src/components/common/Section.tsx` and `frontend/Design/` intentionally left untracked.
 
 ## Next step
 
