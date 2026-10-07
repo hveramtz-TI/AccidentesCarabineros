@@ -10,8 +10,6 @@ import type { NavigationItem } from "./Header"
 
 interface Props {
   children: ReactNode
-  /** Passed through to the Header (dashboard filters). */
-  toolbar?: ReactNode
 }
 
 const NAV_ITEMS: NavigationItem[] = [
@@ -20,10 +18,10 @@ const NAV_ITEMS: NavigationItem[] = [
   { label: "Reports", icon: FileChartColumn, active: false },
 ]
 
-const Layout = ({ children, toolbar }: Props) => {
+const Layout = ({ children }: Props) => {
   return (
     <div className="flex min-h-svh min-w-0 flex-col">
-      <Header toolbar={toolbar} navigation={NAV_ITEMS} />
+      <Header navigation={NAV_ITEMS} />
       <main className="dot-grid min-w-0 flex-1">{children}</main>
       <Footer />
     </div>

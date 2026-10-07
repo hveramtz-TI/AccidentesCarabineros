@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react"
-import DashboardFiltersBar from "@/components/dashboard/dashboard-filters"
 import DashboardView from "@/components/dashboard/dashboard-view"
 import { deriveDashboardData } from "@/lib/data"
 import Layout from "@/layout/Layout"
@@ -16,8 +15,12 @@ function App() {
   const data = useMemo(() => deriveDashboardData(filters), [filters])
 
   return (
-    <Layout toolbar={<DashboardFiltersBar filters={filters} onChange={setFilters} />}>
-      <DashboardView data={data} />
+    <Layout>
+      <DashboardView
+        data={data}
+        filters={filters}
+        onFiltersChange={setFilters}
+      />
     </Layout>
   )
 }

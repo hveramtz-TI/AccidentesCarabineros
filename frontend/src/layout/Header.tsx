@@ -1,4 +1,3 @@
-import type { ReactNode } from "react"
 import type { LucideIcon } from "lucide-react"
 import { Activity } from "lucide-react"
 
@@ -9,12 +8,10 @@ export interface NavigationItem {
 }
 
 interface Props {
-  /** Optional toolbar rendered at the end of the header (e.g. dashboard filters). */
-  toolbar?: ReactNode
   navigation: NavigationItem[]
 }
 
-const Header = ({ toolbar, navigation }: Props) => {
+const Header = ({ navigation }: Props) => {
   return (
     <header className="sticky top-0 z-40 px-4 pt-4">
       <div className="glass-card mx-auto max-w-[1600px] border-border p-3 sm:p-4">
@@ -75,12 +72,6 @@ const Header = ({ toolbar, navigation }: Props) => {
             </ul>
           </nav>
         </div>
-
-        {toolbar ? (
-          <div className="mt-3 min-w-0 border-t border-border/70 pt-3 [&>form]:w-full [&>form]:justify-start [&>form>div]:min-w-0 [&>form>div]:max-w-full [&>form>div]:flex-[1_1_9rem] md:[&>form]:justify-end sm:[&>form>div]:flex-[0_1_11rem]">
-            {toolbar}
-          </div>
-        ) : null}
       </div>
     </header>
   )

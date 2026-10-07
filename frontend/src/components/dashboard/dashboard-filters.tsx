@@ -30,7 +30,7 @@ function FilterSelect({ id, label, value, options, onValueChange, className }: F
         {label}
       </label>
       <Select value={value} onValueChange={onValueChange}>
-        <SelectTrigger id={id} className="focus-glow h-9 w-full border-input bg-[#0a0b0d] font-mono text-xs sm:w-44">
+        <SelectTrigger id={id} className="focus-glow h-9 w-full border-input bg-[#0a0b0d] font-mono text-xs">
           <SelectValue />
         </SelectTrigger>
         <SelectContent position="popper" className="max-h-72">
@@ -48,7 +48,7 @@ function FilterSelect({ id, label, value, options, onValueChange, className }: F
 export default function DashboardFiltersBar({ filters, onChange }: Props) {
   return (
     <form
-      className="flex flex-wrap items-end gap-x-3 gap-y-2"
+      className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3"
       onSubmit={(event) => event.preventDefault()}
       aria-label="Dashboard data filters"
     >
