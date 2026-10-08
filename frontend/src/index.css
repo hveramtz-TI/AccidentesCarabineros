@@ -44,11 +44,14 @@
   --input: rgba(255, 255, 255, 0.12);
   --ring: #00e599;
 
-  --chart-1: #00e599; /* emerald   – accidents */
-  --chart-2: #00e3fd; /* cyan      – telemetry */
-  --chart-3: #ffb224; /* amber     – hazard    */
-  --chart-4: #ff385c; /* crimson   – incident  */
-  --chart-5: #e4f1eb; /* icy mint  – neutral series */
+  /* Monochrome telemetry ramp: neutral gray → primary emerald (#00e599).
+     Series stay distinguishable by lightness plus labels/legends, never by
+     hue alone. */
+  --chart-1: #00e599; /* emerald    – accidents / property damage */
+  --chart-2: #00b87d; /* green      – active cases / minor        */
+  --chart-3: #5b9683; /* teal-gray  – injuries / serious          */
+  --chart-4: #8b9793; /* gray       – fatalities / fatal          */
+  --chart-5: #c3ccc9; /* light gray – faint reference series      */
 
   --radius: 0.5rem;
 
@@ -116,6 +119,9 @@
 
   html {
     @apply font-sans;
+    /* Reserve the scrollbar track so opening an overlay (e.g. a select)
+       never shifts widths and resizes the dashboard panels mid-interaction. */
+    scrollbar-gutter: stable;
   }
 
   body {

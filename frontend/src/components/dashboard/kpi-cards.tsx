@@ -52,7 +52,7 @@ export default function KpiCards({ kpis, monthlyTrend }: Props) {
   return (
     <section
       aria-label="Key telemetry indicators"
-      className="grid h-full min-h-0 grid-cols-1 gap-4 sm:grid-cols-2 sm:grid-rows-2 xl:grid-cols-4 xl:grid-rows-1"
+      className="grid h-full min-h-0 grid-cols-1 grid-rows-4 gap-4 sm:grid-cols-2 sm:grid-rows-2"
     >
       {KPI_SPECS.map((spec) => (
         <Card
