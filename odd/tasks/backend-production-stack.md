@@ -47,7 +47,7 @@ Normalization criteria recovered from history/AGENTS.md (must stay producer/cons
 Constraints and context:
 
 - Cloud Run container contract: listen on `0.0.0.0` and the injected `PORT` (default 8080).
-- No root `.gitignore` and no `backend/.gitignore` → `node_modules` leak risk; fixing this is part of T2.
+- ~~No root `.gitignore`~~ — disproved at T2: root `.gitignore` is tracked in HEAD and already covers node_modules/dist/.env/datasets; only `backend/.gitignore` was needed (done).
 - Datasets (~22 MB total) must never be baked into Docker images or committed casually; mounted read-only for local import.
 - Frontend single join point for future wiring: `frontend/src/lib/data.ts`; contracts in `frontend/src/types/dashboard.ts`.
 - `git` branch context: work happens on a feature branch; `main` is the default. `frontend/Design/*.png` are staged user files — **do not include them in slice commits**; stage explicit paths only.
@@ -75,8 +75,8 @@ Constraints and context:
 
 ## Tasks
 
-- [ ] T1 `README.md`: production stack, ASCII/mermaid flow, local quick-start with Docker, current-status notes (frontend is mockup; importer pending first run).
-- [ ] T2 Fastify bootstrap: `backend/` TS project (`src/server.ts`), `/health`, `start`/`dev`/`build` scripts, `backend/.gitignore` + root `.gitignore` (node_modules, dist, .env, xlsx). Check: `npm run build`, boot on `PORT=8080`, `curl /health` → 200.
+- [x] T1 `README.md`: production stack, ASCII/mermaid flow, local quick-start with Docker, current-status notes (frontend is mockup; importer pending first run).
+- [x] T2 Fastify bootstrap: `backend/` TS project (`src/server.ts`), `/health`, `start`/`dev`/`build` scripts, `backend/.gitignore` (root `.gitignore` already existed in HEAD; no changes needed there). Check: `npm run build`, boot on `PORT=8080`, `curl /health` → 200.
 - [ ] T3 `backend/docs/MER.md`: ERD + mapping tables + cardinality/consistency rules. Check: structural readback; every source column mapped exactly once; counts match evidence above.
 - [ ] T4 Prisma schema + migration for the MER; applied against local Postgres. Check: `prisma migrate dev` clean on a fresh volume; FK/catalog constraints present.
 - [ ] T5 Import pipeline + CLI (`backend/src/import/`): column rename map, normalization (trim/upper/deaccent/dots; date/time/number coercion), catalog upserts, FK validation with orphan report, idempotent re-run. Check: loaded counts equal 73,081 / 148,252 / 130,234; zero FK violations; the 2 vehicle-less siniestros reported, not dropped.
@@ -115,10 +115,16 @@ Constraints and context:
 ## Progress
 
 - 2026-10-08: document created after exploration (headers, row counts, ID overlaps, history stack, container contract). User approved Fastify-only plan; asked for this ODD. No implementation started.
+- 2026-10-08: user authorized T1+T2. Branch `feat/backend-production-stack` created from `development` (`15d8f73`).
+- **T1 done 2026-10-08** (route: direct inline): `README.md` rewritten with the confirmed production stack (Pages/Cloud Run+Fastify-only/Neon/GitHub Actions/Cloudflare edge), mermaid flow, repo layout, local dev commands, honest status (frontend mock; T6 Docker pending). Work-unit commit `99a2799` (README + this plan doc; user-staged `frontend/Design/*.png` deliberately excluded).
+- **T2 done 2026-10-08** (route: delegated direct, one writer — writer trigger fired): Fastify TS bootstrap. `backend/package.json` (ESM, `dev`=tsx watch, `build`=tsc, `start`=node dist/server.js), `backend/tsconfig.json` (strict NodeNext → `dist/`), `backend/src/app.ts` (`buildApp()` composition factory, `GET /health` → `{status:"ok"}`), `backend/src/server.ts` (`0.0.0.0` + injected `PORT` default 8080, SIGTERM/SIGINT graceful close), `backend/.gitignore`. Work-unit commit `0e0d83e` (6 files; committed with explicit pathspec after plain `git commit` twice swept the user-staged Design PNGs — those were reset and left staged, untouched).
+  - Verification evidence (writer + parent spot check): `npm install` exit 0; `npm run build` exit 0 (no type errors); boot smoke `PORT=808x node dist/server.js` + `curl -sf /health` → `{"status":"ok"}` (writer 8081/8082, parent re-ran 8083); `ss -ltn` proves `0.0.0.0` bind; dev mode (tsx) also serves /health. Test-first exception honored (no runner; build+smoke are the functional proof).
+  - Discovery: root `.gitignore` **already existed tracked in HEAD** (covers node_modules, dist, .env, the three datasets, carabineros png) — plan premise and `AGENTS.md` "no root .gitignore / fresh clone has no code" section are outdated; reconcile AGENTS.md in T7.
+  - Follow-ups noted: empty legacy dirs `backend/{controller,db,Models,routes,services}/` (invisible to git, need manual cleanup decision); T4/T5 must register plugins in `buildApp()`, never in `server.ts`; T6 still needs `.dockerignore`.
 
 ## Next step
 
-- T1 (README production stack), then branch + T2.
+- T3 (`backend/docs/MER.md`) then T4/T5 (schema + import).
 
 ## Open decisions
 
