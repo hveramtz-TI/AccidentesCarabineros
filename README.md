@@ -74,12 +74,35 @@ npm start      # node dist/server.js; honors PORT (default 8080)
 
 Smoke check: `curl http://localhost:8080/health` → `{ "status": "ok" }`.
 
-A production-like local stack (Docker Compose with PostgreSQL + Fastify + static
-frontend) is being added in task T6 of the ODD plan; until it exists, the
-backend runs against no database.
+## Local Docker stack
+
+`compose.yaml` runs the production-like flow locally: PostgreSQL (standing in
+for Neon), the Fastify backend image (runs `prisma migrate deploy` at startup),
+an nginx-served SPA frontend, and a one-shot importer. Cloud Run / Cloudflare
+Pages / Neon remain the production targets.
+
+```bash
+docker compose up -d --build   # postgres -> backend (migrates) -> frontend
+docker compose run --rm importer   # loads the three root Excels, reconciles counts
+docker compose down -v             # teardown; -v drops the DB volume
+```
+
+- Frontend: <http://localhost:3200> · API: <http://localhost:8080/health>.
+- The backend image builds from the **repo root** context
+  (`docker build -f backend/Dockerfile .`) because it ships the canonical
+  catalog `frontend/src/data/oversio-identifiers.json`; the root `.dockerignore`
+  keeps datasets, `node_modules`, and `.env` out of every image.
+- Postgres is internal-only with throwaway local credentials
+  (`accidentes`/`accidentes_dev`); production injects a real Neon
+  `DATABASE_URL` into Cloud Run.
+- The importer reuses the backend image and bind-mounts the root `*.xlsx`
+  datasets read-only, asserting 73,081 / 148,252 / 130,234 rows; it is safe to
+  re-run (idempotent).
 
 ## Current status
 
 - Frontend dashboard shell, filters, and charts: done (synthetic fixtures).
-- Backend: Fastify bootstrap with health check; ingestion, MER migrations,
-  Docker, and dashboard endpoints are the next tasks in the ODD plan.
+- Backend: Fastify bootstrap with health check, Prisma migrations, Excel
+  importer, and the local Docker stack are in place; dashboard read endpoints
+  and the deploy slice (Cloud Run/Pages/Neon wiring) are the next tasks in the
+  ODD plan.
