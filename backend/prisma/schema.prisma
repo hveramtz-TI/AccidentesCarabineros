@@ -1,0 +1,222 @@
+// Accidentes de tránsito — modelo relacional (MER.md, task T4).
+// Source of truth: backend/docs/MER.md
+//
+// Naming: Prisma models use PascalCase field names; every table and column is
+// mapped to the snake_case names required by the MER.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Territorial catalog ---------------------------------------------------
+
+model Region {
+  regionId            Int    @id @map("region_id") @db.SmallInt
+  nombreNormal        String @map("nombre_normal") @db.Text
+  nombreEstandarizado String @unique @map("nombre_estandarizado") @db.Text
+  nombreAbreviado     String @unique @map("nombre_abreviado") @db.Text
+  numeroRomano        String @unique @map("numero_romano") @db.Text
+
+  comunas Comuna[]
+
+  @@map("region")
+}
+
+model Comuna {
+  comunaId            String @id @map("comuna_id") @db.Text
+  regionId            Int    @map("region_id") @db.SmallInt
+  nombreNormal        String @map("nombre_normal") @db.Text
+  nombreEstandarizado String @unique @map("nombre_estandarizado") @db.Text
+
+  region   Region        @relation(fields: [regionId], references: [regionId], onDelete: Restrict)
+  aliases  ComunaAlias[]
+  siniestros Siniestro[]
+
+  @@index([regionId])
+  @@map("comuna")
+}
+
+model ComunaAlias {
+  nombreEstandarizadoAlias String  @id @map("nombre_estandarizado_alias") @db.Text
+  comunaId                  String  @map("comuna_id") @db.Text
+  nombreOrigen              String? @map("nombre_origen") @db.Text
+
+  comuna Comuna @relation(fields: [comunaId], references: [comunaId], onDelete: Restrict)
+
+  @@index([comunaId])
+  @@map("comuna_alias")
+}
+
+// --- Lookup catalogs -------------------------------------------------------
+
+model Zona {
+  zonaId              Int    @id @default(autoincrement()) @map("zona_id")
+  nombreNormal        String @map("nombre_normal") @db.Text
+  nombreEstandarizado String @unique @map("nombre_estandarizado") @db.Text
+
+  siniestros Siniestro[]
+
+  @@map("zona")
+}
+
+model TipoSiniestro {
+  tipoSiniestroId     Int    @id @default(autoincrement()) @map("tipo_siniestro_id")
+  nombreNormal        String @map("nombre_normal") @db.Text
+  nombreEstandarizado String @unique @map("nombre_estandarizado") @db.Text
+
+  siniestros Siniestro[]
+
+  @@map("tipo_siniestro")
+}
+
+model Causa {
+  causaId             Int    @id @default(autoincrement()) @map("causa_id")
+  nombreNormal        String @map("nombre_normal") @db.Text
+  nombreEstandarizado String @unique @map("nombre_estandarizado") @db.Text
+
+  siniestros Siniestro[]
+
+  @@map("causa")
+}
+
+model Sector {
+  sectorId            Int    @id @default(autoincrement()) @map("sector_id")
+  nombreNormal        String @map("nombre_normal") @db.Text
+  nombreEstandarizado String @unique @map("nombre_estandarizado") @db.Text
+
+  siniestros Siniestro[]
+
+  @@map("sector")
+}
+
+model CalidadPersona {
+  calidadPersonaId    Int    @id @default(autoincrement()) @map("calidad_persona_id")
+  nombreNormal        String @map("nombre_normal") @db.Text
+  nombreEstandarizado String @unique @map("nombre_estandarizado") @db.Text
+
+  personas Persona[]
+
+  @@map("calidad_persona")
+}
+
+model Sexo {
+  sexoId              Int    @id @default(autoincrement()) @map("sexo_id")
+  nombreNormal        String @map("nombre_normal") @db.Text
+  nombreEstandarizado String @unique @map("nombre_estandarizado") @db.Text
+
+  personas Persona[]
+
+  @@map("sexo")
+}
+
+model ResultadoPersona {
+  resultadoPersonaId  Int    @id @default(autoincrement()) @map("resultado_persona_id")
+  nombreNormal        String @map("nombre_normal") @db.Text
+  nombreEstandarizado String @unique @map("nombre_estandarizado") @db.Text
+
+  personas Persona[]
+
+  @@map("resultado_persona")
+}
+
+model TipoVehiculo {
+  tipoVehiculoId      Int    @id @default(autoincrement()) @map("tipo_vehiculo_id")
+  nombreNormal        String @map("nombre_normal") @db.Text
+  nombreEstandarizado String @unique @map("nombre_estandarizado") @db.Text
+
+  vehiculos Vehiculo[]
+
+  @@map("tipo_vehiculo")
+}
+
+model ServicioVehiculo {
+  servicioVehiculoId  Int    @id @default(autoincrement()) @map("servicio_vehiculo_id")
+  nombreNormal        String @map("nombre_normal") @db.Text
+  nombreEstandarizado String @unique @map("nombre_estandarizado") @db.Text
+
+  vehiculos Vehiculo[]
+
+  @@map("servicio_vehiculo")
+}
+
+// --- Fact tables -----------------------------------------------------------
+
+model Siniestro {
+  siniestroId           BigInt   @id @default(autoincrement()) @map("siniestro_id")
+  idFuente              BigInt   @unique @map("id_fuente")
+  fecha                 DateTime @map("fecha") @db.Date
+  hora                  DateTime @map("hora") @db.Time(6)
+  comunaId              String   @map("comuna_id") @db.Text
+  zonaId                Int      @map("zona_id")
+  tipoSiniestroId       Int      @map("tipo_siniestro_id")
+  causaId               Int      @map("causa_id")
+  sectorId              Int      @map("sector_id")
+  fallecidos            Int      @map("fallecidos")
+  lesionadosGraves      Int      @map("lesionados_graves")
+  lesionadosMenosGraves Int      @map("lesionados_menos_graves")
+  lesionadosLeves       Int      @map("lesionados_leves")
+  ilesos                Int      @map("ilesos")
+  calle1                String?  @map("calle_1") @db.Text
+  calle2                String?  @map("calle_2") @db.Text
+  kmReferencia          String?  @map("km_referencia") @db.Text
+  numeroParte           String   @map("numero_parte") @db.Text
+  tribunal              String   @map("tribunal") @db.Text
+
+  comuna        Comuna        @relation(fields: [comunaId], references: [comunaId], onDelete: Restrict)
+  zona          Zona          @relation(fields: [zonaId], references: [zonaId], onDelete: Restrict)
+  tipoSiniestro TipoSiniestro @relation(fields: [tipoSiniestroId], references: [tipoSiniestroId], onDelete: Restrict)
+  causa         Causa         @relation(fields: [causaId], references: [causaId], onDelete: Restrict)
+  sector        Sector        @relation(fields: [sectorId], references: [sectorId], onDelete: Restrict)
+
+  personas  Persona[]
+  vehiculos Vehiculo[]
+
+  @@index([comunaId])
+  @@index([zonaId])
+  @@index([tipoSiniestroId])
+  @@index([causaId])
+  @@index([sectorId])
+  @@index([fecha])
+  @@map("siniestro")
+}
+
+model Persona {
+  personaId          BigInt @id @default(autoincrement()) @map("persona_id")
+  siniestroId        BigInt @map("siniestro_id")
+  calidadPersonaId   Int    @map("calidad_persona_id")
+  sexoId             Int    @map("sexo_id")
+  resultadoPersonaId Int    @map("resultado_persona_id")
+  edad               Int?   @map("edad") @db.SmallInt
+
+  siniestro        Siniestro        @relation(fields: [siniestroId], references: [siniestroId], onDelete: Cascade)
+  calidadPersona   CalidadPersona   @relation(fields: [calidadPersonaId], references: [calidadPersonaId], onDelete: Restrict)
+  sexo             Sexo             @relation(fields: [sexoId], references: [sexoId], onDelete: Restrict)
+  resultadoPersona ResultadoPersona @relation(fields: [resultadoPersonaId], references: [resultadoPersonaId], onDelete: Restrict)
+
+  @@index([siniestroId])
+  @@index([calidadPersonaId])
+  @@index([sexoId])
+  @@index([resultadoPersonaId])
+  @@map("persona")
+}
+
+model Vehiculo {
+  vehiculoId         BigInt @id @default(autoincrement()) @map("vehiculo_id")
+  siniestroId        BigInt @map("siniestro_id")
+  tipoVehiculoId     Int    @map("tipo_vehiculo_id")
+  servicioVehiculoId Int    @map("servicio_vehiculo_id")
+
+  siniestro        Siniestro        @relation(fields: [siniestroId], references: [siniestroId], onDelete: Cascade)
+  tipoVehiculo     TipoVehiculo     @relation(fields: [tipoVehiculoId], references: [tipoVehiculoId], onDelete: Restrict)
+  servicioVehiculo ServicioVehiculo @relation(fields: [servicioVehiculoId], references: [servicioVehiculoId], onDelete: Restrict)
+
+  @@index([siniestroId])
+  @@index([tipoVehiculoId])
+  @@index([servicioVehiculoId])
+  @@map("vehiculo")
+}

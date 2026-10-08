@@ -6,13 +6,18 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev"
   },
   "dependencies": {
+    "@prisma/client": "6.19.3",
     "fastify": "^5.12.5"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "prisma": "6.19.3",
     "tsx": "^4.0.0",
     "typescript": "~5.9.0"
   }
