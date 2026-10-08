@@ -44,6 +44,25 @@ No root `package.json` or workspace — each app is installed and run from its o
 - `src/App.tsx` / `src/App.css` are the Vite demo template — replace, don't extend.
 - **No test runner is configured** (no vitest/jest/playwright). Do not invent `npm test`.
 
+## Code and style conventions
+
+- **SOLID**: one responsibility per component/module, small focused functions,
+  depend on abstractions (props, types, interfaces) at boundaries, and extend by
+  adding new pieces rather than editing unrelated ones.
+- **KISS**: pick the simplest thing that works. No premature abstraction, no
+  clever indirection, no helper for a one-off. Readable beats flexible-but-opaque.
+- **Tailwind (frontend)**:
+  - Short, flat utility strings; put classes on the element they control.
+  - Use the standard spacing scale (`p-3`, `p-4`, `px-10`, `md:p-10`).
+  - Mobile-first: unprefixed for the base, then `sm:`, `md:`, `lg:`, `xl:`,
+    `2xl:` variants.
+  - Avoid arbitrary values (`max-w-[1600px]`), arbitrary child selectors
+    (`[&>section]:...`), overriding from the parent, and `!important`.
+  - Prefer `w-full` over `w-screen`: `100vw` includes the scrollbar width and can
+    cause horizontal overflow now that `html` uses `scrollbar-gutter: stable`.
+- **Chart colors** live as the `--chart-1..5` tokens in `frontend/src/index.css`
+  (neutral gray → `#00e599`). Change the palette there, not per component.
+
 ## Unsettled stack decision — confirm before building
 
 Engram (project `accidentescarabineros`, obs `#919`/`#920`, 2026-09-25) records a
