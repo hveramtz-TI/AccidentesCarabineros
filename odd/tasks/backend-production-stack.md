@@ -42,7 +42,7 @@ Key/relationship facts measured directly from column A:
 - ID overlap: Siniestros↔Personas = 73,081 (full); Siniestros↔Vehículos = 73,079 → **2 siniestros have no vehicle rows**. Personas↔Vehículos = 73,079.
 - All IDs non-empty in the three files.
 
-Normalization criteria recovered from history/AGENTS.md (must stay producer/consumer aligned): `trim → uppercase → strip accents (NFKD) → remove dots`, then joins against `excel/{comunas,Causas,accdt}.json` lookups (those files are in old history only).
+Approved canonical-data rule: `frontend/src/data/oversio-identifiers.json` is the authoritative region/commune catalog. Generate the same matching key on source and catalog names: trim → Unicode NFKD → strip combining marks → uppercase → retain only ASCII letters/digits. Store readable catalog names separately; map non-orthographic spelling variants through explicit commune aliases, never fuzzy matching.
 
 Constraints and context:
 
@@ -58,8 +58,8 @@ Constraints and context:
 1. `README.md` with the production architecture, flow diagram, component table, and local Docker usage.
 2. Minimal Fastify backend (TypeScript): `$PORT` on `0.0.0.0`, `/health`, CORS-ready shell, npm scripts, `.gitignore` for backend + repo root.
 3. MER documentation `backend/docs/MER.md`: Mermaid ERD, canonical tables/columns/types, cardinalities with the measured row facts, and the full Excel→canonical column mapping.
-4. Prisma schema + migration implementing the MER (entities: `siniestro`, `persona`, `vehiculo`; catalogs: `region`, `comuna`, `zona`, `causa`, `tipo_siniestro`, `tipo_vehiculo`, `servicio_vehiculo`).
-5. Excel import pipeline: read → normalize → validate → load into Postgres, idempotent, with a row-level error report and post-import count reconciliation.
+4. Prisma schema + migration implementing the MER (entities: `siniestro`, `persona`, `vehiculo`; catalogs: `region`, `comuna`, `comuna_alias`, `zona`, `causa`, `tipo_siniestro`, `sector`, `calidad_persona`, `sexo`, `resultado_persona`, `tipo_vehiculo`, `servicio_vehiculo`).
+5. Excel import pipeline: read → normalize → explicit alias resolution → validate → load into Postgres, idempotent, with a row-level error report and post-import count reconciliation.
 6. Docker: backend multi-stage `Dockerfile` (non-root, healthcheck), static frontend serve, `compose.yaml` (postgres + backend + frontend), `.dockerignore`.
 
 ## Out of scope
@@ -71,15 +71,15 @@ Constraints and context:
 - **A1** Backend language: TypeScript (matches frontend tooling and Fastify's TS DX).
 - **A2** ORM: Prisma (continues the prior recorded target-stack decision; Postgres provider fits Neon).
 - **A3** Production Excel source: **still open** (GCS bucket vs upload endpoint — never answered). Not blocking this slice: the importer reads a configured local directory (Docker read-only mount), behind an interface that a later GCS adapter can implement.
-- **A4** Canonical IDs: surrogate PKs internally; the source `ID` preserved as `source_id` (integer) with a unique constraint on siniestros.
+- **A4** Canonical IDs: surrogate PKs internally; the source `ID` preserved as `id_fuente` (integer). It is unique in the current 2025 file; if multiple periods are retained together, scope uniqueness by source period/import batch.
 
 ## Tasks
 
 - [x] T1 `README.md`: production stack, ASCII/mermaid flow, local quick-start with Docker, current-status notes (frontend is mockup; importer pending first run).
 - [x] T2 Fastify bootstrap: `backend/` TS project (`src/server.ts`), `/health`, `start`/`dev`/`build` scripts, `backend/.gitignore` (root `.gitignore` already existed in HEAD; no changes needed there). Check: `npm run build`, boot on `PORT=8080`, `curl /health` → 200.
-- [ ] T3 `backend/docs/MER.md`: ERD + mapping tables + cardinality/consistency rules. Check: structural readback; every source column mapped exactly once; counts match evidence above.
+- [x] T3 `backend/docs/MER.md` + canonical territory mapping: ERD, full Excel mapping, normalization/aliases, constraints and 3NF notes. Check: every source column covered; all 340 source commune labels resolve; 346 catalog commune keys/IDs unique.
 - [ ] T4 Prisma schema + migration for the MER; applied against local Postgres. Check: `prisma migrate dev` clean on a fresh volume; FK/catalog constraints present.
-- [ ] T5 Import pipeline + CLI (`backend/src/import/`): column rename map, normalization (trim/upper/deaccent/dots; date/time/number coercion), catalog upserts, FK validation with orphan report, idempotent re-run. Check: loaded counts equal 73,081 / 148,252 / 130,234; zero FK violations; the 2 vehicle-less siniestros reported, not dropped.
+- [ ] T5 Import pipeline + CLI (`backend/src/import/`): column rename map, normalization (trim/NFKD/uppercase/ASCII alphanumeric key; explicit aliases; date/time/number coercion), catalog upserts, FK validation with orphan report, idempotent re-run. Check: loaded counts equal 73,081 / 148,252 / 130,234; zero FK violations; the 2 vehicle-less siniestros reported, not dropped.
 - [ ] T6 Docker: backend + frontend images, `compose.yaml`, `.dockerignore`, dataset mount `./data` read-only, healthchecks. Check: `docker compose up` → frontend 200, backend `/health` 200, migration applied, import run from inside the container against compose Postgres.
 - [ ] T7 Closure: reconcile docs with observed reality (README commands actually work), record evidence + commit SHAs here.
 
@@ -117,14 +117,14 @@ Constraints and context:
 - 2026-10-08: document created after exploration (headers, row counts, ID overlaps, history stack, container contract). User approved Fastify-only plan; asked for this ODD. No implementation started.
 - 2026-10-08: user authorized T1+T2. Branch `feat/backend-production-stack` created from `development` (`15d8f73`).
 - **T1 done 2026-10-08** (route: direct inline): `README.md` rewritten with the confirmed production stack (Pages/Cloud Run+Fastify-only/Neon/GitHub Actions/Cloudflare edge), mermaid flow, repo layout, local dev commands, honest status (frontend mock; T6 Docker pending). Work-unit commit `99a2799` (README + this plan doc; user-staged `frontend/Design/*.png` deliberately excluded).
-- **T2 done 2026-10-08** (route: delegated direct, one writer — writer trigger fired): Fastify TS bootstrap. `backend/package.json` (ESM, `dev`=tsx watch, `build`=tsc, `start`=node dist/server.js), `backend/tsconfig.json` (strict NodeNext → `dist/`), `backend/src/app.ts` (`buildApp()` composition factory, `GET /health` → `{status:"ok"}`), `backend/src/server.ts` (`0.0.0.0` + injected `PORT` default 8080, SIGTERM/SIGINT graceful close), `backend/.gitignore`. Work-unit commit `0e0d83e` (6 files; committed with explicit pathspec after plain `git commit` twice swept the user-staged Design PNGs — those were reset and left staged, untouched).
   - Verification evidence (writer + parent spot check): `npm install` exit 0; `npm run build` exit 0 (no type errors); boot smoke `PORT=808x node dist/server.js` + `curl -sf /health` → `{"status":"ok"}` (writer 8081/8082, parent re-ran 8083); `ss -ltn` proves `0.0.0.0` bind; dev mode (tsx) also serves /health. Test-first exception honored (no runner; build+smoke are the functional proof).
   - Discovery: root `.gitignore` **already existed tracked in HEAD** (covers node_modules, dist, .env, the three datasets, carabineros png) — plan premise and `AGENTS.md` "no root .gitignore / fresh clone has no code" section are outdated; reconcile AGENTS.md in T7.
   - Follow-ups noted: empty legacy dirs `backend/{controller,db,Models,routes,services}/` (invisible to git, need manual cleanup decision); T4/T5 must register plugins in `buildApp()`, never in `server.ts`; T6 still needs `.dockerignore`.
+- **T3 done 2026-10-08** (route: direct inline): added `backend/docs/MER.md` with the proposed PostgreSQL ERD, complete 37-column source map, source data profile, 3NF rationale, key/FK/index/delete constraints, and import validation rules. Updated `oversio-identifiers.json` as the sole canonical territory source by adding the four approved Región Metropolitana communes: El Monte (`XIII-49`), Isla de Maipo (`XIII-50`), Padre Hurtado (`XIII-51`), Peñaflor (`XIII-52`). Explicit alias map covers the five remaining spelling variants; punctuation/spacing/accent variants normalize directly. `python -m json.tool` and catalog validation passed: 16 regions, 346 communes, unique IDs/normalized names, 340 distinct Excel commune names resolved; all 37 source headers appear in the MER. `frontend/npm run build` passed (existing Vite config/chunk-size warnings only). Work-unit commit to be recorded after creation.
 
 ## Next step
 
-- T3 (`backend/docs/MER.md`) then T4/T5 (schema + import).
+- T4 (Prisma schema + migration implementing the T3 MER), then T5 (Excel import).
 
 ## Open decisions
 

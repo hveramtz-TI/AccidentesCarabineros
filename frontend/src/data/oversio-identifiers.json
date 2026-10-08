@@ -467,7 +467,11 @@
         { "name": "Colina", "identifier": "XIII-45" },
         { "name": "Lampa", "identifier": "XIII-46" },
         { "name": "Tiltil", "identifier": "XIII-47" },
-        { "name": "Santiago", "identifier": "XIII-48" }
+        { "name": "Santiago", "identifier": "XIII-48" },
+        { "name": "El Monte", "identifier": "XIII-49" },
+        { "name": "Isla de Maipo", "identifier": "XIII-50" },
+        { "name": "Padre Hurtado", "identifier": "XIII-51" },
+        { "name": "Peñaflor", "identifier": "XIII-52" }
       ]
     }
   ]
