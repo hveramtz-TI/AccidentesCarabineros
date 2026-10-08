@@ -11,7 +11,7 @@ interface Props {
 
 export default function DashboardView({ data, filters, onFiltersChange }: Props) {
   return (
-    <div className="mx-auto flex w-screen flex-col gap-4 p-4 md:p-10">
+    <div className="flex w-full flex-col gap-4 p-4 md:p-10">
       <DashboardStatus synthetic={data.synthetic} emptyScope={data.emptyScope} />
 
       <ContainerMapFilter filters={filters} onFiltersChange={onFiltersChange} data={data} />
