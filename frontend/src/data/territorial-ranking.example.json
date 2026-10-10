@@ -1,0 +1,295 @@
+{
+  "source": "example-synthetic",
+  "synthetic": true,
+  "note": "Rows keyed by identifiers from oversio-identifiers.json (canonical catalog). Partial coverage by design: a region with no rows yields zeros when filtered.",
+  "rows": [
+    {
+      "identifier": "XV-1",
+      "accidents": 307,
+      "fatalities": 5,
+      "injuries": 182,
+      "severity": {
+        "fatal": 5,
+        "serious": 78,
+        "minor": 104,
+        "property": 120
+      }
+    },
+    {
+      "identifier": "I-5",
+      "accidents": 403,
+      "fatalities": 6,
+      "injuries": 259,
+      "severity": {
+        "fatal": 6,
+        "serious": 121,
+        "minor": 138,
+        "property": 138
+      }
+    },
+    {
+      "identifier": "II-1",
+      "accidents": 559,
+      "fatalities": 6,
+      "injuries": 330,
+      "severity": {
+        "fatal": 6,
+        "serious": 154,
+        "minor": 176,
+        "property": 223
+      }
+    },
+    {
+      "identifier": "III-1",
+      "accidents": 376,
+      "fatalities": 6,
+      "injuries": 252,
+      "severity": {
+        "fatal": 6,
+        "serious": 114,
+        "minor": 138,
+        "property": 118
+      }
+    },
+    {
+      "identifier": "IV-1",
+      "accidents": 493,
+      "fatalities": 6,
+      "injuries": 344,
+      "severity": {
+        "fatal": 6,
+        "serious": 165,
+        "minor": 179,
+        "property": 143
+      }
+    },
+    {
+      "identifier": "V-1",
+      "accidents": 594,
+      "fatalities": 8,
+      "injuries": 355,
+      "severity": {
+        "fatal": 8,
+        "serious": 155,
+        "minor": 200,
+        "property": 231
+      }
+    },
+    {
+      "identifier": "V-7",
+      "accidents": 578,
+      "fatalities": 7,
+      "injuries": 327,
+      "severity": {
+        "fatal": 7,
+        "serious": 160,
+        "minor": 167,
+        "property": 244
+      }
+    },
+    {
+      "identifier": "VI-1",
+      "accidents": 614,
+      "fatalities": 10,
+      "injuries": 414,
+      "severity": {
+        "fatal": 10,
+        "serious": 192,
+        "minor": 222,
+        "property": 190
+      }
+    },
+    {
+      "identifier": "VII-1",
+      "accidents": 461,
+      "fatalities": 7,
+      "injuries": 319,
+      "severity": {
+        "fatal": 7,
+        "serious": 150,
+        "minor": 169,
+        "property": 135
+      }
+    },
+    {
+      "identifier": "VII-14",
+      "accidents": 366,
+      "fatalities": 4,
+      "injuries": 206,
+      "severity": {
+        "fatal": 4,
+        "serious": 97,
+        "minor": 109,
+        "property": 156
+      }
+    },
+    {
+      "identifier": "XVI-10",
+      "accidents": 368,
+      "fatalities": 6,
+      "injuries": 257,
+      "severity": {
+        "fatal": 6,
+        "serious": 116,
+        "minor": 141,
+        "property": 105
+      }
+    },
+    {
+      "identifier": "VIII-1",
+      "accidents": 928,
+      "fatalities": 15,
+      "injuries": 536,
+      "severity": {
+        "fatal": 15,
+        "serious": 240,
+        "minor": 296,
+        "property": 377
+      }
+    },
+    {
+      "identifier": "VIII-20",
+      "accidents": 363,
+      "fatalities": 6,
+      "injuries": 240,
+      "severity": {
+        "fatal": 6,
+        "serious": 112,
+        "minor": 128,
+        "property": 117
+      }
+    },
+    {
+      "identifier": "IX-1",
+      "accidents": 514,
+      "fatalities": 8,
+      "injuries": 297,
+      "severity": {
+        "fatal": 8,
+        "serious": 134,
+        "minor": 163,
+        "property": 209
+      }
+    },
+    {
+      "identifier": "XIV-1",
+      "accidents": 287,
+      "fatalities": 4,
+      "injuries": 199,
+      "severity": {
+        "fatal": 4,
+        "serious": 96,
+        "minor": 103,
+        "property": 84
+      }
+    },
+    {
+      "identifier": "X-20",
+      "accidents": 242,
+      "fatalities": 4,
+      "injuries": 150,
+      "severity": {
+        "fatal": 4,
+        "serious": 64,
+        "minor": 86,
+        "property": 88
+      }
+    },
+    {
+      "identifier": "X-1",
+      "accidents": 513,
+      "fatalities": 7,
+      "injuries": 339,
+      "severity": {
+        "fatal": 7,
+        "serious": 153,
+        "minor": 186,
+        "property": 167
+      }
+    },
+    {
+      "identifier": "XI-1",
+      "accidents": 153,
+      "fatalities": 2,
+      "injuries": 91,
+      "severity": {
+        "fatal": 2,
+        "serious": 42,
+        "minor": 49,
+        "property": 60
+      }
+    },
+    {
+      "identifier": "XII-1",
+      "accidents": 300,
+      "fatalities": 4,
+      "injuries": 211,
+      "severity": {
+        "fatal": 4,
+        "serious": 95,
+        "minor": 116,
+        "property": 85
+      }
+    },
+    {
+      "identifier": "XIII-48",
+      "accidents": 1208,
+      "fatalities": 17,
+      "injuries": 683,
+      "severity": {
+        "fatal": 17,
+        "serious": 289,
+        "minor": 394,
+        "property": 508
+      }
+    },
+    {
+      "identifier": "XIII-9",
+      "accidents": 873,
+      "fatalities": 13,
+      "injuries": 598,
+      "severity": {
+        "fatal": 13,
+        "serious": 271,
+        "minor": 327,
+        "property": 262
+      }
+    },
+    {
+      "identifier": "XIII-18",
+      "accidents": 726,
+      "fatalities": 10,
+      "injuries": 522,
+      "severity": {
+        "fatal": 10,
+        "serious": 241,
+        "minor": 281,
+        "property": 194
+      }
+    },
+    {
+      "identifier": "XIII-32",
+      "accidents": 910,
+      "fatalities": 14,
+      "injuries": 518,
+      "severity": {
+        "fatal": 14,
+        "serious": 254,
+        "minor": 264,
+        "property": 378
+      }
+    },
+    {
+      "identifier": "XIII-19",
+      "accidents": 753,
+      "fatalities": 11,
+      "injuries": 428,
+      "severity": {
+        "fatal": 11,
+        "serious": 195,
+        "minor": 233,
+        "property": 314
+      }
+    }
+  ]
+}
