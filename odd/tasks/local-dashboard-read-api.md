@@ -48,7 +48,7 @@ The user wants to prove the full data-to-API path locally before connecting the 
   - If required, run `docker compose run --rm importer` (without `--reset`) against the local Compose database.
   - Save the importer summary and reconcile inserted counts, skipped rows, lookup/catalog counts, foreign-key integrity, and vehicle-less accidents.
 
-- [ ] T2 — Profile data and agree on indicator definitions
+- [x] T2 — Profile data and agree on indicator definitions
   - Review distributions, missing values, category cardinalities, date coverage, and territory coverage from the loaded database.
   - Evaluate candidates already represented in the dashboard: accident totals, monthly trends, fatalities/injuries/severity, and territory ranking.
   - Evaluate additional useful breakdowns supported by the files: cause/type/sector, person outcomes and demographics, and vehicle type/service.
@@ -97,10 +97,22 @@ The user wants to prove the full data-to-API path locally before connecting the 
 
 ## Next step
 
-Continue with T2: profile the loaded data and agree on indicator definitions before locking the API contract.
+T3: fix the HTTP contract over the approved metrics (`backend/docs/dashboard-metrics.md` is the formula source of truth). Aggregate dashboard endpoint first; territory selectors stay on the versioned canonical catalog until a real consumer needs API endpoints.
 
 ## Progress
 
 - **2026-10-10 — T1 complete (local Docker only):** the three fact tables were empty before import. `docker compose run --rm importer` completed with status `ok` in 30,449 ms; inserted 73,081 siniestros, 148,252 personas, and 130,234 vehiculos; skipped 0 rows and reported 0 errors. Catalog seeded 16 regions, 346 communes, and 5 aliases; the two valid siniestros without vehicles were source IDs `31355` and `50010`. Work-unit commit: `6363f0d`.
-- **Independent SQL verification:** local totals match 73,081 / 148,252 / 130,234; orphan personas = 0; orphan vehiculos = 0; siniestros without vehicles = 2. No Neon or production database was accessed.
-- **Next:** T2 data profiling and user agreement on indicators. Keep `activeCases` excluded unless a source-backed definition is approved.
+- **2026-10-10 — T1 re-verification (live):** importer re-run idempotent: `status: ok (31,163 ms)`, rows read/inserted 73,081 / 148,252 / 130,234, skipped 0, errors 0, the same two vehicle-less siniestros (31355, 50010). Independent SQL: orphans 0 / 0, `no_vehicle=2`, `fecha` 2025-01-01..2025-12-31, 340 communes with accidents, all 16 regions covered. `GET :8080/health` → `{"status":"ok"}`; frontend `:3200` → 200. Duplicate `id_fuente` = 0; 6 CHECK constraints verified live via `pg_constraint`.
+- **2026-10-10 — T2 profiling evidence (live SQL, local Docker only; read-only explorer had no shell, so the parent executed its prepared batch inline):**
+  - **Cross-grain reconciliation (exact):** accident-level sums equal person-level outcome counts — fallecidos 1,507; graves 7,060; menos_graves 3,392; leves 31,253; ilesos 105,040. Fatal personas by sexo: 1,172 M + 335 F = 1,507. No double-count risk: either grain may be used; person grain adds sexo/edad/calidad.
+  - **Monthly:** accidents 5,458–6,791 (peak Mar 6,791; low Feb 5,458); fatalities 102–152/mo; injuries (grave+m_grave+leve) 41,705 total.
+  - **Severity (MECE, accident grain):** fatal 1,339 (1.8%) / serious 6,018 / minor 21,757 / only_ilesos 43,967; "all-zero" bucket = 0.
+  - **Hour (3h buckets):** peak 15–18h (13,498) and 18–21h (13,395); trough 00–03 (3,334). Exactly `00:00:00` rows: 234 (0.3%) — time-missing artifacts, keep but disclose.
+  - **Territory:** XIII 20,293 (27.8%), VIII 8,196, V 7,231, VII 6,971, IX 5,588; top comunas: Temuco 2,079, Antofagasta 1,891, Concepción 1,843, Puente Alto 1,662. Per-commune range 1–2,079; 6 catalog communes have zero accidents.
+  - **Causa:** top cause "conductor no atento" 32,999 (45.1%); ebriedad 5,444 (110 deaths); "velocidad no razonable" 2,540 accidents but 253 deaths — highest lethality; 7 of 70 causas have <10 accidents → 'other' tail.
+  - **Tipo/sector:** colisión lateral 16.7%, colisión 14.6%, choque 12.3%; urbano 74.2% / rural 25.8%.
+  - **Persona:** conductor 71.3%, se da a la fuga 13.1%, pasajero 10.7%, peatón 4.9%; masculino 70.5%, femenino 25.1%, se ignora 4.3%; edad NULL 23,918 (16.1%); age bands: 0–17: 5,255; 18–25: 15,942; 26–40: 45,651; 41–64: 46,236; 65+: 11,250.
+  - **Vehículo:** 1.782 rows/siniestro avg (LEFT JOIN incl. the 2 zeros), max 18; automovil in 70.1% of accidents, camioneta 23.5%, jeep 14.6%, motocicleta 9.0%; servicio particular 85.7% of rows.
+  - **Skip list (measured):** tribunal 502 values; calle_2 blank 37,772 (51.7%); km blank 36,369 (~49.8%); geocoding absent by scope.
+- **Route:** T1 re-verify + T2 profiling inline (single bounded bash batch after the explorer's blocked return; no writes to app code).
+- **2026-10-10 — T2 gate cleared, T2 complete:** user required exactly 4 KPIs. `activeCases` rejected (synthetic); **Lesionados graves** (`SUM(lesionados_graves)`, national 7.060, monthly series available) approved as the 4th KPI after comparing trade-offs vs "siniestros con fuga". All other proposed indicators approved as-is. Formulas, national baselines, MECE severity buckets (incl. `only_ilesos` replacing synthetic "Property damage"), cross-grain reconciliation table (Δ=0 on all five outcomes), caveats (234 zero-hour artifacts, 16.1% NULL edad, ZONA≠region, 6 zero-accident communes) and the measured skip list are recorded in `backend/docs/dashboard-metrics.md` (written in Spanish per the docs-folder convention of `MER.md`). That document is now the single source of truth for T3/T4; the API may not define indicators outside it. Metrics-doc commit: `5fedf70`.
