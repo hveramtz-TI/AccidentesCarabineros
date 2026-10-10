@@ -101,6 +101,6 @@ Continue with T2: profile the loaded data and agree on indicator definitions bef
 
 ## Progress
 
-- **2026-10-10 — T1 complete (local Docker only):** the three fact tables were empty before import. `docker compose run --rm importer` completed with status `ok` in 30,449 ms; inserted 73,081 siniestros, 148,252 personas, and 130,234 vehiculos; skipped 0 rows and reported 0 errors. Catalog seeded 16 regions, 346 communes, and 5 aliases; the two valid siniestros without vehicles were source IDs `31355` and `50010`.
+- **2026-10-10 — T1 complete (local Docker only):** the three fact tables were empty before import. `docker compose run --rm importer` completed with status `ok` in 30,449 ms; inserted 73,081 siniestros, 148,252 personas, and 130,234 vehiculos; skipped 0 rows and reported 0 errors. Catalog seeded 16 regions, 346 communes, and 5 aliases; the two valid siniestros without vehicles were source IDs `31355` and `50010`. Work-unit commit: `6363f0d`.
 - **Independent SQL verification:** local totals match 73,081 / 148,252 / 130,234; orphan personas = 0; orphan vehiculos = 0; siniestros without vehicles = 2. No Neon or production database was accessed.
 - **Next:** T2 data profiling and user agreement on indicators. Keep `activeCases` excluded unless a source-backed definition is approved.
