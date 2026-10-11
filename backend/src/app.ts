@@ -1,9 +1,14 @@
 import Fastify from "fastify";
 import type { FastifyInstance } from "fastify";
 
+import dashboardRoutes from "./routes/dashboard.js";
+import type { DashboardService } from "./types/dashboard-api.js";
+
 export interface BuildAppOptions {
   /** Override Fastify logger configuration; defaults to enabled. */
   logger?: boolean;
+  /** Deterministic data-service seam for API tests and alternate hosts. */
+  dashboardService?: DashboardService;
 }
 
 /**
@@ -18,6 +23,8 @@ export function buildApp(opts: BuildAppOptions = {}): FastifyInstance {
   app.get("/health", () => {
     return { status: "ok" };
   });
+
+  app.register(dashboardRoutes, { service: opts.dashboardService });
 
   return app;
 }

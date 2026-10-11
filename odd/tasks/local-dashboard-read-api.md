@@ -91,9 +91,15 @@ The user wants to prove the full data-to-API path locally before connecting the 
 
 ## User decision gates
 
-- T2 must finish with agreement on indicator definitions before T3's response contract is fixed.
-- `activeCases` remains excluded unless the user approves a source-backed definition.
+- T2 must finish with agreement on indicator definitions before T3's response contract is fixed. **DONE 2026-10-10: 4 KPIs approved (accidentes, fallecidos, lesiones totales, lesionados graves); `activeCases` replaced.**
+- `activeCases` remains excluded unless the user approves a source-backed definition. **Resolved: replaced by Lesionados graves.**
 - Any schema change or indicator requiring data absent from the 2025 files must be surfaced before implementation.
+
+## Delivery
+
+- Branch: `feat/backend-production-stack` (continues the prior production-stack branch; same unreviewed-by-RDD reality — switch globally off).
+- Strategy: `ask-on-risk` (default). Running authored-change count from this ODD's work-unit commits ≈ 380 lines through T3 (`6363f0d` 106, `7a0fc7d` 2, `5fedf70` 109, `c843bc4` 16, `551a116` 147). The T4 implementation commit is forecast to cross the ~400-line slice budget (≈500–800 lines: service/controller/routes/types/tests + wiring). PR slicing/chain remains the user's call; no push/PR is implied by the work-unit commits on this feature branch.
+- Work-unit pattern: one commit per task (code + docs), ODD evidence recorded in follow-up `docs(odd)` commits with explicit pathspecs (the `frontend/Design/*.png` staged files stay untouched).
 
 ## Next step
 
