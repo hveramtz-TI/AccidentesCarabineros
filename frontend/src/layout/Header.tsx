@@ -13,8 +13,8 @@ interface Props {
 
 const Header = ({ navigation }: Props) => {
   return (
-    <header className="sticky top-0 z-40 px-4 pt-4">
-      <div className="glass-card mx-auto max-w-[1600px] border-border p-3 sm:p-4">
+    <header className="sticky top-0 z-40 px-4 pt-4 md:px-10">
+      <div className="glass-card mx-auto w-auto border-border p-3 sm:p-4">
         <div className="flex min-w-0 flex-wrap items-center gap-x-6 gap-y-3">
           <div className="flex min-w-0 shrink-0 items-center gap-3">
             <span
