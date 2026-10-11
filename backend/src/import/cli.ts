@@ -133,8 +133,8 @@ function exitCode(report: ImportReport, options: CliOptions): number {
 
 async function main(): Promise<number> {
   const options = parseArgs(process.argv.slice(2));
-  if (!process.env.DATABASE_URL) {
-    throw new Error("DATABASE_URL is required in the environment");
+  if (!process.env.DATABASE_NEON_URL) {
+    throw new Error("DATABASE_NEON_URL is required in the environment");
   }
 
   const prisma = new PrismaClient();
