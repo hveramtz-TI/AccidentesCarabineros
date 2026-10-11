@@ -125,7 +125,7 @@ docker compose down -v             # teardown; -v drops the DB volume
   keeps datasets, `node_modules`, and `.env` out of every image.
 - Postgres is internal-only with throwaway local credentials
   (`accidentes`/`accidentes_dev`); production injects a real Neon
-  `DATABASE_URL` into Cloud Run.
+  `DATABASE_NEON_URL` for API traffic and `DIRECT_URL` for Prisma migrations.
 - The importer reuses the backend image and bind-mounts the root `*.xlsx`
   datasets read-only, asserting 73,081 / 148,252 / 130,234 rows; it is safe to
   re-run (idempotent).

@@ -8,7 +8,7 @@
 #   docker compose down -v                      # teardown, drops the DB volume
 #
 # The Postgres credentials below are throwaway local-only defaults; production
-# injects a real Neon DATABASE_URL into Cloud Run. Postgres publishes no host
+# injects a real Neon DATABASE_NEON_URL into Cloud Run. Postgres publishes no host
 # port — it is reachable only on the compose network.
 
 name: accidentescarabineros
@@ -38,7 +38,8 @@ services:
       dockerfile: backend/Dockerfile
     image: accidentes-backend:local
     environment:
-      DATABASE_URL: postgresql://accidentes:accidentes_dev@postgres:5432/accidentes?schema=public
+      DATABASE_NEON_URL: postgresql://accidentes:accidentes_dev@postgres:5432/accidentes?schema=public
+      DIRECT_URL: postgresql://accidentes:accidentes_dev@postgres:5432/accidentes?schema=public
       PORT: "8080"
       # Basic Bearer request barrier (NOT authentication). Value comes from
       # the ignored root .env (UUID_CONNECTION=...); never commit real tokens.
@@ -93,7 +94,8 @@ services:
     image: accidentes-backend:local
     profiles: ["ops"]
     environment:
-      DATABASE_URL: postgresql://accidentes:accidentes_dev@postgres:5432/accidentes?schema=public
+      DATABASE_NEON_URL: postgresql://accidentes:accidentes_dev@postgres:5432/accidentes?schema=public
+      DIRECT_URL: postgresql://accidentes:accidentes_dev@postgres:5432/accidentes?schema=public
     depends_on:
       postgres:
         condition: service_healthy
