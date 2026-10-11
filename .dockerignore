@@ -1,0 +1,25 @@
+# Governs the backend image build context, which is the REPO ROOT
+# (`docker build -f backend/Dockerfile .` — the image ships the canonical
+# territory catalog from frontend/src/data/).
+#
+# Allowlist style: ignore every top-level entry, then re-include only backend/
+# and the one catalog file the Dockerfile COPYs from frontend/.
+
+/*
+!backend
+!frontend
+frontend/*
+!frontend/src
+frontend/src/*
+!frontend/src/data
+frontend/src/data/*
+!frontend/src/data/oversio-identifiers.json
+
+# Defense in depth — none of these may ever enter an image, at any depth:
+# node_modules/dist are rebuilt inside the build stage; .env holds secrets;
+# *.xlsx datasets are runtime-mounted read-only instead.
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+**/*.xlsx

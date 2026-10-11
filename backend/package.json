@@ -1,6 +1,4 @@
 {
-<<<<<<< Updated upstream
-=======
   "name": "backend",
   "version": "0.0.0",
   "private": true,
@@ -15,8 +13,15 @@
     "db:import": "cd .. && node backend/dist/import/cli.js",
     "test": "node --import tsx --test src/import/*.test.ts src/services/dashboard-service.test.ts src/routes/dashboard.test.ts"
   },
->>>>>>> Stashed changes
   "dependencies": {
+    "@prisma/client": "6.19.3",
+    "exceljs": "^4.4.0",
     "fastify": "^5.12.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "prisma": "6.19.3",
+    "tsx": "^4.0.0",
+    "typescript": "~5.9.0"
   }
 }
