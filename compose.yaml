@@ -1,0 +1,97 @@
+# Production-like local stack: PostgreSQL (standing in for Neon), the Fastify
+# backend image, an nginx-served SPA frontend, and a one-shot Excel importer.
+# Cloud Run / Cloudflare Pages / Neon remain the production targets; this
+# proves the same flow on one host.
+#
+#   docker compose up -d --build                # postgres -> backend (migrates) -> frontend
+#   docker compose run --rm importer            # loads the three root Excels
+#   docker compose down -v                      # teardown, drops the DB volume
+#
+# The Postgres credentials below are throwaway local-only defaults; production
+# injects a real Neon DATABASE_URL into Cloud Run. Postgres publishes no host
+# port — it is reachable only on the compose network.
+
+name: accidentescarabineros
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: accidentes
+      POSTGRES_PASSWORD: accidentes_dev
+      POSTGRES_DB: accidentes
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      # TCP probe INSIDE the container: a published port or the unix-socket
+      # pg_isready can pass while initdb is still running (documented
+      # readiness race, see odd plan T4 boot-CI note).
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -U accidentes"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: accidentes-backend:local
+    environment:
+      DATABASE_URL: postgresql://accidentes:accidentes_dev@postgres:5432/accidentes?schema=public
+      PORT: "8080"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      # node:22-slim has global fetch but no curl/wget. Generous retries so
+      # the healthcheck outlives the `prisma migrate deploy` startup on first
+      # boot against a fresh volume.
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  frontend:
+    build: ./frontend
+    image: accidentes-frontend:local
+    ports:
+      - "3200:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      # nginx:1.27-alpine ships busybox wget.
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+  # One-shot importer, NOT started by `up` (compose profile "ops").
+  # Run explicitly with:  docker compose run --rm importer
+  # The root Excel datasets are bind-mounted as individual read-only files;
+  # they never enter any image. Migrations are already applied by the backend
+  # service; this reuses the backend image (same build config → cached).
+  importer:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: accidentes-backend:local
+    profiles: ["ops"]
+    environment:
+      DATABASE_URL: postgresql://accidentes:accidentes_dev@postgres:5432/accidentes?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - "./Siniestros_2025(1).xlsx:/data/Siniestros_2025(1).xlsx:ro"
+      - "./Personas_2025(1).xlsx:/data/Personas_2025(1).xlsx:ro"
+      - "./Vehiculos_2025(1).xlsx:/data/Vehiculos_2025(1).xlsx:ro"
+    command: ["node", "dist/import/cli.js", "--dir", "/data", "--catalog", "/app/catalog/oversio-identifiers.json", "--expect-siniestros", "73081", "--expect-personas", "148252", "--expect-vehiculos", "130234"]
+
+volumes:
+  postgres-data:

@@ -1,0 +1,7 @@
+# Build context is ./frontend. node_modules and dist are rebuilt inside the
+# image; Design/ is user mockup PNGs; .env* must never be baked.
+node_modules
+dist
+Design
+.env
+.env.*
