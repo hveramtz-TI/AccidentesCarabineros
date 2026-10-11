@@ -43,7 +43,7 @@ const emptyResponse: DashboardResponse = {
     rows: 0,
     calidad: [],
     sexo: [],
-    ageBands: ["0-17", "18-25", "26-40", "41-64", "65+", "unknown"].map((band) => ({ band, count: 0 })),
+    ageBands: (["0-17", "18-25", "26-40", "41-64", "65+", "unknown"] as const).map((band) => ({ band, count: 0 })),
   },
 };
 
