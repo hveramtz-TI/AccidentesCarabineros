@@ -40,6 +40,10 @@ services:
     environment:
       DATABASE_URL: postgresql://accidentes:accidentes_dev@postgres:5432/accidentes?schema=public
       PORT: "8080"
+      # Basic Bearer request barrier (NOT authentication). Value comes from
+      # the ignored root .env (UUID_CONNECTION=...); never commit real tokens.
+      UUID_CONNECTION: ${UUID_CONNECTION:-}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3200,http://localhost:5173}
     ports:
       - "8080:8080"
     depends_on:
@@ -56,7 +60,13 @@ services:
       start_period: 30s
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        # VITE_* values are public build inputs (embedded in the static bundle);
+        # VITE_UUID_CONNECTION must equal the backend's UUID_CONNECTION above.
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
+        VITE_UUID_CONNECTION: ${UUID_CONNECTION:-}
     image: accidentes-frontend:local
     ports:
       - "3200:80"

@@ -73,6 +73,37 @@ npm start      # node dist/server.js; honors PORT (default 8080)
 ```
 
 Smoke check: `curl http://localhost:8080/health` → `{ "status": "ok" }`.
+`GET /api/dashboard` requires `Authorization: Bearer $UUID_CONNECTION`
+(`/health` stays public):
+
+```bash
+curl -H "Authorization: Bearer $UUID_CONNECTION" http://localhost:8080/api/dashboard
+```
+
+## Dashboard API connection (local)
+
+The frontend reads `GET /api/dashboard` with a basic Bearer request barrier.
+It is a lightweight barrier, **not** user authentication: `VITE_UUID_CONNECTION`
+is embedded in the static bundle and is intentionally visible (accepted
+limitation). Development and production must use different values.
+
+| Variable | Side | Where it lives locally |
+|---|---|---|
+| `UUID_CONNECTION` | backend runtime (expected Bearer) | repo-root `.env` (compose interpolation; ignored) |
+| `VITE_API_BASE_URL` | frontend build (API origin) | root `.env` for compose / `frontend/.env.local` for Vite dev |
+| `VITE_UUID_CONNECTION` | frontend build (Bearer sent) | compose passes `UUID_CONNECTION` through; `frontend/.env.local` for Vite dev |
+| `CORS_ALLOWED_ORIGINS` | backend runtime | root `.env`; defaults to `http://localhost:3200,http://localhost:5173` |
+
+```bash
+cp .env.example .env                      # then set UUID_CONNECTION=...
+cp frontend/.env.example frontend/.env.local  # same token, for `npm run dev`
+```
+
+Never write real token values into Git, Dockerfiles, docs, or logs.
+Future production mapping (documentation only — not applied): Cloudflare Pages
+build gets `VITE_API_BASE_URL` + `VITE_UUID_CONNECTION` (public build inputs);
+Cloud Run gets `UUID_CONNECTION` from Secret Manager, plus the deployed Pages
+origin in `CORS_ALLOWED_ORIGINS`.
 
 ## Local Docker stack
 
@@ -101,8 +132,9 @@ docker compose down -v             # teardown; -v drops the DB volume
 
 ## Current status
 
-- Frontend dashboard shell, filters, and charts: done (synthetic fixtures).
+- Frontend dashboard shell, filters, and charts: connected to the real
+  `GET /api/dashboard` API (Bearer barrier) — synthetic fixtures were removed.
 - Backend: Fastify bootstrap with health check, Prisma migrations, Excel
-  importer, and the local Docker stack are in place; dashboard read endpoints
-  and the deploy slice (Cloud Run/Pages/Neon wiring) are the next tasks in the
-  ODD plan.
+  importer, dashboard read endpoint, Bearer/CORS guard, and the local Docker
+  stack are in place; the deploy slice (Cloud Run/Pages/Neon wiring) is the
+  next task in the ODD plan.

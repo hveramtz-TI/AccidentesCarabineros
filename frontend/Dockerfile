@@ -5,6 +5,13 @@
 
 FROM node:22-slim AS build
 WORKDIR /app
+# Vite embeds VITE_* at build time; compose (or CI) passes local values here.
+# Defaults keep the image buildable without secrets; the backend token must
+# match UUID_CONNECTION of the target API for /api/dashboard calls to pass.
+ARG VITE_API_BASE_URL=http://localhost:8080
+ARG VITE_UUID_CONNECTION=
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL \
+    VITE_UUID_CONNECTION=$VITE_UUID_CONNECTION
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .

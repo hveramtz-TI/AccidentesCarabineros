@@ -1,29 +1,19 @@
 # Data directory
 
-Canonical and fixture data for the dashboard frontend.
+Canonical data for the dashboard frontend.
 
 ## Files
 
 - `oversio-identifiers.json` — **canonical territorial catalog** (16 regions,
   ~350 communes) with `identifier` keys like `"XIII-9"`. This file is the
   source of truth for region/commune names and must not be duplicated or
-  edited elsewhere.
-- `dashboard-summary.example.json` — **synthetic** national aggregates:
-  KPIs, 12-month trend (generic `Jan`–`Dec` labels — no real year is claimed)
-  and a severity distribution. `source: "example-synthetic"`, `synthetic: true`.
-- `territorial-ranking.example.json` — **synthetic** per-commune rows keyed by
-  identifiers that exist in `oversio-identifiers.json` (e.g. `XIII-9` La
-  Florida, `VII-1` Talca, `X-20` Osorno). Coverage is deliberately partial: a
-  region with no fixture rows yields zeros when filtered.
+  edited elsewhere. Filter option lists and the region `romanNumber → number`
+  mapping used by the API query builder read from it.
 
-## Invariants (validated when generated)
+## Removed fixtures
 
-- `fatal + serious + minor + property == accidents` per row; `fatal ==
-  fatalities` and `serious + minor == injuries`.
-- Summary KPIs equal the column sums of `monthlyTrend`; severity buckets sum
-  to `kpis.accidents`.
-
-These are demo values only. **Do not present them as official statistics.**
-Real data will arrive later from the backend; loaders in `src/lib/data.ts`
-are the single join point and will switch sources without touching
-components.
+The synthetic `dashboard-summary.example.json` and
+`territorial-ranking.example.json` (and the `deriveDashboardData` join layer)
+were deleted when the dashboard switched to the real `GET /api/dashboard`
+backend. All dashboard values now come from the API; nothing in `src/data/`
+is demo data, and there is no synthetic fallback path.
