@@ -49,7 +49,7 @@ Use `DATABASE_NEON_URL` for backend database connections, preserve the local Com
 - [x] T3 — Add the PR-to-`main` Neon branch create/delete workflow.
 - [x] T4 — Update the existing production deployment ODD's connection-variable references.
 - [x] T5 — Validate Prisma, backend, Compose, and workflow configuration.
-- [ ] T6 — Review the exact worktree diff and create one local conventional commit; do not push.
+- [x] T6 — Review the exact worktree diff and create one local conventional commit; do not push.
 
 ## Acceptance criteria
 
@@ -83,5 +83,7 @@ Use `DATABASE_NEON_URL` for backend database connections, preserve the local Com
 ## Delivery
 
 - Work unit: Neon runtime connection contract and PR branch lifecycle.
-- Proposed commit: `feat(neon): wire runtime URL and PR branch lifecycle`.
+- Work-unit commit: `9edb108` — `feat(neon): wire runtime URL and PR branch lifecycle`.
+- Runtime harness: N/A; no Neon API request or GitHub Actions run was made during local verification.
+- Rollback boundary: revert `9edb108` to restore the previous `DATABASE_URL` contract and remove the PR branch workflow; this does not touch Neon resources.
 - No push, pull request, manual Neon operation, or cloud deployment is authorized by this task.
