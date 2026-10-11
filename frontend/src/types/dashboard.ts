@@ -1,10 +1,9 @@
 /**
- * Data contract for the AccidentesCarabineros dashboard.
+ * View models for the AccidentesCarabineros dashboard.
  *
- * All bundled fixtures are SYNTHETIC example data (`synthetic: true`,
- * `source: "example-synthetic"`). Month labels are generic calendar keys
- * ("Jan".."Dec") and make no claim about a real reporting period or year.
- * Do not present fixture values as official statistics.
+ * All values come from GET /api/dashboard (verified 2025 data). The
+ * territorial catalog (oversio-identifiers.json) remains the canonical
+ * source for filter option lists.
  */
 
 export const MONTH_KEYS = [
@@ -28,14 +27,15 @@ export interface Kpis {
   accidents: number
   fatalities: number
   injuries: number
-  activeCases: number
+  seriousInjuries: number
 }
 
 export interface MonthlyPoint {
-  month: MonthKey
+  month: string
   accidents: number
   fatalities: number
   injuries: number
+  seriousInjuries: number
 }
 
 export interface SeverityBucket {
@@ -44,43 +44,19 @@ export interface SeverityBucket {
   count: number
 }
 
-export interface SeverityBreakdown {
-  fatal: number
-  serious: number
-  minor: number
-  property: number
-}
-
-export interface DashboardSummary {
-  source: string
-  synthetic: boolean
-  /** Generic period descriptor — never a real year claim */
-  periodLabel: string
-  kpis: Kpis
-  monthlyTrend: MonthlyPoint[]
-  severityDistribution: SeverityBucket[]
-}
-
-/** Raw territorial fixture row keyed by an oversio identifier ("XIII-9"). */
-export interface TerritorialRowRaw {
-  identifier: string
+export interface TerritoryRow {
+  /** Region roman code or commune identifier, as provided by the API. */
+  code: string
+  name: string
   accidents: number
   fatalities: number
-  injuries: number
-  severity: SeverityBreakdown
 }
 
-/** Fixture row joined with the canonical territorial catalog. */
-export interface TerritorialRow extends TerritorialRowRaw {
-  region: string
-  regionRoman: string
-  commune: string
-}
-
-export interface TerritorialFixture {
-  source: string
-  synthetic: boolean
-  rows: TerritorialRowRaw[]
+export interface TerritoryRankingData {
+  scope: "region" | "commune"
+  rows: TerritoryRow[]
+  outsideTopCount: number
+  outsideAccidents: number
 }
 
 export interface CommuneRef {
@@ -117,16 +93,13 @@ export interface DashboardFilters {
   commune: string
 }
 
-/** Everything the visualizations render, derived from filters. */
+/** Everything the visualizations render, adapted from the API response. */
 export interface DashboardData {
   kpis: Kpis
   monthlyTrend: MonthlyPoint[]
   severityDistribution: SeverityBucket[]
-  /** Rows in scope, sorted by accidents desc (ranking source). */
-  territories: TerritorialRow[]
-  /** Human label of the current scope, for chart subtitles. */
+  territories: TerritoryRankingData
+  /** Human label of the current scope, from the API. */
   scopeLabel: string
-  synthetic: boolean
-  /** True when the scope has no fixture rows (partial synthetic coverage). */
   emptyScope: boolean
 }

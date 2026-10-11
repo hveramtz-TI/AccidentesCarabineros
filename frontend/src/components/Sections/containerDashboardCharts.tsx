@@ -4,13 +4,13 @@ import TrendChart from "@/components/dashboard/trend-chart"
 import type {
   MonthlyPoint,
   SeverityBucket,
-  TerritorialRow,
+  TerritoryRankingData,
 } from "@/types/dashboard"
 
 type Props = {
   monthlyTrend: MonthlyPoint[]
   severityDistribution: SeverityBucket[]
-  territories: TerritorialRow[]
+  territories: TerritoryRankingData
   scopeLabel: string
 }
 

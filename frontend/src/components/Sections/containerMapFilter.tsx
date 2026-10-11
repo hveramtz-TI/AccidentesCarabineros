@@ -6,7 +6,8 @@ import KpiCards from '../dashboard/kpi-cards'
 type Props = {
   filters: DashboardFilters
   onFiltersChange: (next: DashboardFilters) => void
-  data: DashboardData
+  data: DashboardData | null
+  loading: boolean
 }
 
 const ContainerMapFilter = (props: Props) => {
@@ -23,7 +24,7 @@ const ContainerMapFilter = (props: Props) => {
           />
         </div>
         <div className="min-h-0 flex-1">
-          <KpiCards kpis={props.data.kpis} monthlyTrend={props.data.monthlyTrend} />
+          <KpiCards kpis={props.data?.kpis ?? null} monthlyTrend={props.data?.monthlyTrend ?? []} loading={props.loading} />
         </div>
       </div>
     </section>

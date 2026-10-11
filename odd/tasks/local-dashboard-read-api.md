@@ -10,7 +10,7 @@ Load the 2025 Excel datasets into the local Docker PostgreSQL database, agree on
 - The local database `accidentes` has the single Prisma migration applied; `prisma migrate status` reports the schema is up to date.
 - `docker compose run --rm importer` already imports the three root Excel files, checks expected row totals, and emits an import summary. It is idempotent for the current 2025 files.
 - All three source workbooks are present in the repository root. The existing Docker importer mounts them read-only.
-- The backend currently exposes only `GET /health`; `buildApp()` is its route composition point.
+- The backend exposes `GET /health` and `GET /api/dashboard`; `buildApp()` is its route composition point.
 - The frontend dashboard still derives its figures from synthetic fixtures. Frontend-to-API wiring is explicitly deferred.
 
 ## Why
@@ -61,13 +61,13 @@ The user wants to prove the full data-to-API path locally before connecting the 
   - Decide whether region/commune selectors need API endpoints or can continue using the versioned canonical catalog; do not add endpoints without a consumer.
   - Document request parameters, response types, ordering, empty-result behavior, and validation errors before implementation.
 
-- [ ] T4 — Implement the read API
+- [x] T4 — Implement the read API
   - Add focused analytics services for approved queries, controller handlers for validation/HTTP mapping, and Fastify route plugins.
   - Register route plugins from `buildApp()`; keep `server.ts` responsible only for starting and stopping the server.
   - Use Prisma operations where they express the required aggregation clearly; use parameterized SQL only for queries that need it.
   - Return aggregates and canonical labels/IDs required by the contract; never expose synthetic fixture values as official data.
 
-- [ ] T5 — Verify locally
+- [x] T5 — Verify locally
   - Add service and route tests for approved formulas, period/region/commune filters, invalid parameters, and empty scopes. Keep the existing importer tests.
   - Ensure the backend test command includes the new API tests without dropping the importer tests.
   - Run backend tests and build; smoke the new endpoints against the running local Compose database.
@@ -79,7 +79,7 @@ The user wants to prove the full data-to-API path locally before connecting the 
 - Approved indicator definitions are recorded and traceable to source columns and aggregation rules; ambiguous or synthetic indicators are excluded until resolved.
 - Read endpoints implement only the approved contract, validate filters, and return database-derived aggregates.
 - Service/route tests, backend build, local endpoint smoke checks, and independent SQL reconciliations pass.
-- `GET /health` remains healthy; no frontend or production database is changed in this slice.
+- `GET /health` remains healthy; no frontend code or production database is changed in this slice.
 
 ## Checks
 
@@ -97,16 +97,18 @@ The user wants to prove the full data-to-API path locally before connecting the 
 
 ## Delivery
 
-- Branch: `feat/backend-production-stack` (continues the prior production-stack branch; same unreviewed-by-RDD reality — switch globally off).
-- Strategy: `ask-on-risk` (default). Running authored-change count from this ODD's work-unit commits ≈ 380 lines through T3 (`6363f0d` 106, `7a0fc7d` 2, `5fedf70` 109, `c843bc4` 16, `551a116` 147). The T4 implementation commit is forecast to cross the ~400-line slice budget (≈500–800 lines: service/controller/routes/types/tests + wiring). PR slicing/chain remains the user's call; no push/PR is implied by the work-unit commits on this feature branch.
-- Work-unit pattern: one commit per task (code + docs), ODD evidence recorded in follow-up `docs(odd)` commits with explicit pathspecs (the `frontend/Design/*.png` staged files stay untouched).
+- Current branch: `development`; the feature branch `feat/backend-production-stack` was merged by existing PR #7 (`008b8ac`). RDD remains globally off; no review lifecycle was run.
+- Strategy: **`stacked-to-main`**, selected by the user on 2026-10-11. No new PR or push was created by this work. Existing PR #7 targets `development` and includes the prior stack through T4 (`5ed120a`), plus `Neon.md` and `frontend/Design/{Footer,Header,mockup}.png`; the user confirmed those inclusions were intentional. Do not rewrite that merged history. Any future PRs use the selected stacked-to-main strategy.
+- Work-unit evidence: T1 import-plan evidence `6363f0d` / `7a0fc7d`; T2 metric spec `5fedf70` / ODD evidence `c843bc4`; T3 API contract `551a116`; T4 implementation `5ed120a`; T4 age-band test typing fix `7db9c2e`; merge `008b8ac`. T5 is verification-only and does not introduce source changes.
 
 ## Next step
 
-T4: implement the read API per the contract in `backend/docs/dashboard-api.md` §8 (routes/controllers/services/types under `backend/src/`). Route: delegated direct (writer trigger: 4+ non-trivial files). Test-first applies: add failing route/service tests against the contract baselines before implementing. Keep importer tests green.
+T1–T5 are complete. Frontend-to-API wiring and any Neon/Cloud Run deployment remain separate, deferred work and require a new scope decision.
 
 ## Progress
 
+- **2026-10-11 — T4 complete:** `GET /api/dashboard` implementation is present in commit `5ed120a`, merged by `008b8ac`; the user confirmed the merge contents (including `Neon.md` and the three Design PNGs) were intentional. Native risk assessment was high/unassessable because new paths were untracked; the independent verifier found no implementation defect and flagged a low route-fixture gap. Parent fixed the age-band literal typing after the Docker build exposed it; correction commit `7db9c2e`. `npm test` passed 24/24 and `npm run build` passed. RDD is off; no native review lifecycle ran.
+- **2026-10-11 — T5 complete (local Docker only):** `docker compose up -d --build` succeeded using the classic builder (buildx unavailable); backend, frontend and Postgres all became healthy and were left running. `/health` returned 200 and frontend root 200. National API KPIs 73,081 / 1,507 / 41,705 / 7,060 and severity 1,339 / 6,018 / 21,757 / 43,967 matched independent SQL (Δ=0). `regionId=13` and `communeId=XIII-9` KPIs/severity also matched SQL (Δ=0). Zero-accident `communeId=I-2` (Camiña) returned 200, `emptyScope=true`, zero KPIs, and dense arrays (12 months / 4 severity / 8 hour / 6 age bands). Invalid date returned 400 `VALIDATION_ERROR`. National checks: 12 monthly rows; 6 zero-accident communes; 10 causes + 60 others; 15 accident types; 2 sectors; 8 hour buckets with 234 midnight artifacts; 148,252 persons with 23,918 unknown ages. Backend tests 24/24 and build passed. No importer, production DB, or Neon was used.
 - **2026-10-10 — T1 complete (local Docker only):** the three fact tables were empty before import. `docker compose run --rm importer` completed with status `ok` in 30,449 ms; inserted 73,081 siniestros, 148,252 personas, and 130,234 vehiculos; skipped 0 rows and reported 0 errors. Catalog seeded 16 regions, 346 communes, and 5 aliases; the two valid siniestros without vehicles were source IDs `31355` and `50010`. Work-unit commit: `6363f0d`.
 - **2026-10-10 — T1 re-verification (live):** importer re-run idempotent: `status: ok (31,163 ms)`, rows read/inserted 73,081 / 148,252 / 130,234, skipped 0, errors 0, the same two vehicle-less siniestros (31355, 50010). Independent SQL: orphans 0 / 0, `no_vehicle=2`, `fecha` 2025-01-01..2025-12-31, 340 communes with accidents, all 16 regions covered. `GET :8080/health` → `{"status":"ok"}`; frontend `:3200` → 200. Duplicate `id_fuente` = 0; 6 CHECK constraints verified live via `pg_constraint`.
 - **2026-10-10 — T2 profiling evidence (live SQL, local Docker only; read-only explorer had no shell, so the parent executed its prepared batch inline):**

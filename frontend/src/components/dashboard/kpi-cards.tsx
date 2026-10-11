@@ -6,8 +6,9 @@ import { usePrefersReducedMotion } from "@/lib/use-prefers-reduced-motion"
 import type { Kpis, MonthlyPoint } from "@/types/dashboard"
 
 interface Props {
-  kpis: Kpis
+  kpis: Kpis | null
   monthlyTrend: MonthlyPoint[]
+  loading: boolean
 }
 
 interface KpiSpec {
@@ -21,33 +22,22 @@ const KPI_SPECS: KpiSpec[] = [
   { key: "accidents", label: "Accidents", token: "accidents" },
   { key: "fatalities", label: "Fatalities", token: "fatalities" },
   { key: "injuries", label: "Injuries", token: "injuries" },
-  { key: "activeCases", label: "Active cases", token: "activeCases" },
+  { key: "seriousInjuries", label: "Serious injuries", token: "seriousInjuries" },
 ]
 
 const SPARK_CONFIG = {
   accidents: { label: "Accidents", color: "var(--color-chart-1)" },
   fatalities: { label: "Fatalities", color: "var(--color-chart-4)" },
   injuries: { label: "Injuries", color: "var(--color-chart-3)" },
-  activeCases: { label: "Active cases", color: "var(--color-chart-2)" },
+  seriousInjuries: { label: "Serious injuries", color: "var(--color-chart-2)" },
 } satisfies ChartConfig
 
 function formatMetric(value: number): string {
   return value.toLocaleString("en-US")
 }
 
-
-function sparkSeries(kpis: Kpis, monthlyTrend: MonthlyPoint[]): MonthlyPoint[] {
-  const ratio =
-    kpis.accidents > 0 ? kpis.activeCases / kpis.accidents : 0
-  return monthlyTrend.map((p) => ({
-    ...p,
-    activeCases: Math.round(p.accidents * ratio),
-  }))
-}
-
-export default function KpiCards({ kpis, monthlyTrend }: Props) {
+export default function KpiCards({ kpis, monthlyTrend, loading }: Props) {
   const reducedMotion = usePrefersReducedMotion()
-  const series = sparkSeries(kpis, monthlyTrend)
 
   return (
     <section
@@ -63,7 +53,15 @@ export default function KpiCards({ kpis, monthlyTrend }: Props) {
             <div className="px-4 pt-3">
               <div className="metric-label">{spec.label}</div>
               <div className="metric-value mt-1 text-3xl font-semibold leading-tight text-foreground">
-                {formatMetric(kpis[spec.key])}
+                {loading || !kpis ? (
+                  <span
+                    role="status"
+                    aria-label={`${spec.label} loading`}
+                    className="inline-block h-8 w-24 animate-pulse rounded bg-muted"
+                  />
+                ) : (
+                  formatMetric(kpis[spec.key])
+                )}
               </div>
             </div>
             <div
@@ -71,22 +69,24 @@ export default function KpiCards({ kpis, monthlyTrend }: Props) {
               role="img"
               aria-label={`${spec.label} monthly trend sparkline`}
             >
-              <ChartContainer
-                config={SPARK_CONFIG satisfies ChartConfig}
-                className="aspect-auto h-full w-full"
-              >
-                <LineChart data={series} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
-                  <YAxis hide domain={["dataMin", "dataMax"]} />
-                  <Line
-                    type="linear"
-                    dataKey={spec.key}
-                    stroke={`var(--color-${spec.token})`}
-                    strokeWidth={1.5}
-                    dot={false}
-                    isAnimationActive={!reducedMotion}
-                  />
-                </LineChart>
-              </ChartContainer>
+              {!loading && kpis && (
+                <ChartContainer
+                  config={SPARK_CONFIG satisfies ChartConfig}
+                  className="aspect-auto h-full w-full"
+                >
+                  <LineChart data={monthlyTrend} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
+                    <YAxis hide domain={["dataMin", "dataMax"]} />
+                    <Line
+                      type="linear"
+                      dataKey={spec.key}
+                      stroke={`var(--color-${spec.token})`}
+                      strokeWidth={1.5}
+                      dot={false}
+                      isAnimationActive={!reducedMotion}
+                    />
+                  </LineChart>
+                </ChartContainer>
+              )}
             </div>
           </CardContent>
         </Card>

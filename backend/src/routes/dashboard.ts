@@ -6,6 +6,8 @@ import { DashboardValidationError, type DashboardService } from "../types/dashbo
 
 interface DashboardRouteOptions {
   service?: DashboardService;
+  /** Expected Bearer token; null/empty means the protected route rejects everything. */
+  authToken?: string | null;
 }
 
 const querystringSchema = {
@@ -21,8 +23,22 @@ const querystringSchema = {
 
 const dashboardRoutes: FastifyPluginAsync<DashboardRouteOptions> = async (fastify, options) => {
   const service = options.service ?? createDashboardService();
+  const authToken = options.authToken ?? null;
   fastify.addHook("onRequest", async (_request, reply) => {
     reply.header("Cache-Control", "no-store");
+  });
+  // Bearer barrier runs before schema validation, the controller, and Prisma;
+  // a rejected request never touches the analytics service.
+  fastify.addHook("preValidation", async (request, reply) => {
+    if (!authToken) {
+      return reply.code(500).send({
+        error: { code: "AUTH_NOT_CONFIGURED", message: "UUID_CONNECTION is not set on the backend" },
+      });
+    }
+    const header = request.headers.authorization;
+    if (header !== `Bearer ${authToken}`) {
+      return reply.code(401).send({ error: { code: "UNAUTHORIZED", message: "missing or invalid bearer token" } });
+    }
   });
   fastify.addHook("onClose", async () => service.close?.());
 

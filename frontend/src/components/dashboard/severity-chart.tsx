@@ -22,10 +22,10 @@ const config = {
 
 /** Category colors are decorative; category names are always labeled. */
 const BAR_COLORS = [
-  "var(--color-chart-4)", // Fatal        – crimson
-  "var(--color-chart-3)", // Serious      – amber
-  "var(--color-chart-2)", // Minor        – cyan
-  "var(--color-chart-1)", // Property     – emerald
+  "var(--color-chart-4)", // Fatal           – gray
+  "var(--color-chart-3)", // Serious injuries – teal-gray
+  "var(--color-chart-2)", // Minor injuries   – green
+  "var(--color-chart-1)", // Uninjured only   – emerald
 ]
 
 export default function SeverityChart({ severityDistribution, scopeLabel }: Props) {
@@ -36,13 +36,13 @@ export default function SeverityChart({ severityDistribution, scopeLabel }: Prop
       <CardHeader>
         <CardTitle className="text-base">Severity distribution</CardTitle>
         <CardDescription className="font-mono text-xs">
-          {scopeLabel} — synthetic example data
+          {scopeLabel} — MECE severity buckets from the API
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div
           role="img"
-          aria-label={`Bar chart of accident severity categories for ${scopeLabel}. Categories are labeled on the axis and counts are printed above each bar. Values are synthetic.`}
+            aria-label={`Bar chart of accident severity categories for ${scopeLabel}. Categories are labeled on the axis and counts are printed above each bar.`}
         >
           <ChartContainer config={config} className="h-64 w-full">
             <BarChart

@@ -1,27 +1,48 @@
-import type { DashboardData, DashboardFilters } from "@/types/dashboard"
+import { useMemo } from "react"
+
+import type { DashboardQueryState } from "@/hooks/use-dashboard-query"
+import { adaptDashboardResponse } from "@/lib/dashboard-adapter"
+import type { DashboardFilters } from "@/types/dashboard"
 import ContainerDashboardCharts from "../Sections/containerDashboardCharts"
 import ContainerMapFilter from "../Sections/containerMapFilter"
 import DashboardStatus from "./dashboard-status"
 
 interface Props {
-  data: DashboardData
+  query: DashboardQueryState
   filters: DashboardFilters
   onFiltersChange: (next: DashboardFilters) => void
 }
 
-export default function DashboardView({ data, filters, onFiltersChange }: Props) {
+export default function DashboardView({ query, filters, onFiltersChange }: Props) {
+  const data = useMemo(
+    () => (query.data ? adaptDashboardResponse(query.data) : null),
+    [query.data],
+  )
+
   return (
     <div className="flex w-full flex-col gap-4 p-4 md:p-10">
-      <DashboardStatus synthetic={data.synthetic} emptyScope={data.emptyScope} />
-
-      <ContainerMapFilter filters={filters} onFiltersChange={onFiltersChange} data={data} />
-
-      <ContainerDashboardCharts
-        monthlyTrend={data.monthlyTrend}
-        severityDistribution={data.severityDistribution}
-        territories={data.territories}
-        scopeLabel={data.scopeLabel}
+      <DashboardStatus
+        status={query.status}
+        error={query.error}
+        emptyScope={data?.emptyScope ?? false}
+        onRetry={query.retry}
       />
+
+      <ContainerMapFilter
+        filters={filters}
+        onFiltersChange={onFiltersChange}
+        data={data}
+        loading={query.status === "loading" && !data}
+      />
+
+      {data && (
+        <ContainerDashboardCharts
+          monthlyTrend={data.monthlyTrend}
+          severityDistribution={data.severityDistribution}
+          territories={data.territories}
+          scopeLabel={data.scopeLabel}
+        />
+      )}
     </div>
   )
 }

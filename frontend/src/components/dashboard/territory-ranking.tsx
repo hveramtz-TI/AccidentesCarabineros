@@ -23,10 +23,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts"
 import { usePrefersReducedMotion } from "@/lib/use-prefers-reduced-motion"
-import type { TerritorialRow } from "@/types/dashboard"
+import type { TerritoryRankingData } from "@/types/dashboard"
 
 interface Props {
-  territories: TerritorialRow[]
+  territories: TerritoryRankingData
   scopeLabel: string
 }
 
@@ -34,20 +34,19 @@ const config = {
   accidents: { label: "Accidents", color: "var(--color-chart-1)" },
 } satisfies ChartConfig
 
-const TOP_N = 10
-
 const fmt = (value: number) => value.toLocaleString("en-US")
 
 export default function TerritoryRanking({ territories, scopeLabel }: Props) {
   const reducedMotion = usePrefersReducedMotion()
-  const top = territories.slice(0, TOP_N)
+  const rows = territories.rows
+  const territoryNoun = territories.scope === "region" ? "Region" : "Commune"
 
   return (
     <Card className="glass-card rounded-lg shadow-none">
       <CardHeader>
         <CardTitle className="text-base">Top territories by accidents</CardTitle>
         <CardDescription className="font-mono text-xs">
-          {scopeLabel} — top {top.length} of {territories.length} rows in scope (synthetic)
+          {scopeLabel} — top {rows.length} {territories.scope} territories returned by the API
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -60,12 +59,12 @@ export default function TerritoryRanking({ territories, scopeLabel }: Props) {
           <TabsContent value="chart">
             <div
               role="img"
-              aria-label={`Horizontal bar chart of the top ${top.length} territories by accident count. Commune names label each bar and counts are printed at the bar ends. Values are synthetic.`}
+              aria-label={`Horizontal bar chart of the top ${rows.length} territories by accident count. Territory names label each bar and counts are printed at the bar ends.`}
             >
               <ChartContainer config={config} className="h-80 w-full">
                 <BarChart
                   layout="vertical"
-                  data={top}
+                  data={rows}
                   margin={{ top: 4, right: 48, bottom: 0, left: 8 }}
                 >
                   <CartesianGrid horizontal={false} strokeDasharray="3 3" />
@@ -78,7 +77,7 @@ export default function TerritoryRanking({ territories, scopeLabel }: Props) {
                   />
                   <YAxis
                     type="category"
-                    dataKey="commune"
+                    dataKey="name"
                     width={120}
                     tickLine={false}
                     axisLine={false}
@@ -87,7 +86,7 @@ export default function TerritoryRanking({ territories, scopeLabel }: Props) {
                   <ChartTooltip
                     content={
                       <ChartTooltipContent
-                        nameKey="commune"
+                        nameKey="name"
                         formatter={(value, name) => (
                           <>
                             <span className="text-muted-foreground">{String(name)}</span>
@@ -97,7 +96,7 @@ export default function TerritoryRanking({ territories, scopeLabel }: Props) {
                       />
                     }
                   />
-                  <Bar dataKey="accidents" fill="var(--color-accidents)" radius={[0, 2, 2, 0]} barSize={16} isAnimationActive={!reducedMotion}>
+                  <Bar dataKey="accidents" fill="var(--color-chart-1)" radius={[0, 2, 2, 0]} barSize={16} isAnimationActive={!reducedMotion}>
                     <LabelList
                       dataKey="accidents"
                       position="right"
@@ -113,32 +112,28 @@ export default function TerritoryRanking({ territories, scopeLabel }: Props) {
           <TabsContent value="table">
             <Table>
               <TableCaption>
-                Accessible fallback — top {top.length} territories by accidents
-                (synthetic example data, keyed by official commune identifiers).
+                Accessible fallback — top {rows.length} territories by accidents,
+                as returned by the dashboard API.
               </TableCaption>
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-10">#</TableHead>
-                  <TableHead>Region</TableHead>
-                  <TableHead>Commune</TableHead>
-                  <TableHead>Identifier</TableHead>
+                  <TableHead>Code</TableHead>
+                  <TableHead>{territoryNoun}</TableHead>
                   <TableHead className="text-right">Accidents</TableHead>
                   <TableHead className="text-right">Fatalities</TableHead>
-                  <TableHead className="text-right">Injuries</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {top.map((row, index) => (
-                  <TableRow key={row.identifier}>
+                {rows.map((row, index) => (
+                  <TableRow key={row.code}>
                     <TableCell className="font-mono text-muted-foreground tabular-nums">
                       {index + 1}
                     </TableCell>
-                    <TableCell className="text-sm">{row.regionRoman}</TableCell>
-                    <TableCell className="text-sm">{row.commune}</TableCell>
-                    <TableCell className="font-mono text-xs">{row.identifier}</TableCell>
+                    <TableCell className="font-mono text-xs">{row.code}</TableCell>
+                    <TableCell className="text-sm">{row.name}</TableCell>
                     <TableCell className="text-right font-mono tabular-nums">{fmt(row.accidents)}</TableCell>
                     <TableCell className="text-right font-mono tabular-nums">{fmt(row.fatalities)}</TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">{fmt(row.injuries)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

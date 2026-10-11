@@ -32,6 +32,7 @@ const config = {
   accidents: { label: "Accidents", color: "var(--color-chart-1)" },
   fatalities: { label: "Fatalities", color: "var(--color-chart-4)" },
   injuries: { label: "Injuries", color: "var(--color-chart-3)" },
+  seriousInjuries: { label: "Serious injuries", color: "var(--color-chart-2)" },
 } satisfies ChartConfig
 
 export default function TrendChart({ monthlyTrend, scopeLabel }: Props) {
@@ -42,13 +43,13 @@ export default function TrendChart({ monthlyTrend, scopeLabel }: Props) {
       <CardHeader>
         <CardTitle className="text-base">Monthly trend</CardTitle>
         <CardDescription className="font-mono text-xs">
-          {scopeLabel} — synthetic example data
+          {scopeLabel} — accidents, fatalities and serious injuries per month
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div
           role="img"
-          aria-label={`Line chart of accidents, fatalities and injuries by month for ${scopeLabel}. Values are synthetic. Series names are shown in the legend.`}
+              aria-label={`Line chart of accidents, fatalities and injuries by month for ${scopeLabel}. Series names are shown in the legend.`}
         >
           <ChartContainer config={config} className="h-64 w-full">
             <LineChart data={monthlyTrend} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
@@ -72,7 +73,7 @@ export default function TrendChart({ monthlyTrend, scopeLabel }: Props) {
               <Line
                 type="monotone"
                 dataKey="accidents"
-                stroke="var(--color-accidents)"
+                stroke="var(--color-chart-1)"
                 strokeWidth={2}
                 dot={false}
                 isAnimationActive={!reducedMotion}
@@ -80,7 +81,7 @@ export default function TrendChart({ monthlyTrend, scopeLabel }: Props) {
               <Line
                 type="monotone"
                 dataKey="injuries"
-                stroke="var(--color-injuries)"
+                stroke="var(--color-chart-3)"
                 strokeWidth={2}
                 dot={false}
                 strokeDasharray="6 3"
@@ -88,8 +89,17 @@ export default function TrendChart({ monthlyTrend, scopeLabel }: Props) {
               />
               <Line
                 type="monotone"
+                dataKey="seriousInjuries"
+                stroke="var(--color-chart-2)"
+                strokeWidth={2}
+                dot={false}
+                strokeDasharray="2 3"
+                isAnimationActive={!reducedMotion}
+              />
+              <Line
+                type="monotone"
                 dataKey="fatalities"
-                stroke="var(--color-fatalities)"
+                stroke="var(--color-chart-4)"
                 strokeWidth={2}
                 dot={{ r: 2.5 }}
                 isAnimationActive={!reducedMotion}
