@@ -47,11 +47,13 @@ const emptyResponse: DashboardResponse = {
   },
 };
 
+const auth = { authorization: "Bearer test-token" };
+
 test("GET /api/dashboard returns the full payload and no-store for an injected service", async (t) => {
-  const app = buildApp({ logger: false, dashboardService: { async getDashboard() { return emptyResponse; } } });
+  const app = buildApp({ logger: false, authToken: "test-token", dashboardService: { async getDashboard() { return emptyResponse; } } });
   t.after(() => app.close());
 
-  const response = await app.inject({ method: "GET", url: "/api/dashboard?unknown=ignored" });
+  const response = await app.inject({ method: "GET", headers: auth, url: "/api/dashboard?unknown=ignored" });
 
   assert.equal(response.statusCode, 200);
   assert.equal(response.headers["cache-control"], "no-store");
@@ -60,10 +62,10 @@ test("GET /api/dashboard returns the full payload and no-store for an injected s
 });
 
 test("GET /api/dashboard returns documented validation errors", async (t) => {
-  const app = buildApp({ logger: false, dashboardService: { async getDashboard() { throw new Error("must not be called"); } } });
+  const app = buildApp({ logger: false, authToken: "test-token", dashboardService: { async getDashboard() { throw new Error("must not be called"); } } });
   t.after(() => app.close());
 
-  const response = await app.inject({ method: "GET", url: "/api/dashboard?from=2025-04-01&to=2025-03-31" });
+  const response = await app.inject({ method: "GET", headers: auth, url: "/api/dashboard?from=2025-04-01&to=2025-03-31" });
 
   assert.equal(response.statusCode, 400);
   assert.equal(response.headers["cache-control"], "no-store");
@@ -72,11 +74,11 @@ test("GET /api/dashboard returns documented validation errors", async (t) => {
 });
 
 test("GET /api/dashboard rejects malformed dates and unsupported region IDs", async (t) => {
-  const app = buildApp({ logger: false, dashboardService: { async getDashboard() { throw new Error("must not be called"); } } });
+  const app = buildApp({ logger: false, authToken: "test-token", dashboardService: { async getDashboard() { throw new Error("must not be called"); } } });
   t.after(() => app.close());
 
   for (const query of ["from=2025-2-01", "regionId=17", "communeId=not-a-commune"]) {
-    const response = await app.inject({ method: "GET", url: `/api/dashboard?${query}` });
+    const response = await app.inject({ method: "GET", headers: auth, url: `/api/dashboard?${query}` });
     assert.equal(response.statusCode, 400, query);
     assert.equal(response.headers["cache-control"], "no-store", query);
     assert.equal(response.json().error.code, "VALIDATION_ERROR", query);
@@ -84,10 +86,10 @@ test("GET /api/dashboard rejects malformed dates and unsupported region IDs", as
 });
 
 test("GET /api/dashboard sanitizes service failures", async (t) => {
-  const app = buildApp({ logger: false, dashboardService: { async getDashboard() { throw new Error("secret SQL details"); } } });
+  const app = buildApp({ logger: false, authToken: "test-token", dashboardService: { async getDashboard() { throw new Error("secret SQL details"); } } });
   t.after(() => app.close());
 
-  const response = await app.inject({ method: "GET", url: "/api/dashboard" });
+  const response = await app.inject({ method: "GET", headers: auth, url: "/api/dashboard" });
 
   assert.equal(response.statusCode, 500);
   assert.deepEqual(response.json(), { error: { code: "INTERNAL", message: "dashboard query failed" } });

@@ -7,8 +7,8 @@
 - `GET /api/dashboard` — único endpoint de datos: responde **todas** las secciones aprobadas para un juego de filtros en una sola pasada. Justificación: la consumidora prevista (el dashboard) carga todo junto; dividir por sección multiplicaría consultas SQL y round-trips sin consumidora independiente. No se agregan endpoints sin consumidora real.
 - `GET /health` — sin cambios (contrato Cloud Run).
 - **No** se expone endpoint de selectores territoriales: el frontend sigue usando el catálogo canónico versionado (`frontend/src/data/oversio-identifiers.json`) hasta que exista un consumidor que lo requiera.
-- Sin auth, sin escritura, sin CRUD por tabla (fuera de alcance del ODD).
-- CORS: fuera de esta slice (el wiring del frontend está diferido); se define en la slice de conexión.
+- Auth: `GET /api/dashboard` exige `Authorization: Bearer <UUID_CONNECTION>` (barrera básica de request, **no** autenticación de usuarios; el valor del frontend es intencionalmente público). Sin token o con token incorrecto → `401 UNAUTHORIZED` antes de validación de query, controlador, y Prisma. Si `UUID_CONNECTION` no está configurado en el backend → `500 AUTH_NOT_CONFIGURED` (fail closed, nunca abierto). `/health` sigue público (healthcheck de Cloud Run/compose). Sin escritura, sin CRUD por tabla.
+- CORS: allowlist estrecha de orígenes de browser, configurable vía `CORS_ALLOWED_ORIGINS` (lista separada por comas); default local: `http://localhost:3200` y `http://localhost:5173`. El `OPTIONS` preflight (204) se resuelve **antes** del guard Bearer y responde solo para orígenes permitidos; los errores llevan headers CORS para que el browser pueda leer `401`/`400`. El origen de producción (Cloudflare Pages) se confirma antes del despliegue.
 
 ## 2. Parámetros de query (validados por schema de la ruta; Fastify JSON Schema, sin dependencias nuevas)
 
