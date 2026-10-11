@@ -1,4 +1,21 @@
 {
+<<<<<<< Updated upstream
+=======
+  "name": "backend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:import": "cd .. && node backend/dist/import/cli.js",
+    "test": "node --import tsx --test src/import/*.test.ts src/services/dashboard-service.test.ts src/routes/dashboard.test.ts"
+  },
+>>>>>>> Stashed changes
   "dependencies": {
     "fastify": "^5.12.5"
   }
