@@ -4,10 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "node --env-file=.env --import tsx --watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "db:generate": "prisma generate",
+    "db:check": "node --env-file=.env --import tsx src/db/check-connection.ts",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:import": "cd .. && node backend/dist/import/cli.js",
