@@ -1,5 +1,6 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 
+import { prisma as sharedPrisma } from "../db/conection.js";
 import {
   DashboardValidationError,
   type DashboardFilters,
@@ -223,7 +224,7 @@ function countNumber(value: bigint | number | null | undefined): number {
   return result;
 }
 
-function createPrismaDashboardRepository(prisma = new PrismaClient()): DashboardRepository {
+function createPrismaDashboardRepository(prisma: PrismaClient = sharedPrisma): DashboardRepository {
   return {
     close: () => prisma.$disconnect(),
     async resolveTerritory(filters) {
