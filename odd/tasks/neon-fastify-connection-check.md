@@ -60,5 +60,5 @@ The Neon database has been loaded, but the Fastify backend still needs a reusabl
 - T1: complete — Fastify's local `dev` command now loads `.env`; the dashboard repository and smoke check share one Prisma client.
 - Verification evidence: `npm test` passed (31/31); `npm run build` passed; `npm run db:check` succeeded with `SELECT 1` (worker run and parent spot check); `git diff --check` passed.
 - Assessment: RDD is off; read-only risk assessment classified the candidate as medium / under budget. The writer's self-verification passed.
-- Commit identity: to be recorded after the work-unit commit.
-- Next step: commit the verified T1 work unit and record its identity here and in Engram.
+- Commit identity: `7256f5a` — `feat(backend): add Neon Prisma connection check`.
+- Next step: no implementation follow-up; run `npm run dev` from `backend/` when starting the local API.
