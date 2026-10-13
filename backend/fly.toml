@@ -9,7 +9,7 @@ primary_region = 'gru'
 [build]
 
 [deploy]
-  release_command = 'npx prisma migrate deploy'
+  release_command = 'node dist/server.js'
 
 [http_service]
   internal_port = 8080
