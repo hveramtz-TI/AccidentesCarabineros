@@ -26,7 +26,7 @@ const emptyResponse: DashboardResponse = {
     { key: "minor", label: "Minor injuries", accidents: 0 },
     { key: "onlyIlesos", label: "Uninjured only", accidents: 0 },
   ],
-  territories: { scope: "region", items: [], outsideTopCount: 0, outsideAccidents: 0, zeroAccidentCount: 0 },
+  territories: { scope: "region", items: [], all: [], outsideTopCount: 0, outsideAccidents: 0, zeroAccidentCount: 0 },
   causes: { items: [], other: { distinctCount: 0, accidents: 0 } },
   accidentTypes: [],
   sectors: [],

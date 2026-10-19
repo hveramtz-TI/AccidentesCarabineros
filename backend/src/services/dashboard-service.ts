@@ -147,6 +147,7 @@ export function createDashboardService(
         territories: {
           scope: territory.territoryScope,
           items: topTerritories,
+          all: territoryRows,
           outsideTopCount: outsideTerritories.length,
           outsideAccidents: outsideTerritories.reduce((sum, row) => sum + row.accidents, 0),
           zeroAccidentCount: snapshot.zeroAccidentCount,

@@ -77,6 +77,7 @@ test("uses database aggregates for KPIs and stable shares while retaining the co
             { code: "VIII-2", name: "Comuna B", accidents: 6, fatalities: 1 },
             { code: "VIII-1", name: "Comuna A", accidents: 6, fatalities: 1 },
             { code: "VIII-3", name: "Comuna C", accidents: 2, fatalities: 0 },
+            { code: "VIII-4", name: "Comuna D", accidents: 0, fatalities: 0 },
           ],
           zeroAccidentCount: 4,
           causes: [
@@ -110,7 +111,14 @@ test("uses database aggregates for KPIs and stable shares while retaining the co
   assert.equal(result.hourBuckets.items[5].accidents, 8);
   assert.equal(result.hourBuckets.midnightArtifactCount, 1);
   assert.equal(result.territories.items[0].code, "VIII-1");
+  assert.deepEqual(result.territories.items.map(({ code }) => code), ["VIII-1", "VIII-2", "VIII-3"]);
   assert.equal(result.territories.zeroAccidentCount, 4);
+  assert.deepEqual(result.territories.all, [
+    { code: "VIII-1", name: "Comuna A", accidents: 6, fatalities: 1 },
+    { code: "VIII-2", name: "Comuna B", accidents: 6, fatalities: 1 },
+    { code: "VIII-3", name: "Comuna C", accidents: 2, fatalities: 0 },
+    { code: "VIII-4", name: "Comuna D", accidents: 0, fatalities: 0 },
+  ]);
   assert.deepEqual(result.persons.ageBands.map(({ band, count }) => [band, count]), [
     ["0-17", 0], ["18-25", 0], ["26-40", 0], ["41-64", 0], ["65+", 0], ["unknown", 2],
   ]);
