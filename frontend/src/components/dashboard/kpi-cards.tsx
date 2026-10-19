@@ -19,21 +19,21 @@ interface KpiSpec {
 }
 
 const KPI_SPECS: KpiSpec[] = [
-  { key: "accidents", label: "Accidents", token: "accidents" },
-  { key: "fatalities", label: "Fatalities", token: "fatalities" },
-  { key: "injuries", label: "Injuries", token: "injuries" },
-  { key: "seriousInjuries", label: "Serious injuries", token: "seriousInjuries" },
+  { key: "accidents", label: "Siniestros", token: "accidents" },
+  { key: "fatalities", label: "Fallecidos", token: "fatalities" },
+  { key: "injuries", label: "Lesionados", token: "injuries" },
+  { key: "seriousInjuries", label: "Lesionados graves", token: "seriousInjuries" },
 ]
 
 const SPARK_CONFIG = {
-  accidents: { label: "Accidents", color: "var(--color-chart-1)" },
-  fatalities: { label: "Fatalities", color: "var(--color-chart-4)" },
-  injuries: { label: "Injuries", color: "var(--color-chart-3)" },
-  seriousInjuries: { label: "Serious injuries", color: "var(--color-chart-2)" },
+  accidents: { label: "Siniestros", color: "var(--color-chart-1)" },
+  fatalities: { label: "Fallecidos", color: "var(--color-chart-4)" },
+  injuries: { label: "Lesionados", color: "var(--color-chart-3)" },
+  seriousInjuries: { label: "Lesionados graves", color: "var(--color-chart-2)" },
 } satisfies ChartConfig
 
 function formatMetric(value: number): string {
-  return value.toLocaleString("en-US")
+  return value.toLocaleString("es-CL")
 }
 
 export default function KpiCards({ kpis, monthlyTrend, loading }: Props) {
@@ -41,7 +41,7 @@ export default function KpiCards({ kpis, monthlyTrend, loading }: Props) {
 
   return (
     <section
-      aria-label="Key telemetry indicators"
+      aria-label="Indicadores clave"
       className="grid h-full min-h-0 grid-cols-1 grid-rows-4 gap-4 sm:grid-cols-2 sm:grid-rows-2"
     >
       {KPI_SPECS.map((spec) => (
@@ -56,7 +56,7 @@ export default function KpiCards({ kpis, monthlyTrend, loading }: Props) {
                 {loading || !kpis ? (
                   <span
                     role="status"
-                    aria-label={`${spec.label} loading`}
+                    aria-label={`${spec.label}: cargando`}
                     className="inline-block h-8 w-24 animate-pulse rounded bg-muted"
                   />
                 ) : (
@@ -67,7 +67,7 @@ export default function KpiCards({ kpis, monthlyTrend, loading }: Props) {
             <div
               className="mt-2 min-h-9 w-full flex-1"
               role="img"
-              aria-label={`${spec.label} monthly trend sparkline`}
+              aria-label={`${spec.label}: tendencia mensual`}
             >
               {!loading && kpis && (
                 <ChartContainer

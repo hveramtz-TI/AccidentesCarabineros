@@ -50,18 +50,18 @@ export default function DashboardFiltersBar({ filters, onChange }: Props) {
     <form
       className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3"
       onSubmit={(event) => event.preventDefault()}
-      aria-label="Dashboard data filters"
+      aria-label="Filtros del panel"
     >
       <FilterSelect
         id="filter-period"
-        label="Period"
+        label="Período"
         value={filters.period}
         options={periodOptions}
         onValueChange={(value) => onChange({ ...filters, period: value as DashboardFilters["period"] })}
       />
       <FilterSelect
         id="filter-region"
-        label="Region"
+        label="Región"
         value={filters.region}
         options={regionOptions}
         onValueChange={(value) =>
@@ -71,7 +71,7 @@ export default function DashboardFiltersBar({ filters, onChange }: Props) {
       />
       <FilterSelect
         id="filter-commune"
-        label="Commune"
+        label="Comuna"
         value={filters.commune}
         options={communeOptions(filters.region)}
         onValueChange={(value) => onChange({ ...filters, commune: value })}

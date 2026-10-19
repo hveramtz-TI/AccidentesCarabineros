@@ -31,35 +31,36 @@ interface Props {
 }
 
 const config = {
-  accidents: { label: "Accidents", color: "var(--color-chart-1)" },
+  accidents: { label: "Siniestros", color: "var(--color-chart-1)" },
 } satisfies ChartConfig
 
-const fmt = (value: number) => value.toLocaleString("en-US")
+const fmt = (value: number) => value.toLocaleString("es-CL")
 
 export default function TerritoryRanking({ territories, scopeLabel }: Props) {
   const reducedMotion = usePrefersReducedMotion()
   const rows = territories.rows
-  const territoryNoun = territories.scope === "region" ? "Region" : "Commune"
+  const territoryNoun = territories.scope === "region" ? "regiones" : "comunas"
+  const territoryLabel = territories.scope === "region" ? "Región" : "Comuna"
 
   return (
     <Card className="glass-card rounded-lg shadow-none">
       <CardHeader>
-        <CardTitle className="text-base">Top territories by accidents</CardTitle>
+        <CardTitle className="text-base">Territorios con más siniestros</CardTitle>
         <CardDescription className="font-mono text-xs">
-          {scopeLabel} — top {rows.length} {territories.scope} territories returned by the API
+          {scopeLabel} — {rows.length} {territoryNoun} con más siniestros
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="chart">
-          <TabsList aria-label="Territorial ranking view">
-            <TabsTrigger value="chart">Chart</TabsTrigger>
-            <TabsTrigger value="table">Table</TabsTrigger>
+          <TabsList aria-label="Vista del ranking territorial">
+            <TabsTrigger value="chart">Gráfico</TabsTrigger>
+            <TabsTrigger value="table">Tabla</TabsTrigger>
           </TabsList>
 
           <TabsContent value="chart">
             <div
               role="img"
-              aria-label={`Horizontal bar chart of the top ${rows.length} territories by accident count. Territory names label each bar and counts are printed at the bar ends.`}
+              aria-label={`Gráfico de barras horizontal de las ${rows.length} ${territoryNoun} con más siniestros. Los nombres identifican cada barra y las cantidades aparecen al final.`}
             >
               <ChartContainer config={config} className="h-80 w-full">
                 <BarChart
@@ -112,16 +113,16 @@ export default function TerritoryRanking({ territories, scopeLabel }: Props) {
           <TabsContent value="table">
             <Table>
               <TableCaption>
-                Accessible fallback — top {rows.length} territories by accidents,
-                as returned by the dashboard API.
+                Vista accesible: {rows.length} {territoryNoun} con más siniestros,
+                según los datos del panel.
               </TableCaption>
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-10">#</TableHead>
-                  <TableHead>Code</TableHead>
-                  <TableHead>{territoryNoun}</TableHead>
-                  <TableHead className="text-right">Accidents</TableHead>
-                  <TableHead className="text-right">Fatalities</TableHead>
+                  <TableHead>Código</TableHead>
+                  <TableHead>{territoryLabel}</TableHead>
+                  <TableHead className="text-right">Siniestros</TableHead>
+                  <TableHead className="text-right">Fallecidos</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

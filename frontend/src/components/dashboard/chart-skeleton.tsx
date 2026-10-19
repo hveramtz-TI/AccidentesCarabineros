@@ -29,7 +29,7 @@ export default function ChartSkeleton({ title, description, bodyClass }: Props) 
       <CardContent>
         <div
           role="status"
-          aria-label={`${title} loading`}
+          aria-label={`${title}: cargando`}
           className={`animate-pulse rounded bg-muted ${bodyClass}`}
         />
       </CardContent>

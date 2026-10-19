@@ -7,18 +7,18 @@
  */
 
 export const MONTH_KEYS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
+  "ene.",
+  "feb.",
+  "mar.",
+  "abr.",
+  "may.",
+  "jun.",
+  "jul.",
+  "ago.",
+  "sept.",
+  "oct.",
+  "nov.",
+  "dic.",
 ] as const
 
 export type MonthKey = (typeof MONTH_KEYS)[number]

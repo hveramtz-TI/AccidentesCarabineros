@@ -21,25 +21,25 @@ export interface Option {
 }
 
 export const periodOptions: Option[] = [
-  { value: "all", label: "Full period" },
-  { value: "q1", label: "Q1 (Jan–Mar)" },
-  { value: "q2", label: "Q2 (Apr–Jun)" },
-  { value: "q3", label: "Q3 (Jul–Sep)" },
-  { value: "q4", label: "Q4 (Oct–Dec)" },
+  { value: "all", label: "Año completo" },
+  { value: "q1", label: "T1 (ene.–mar.)" },
+  { value: "q2", label: "T2 (abr.–jun.)" },
+  { value: "q3", label: "T3 (jul.–sept.)" },
+  { value: "q4", label: "T4 (oct.–dic.)" },
 ]
 
 export const regionOptions: Option[] = [
-  { value: ALL_VALUE, label: "All regions" },
+  { value: ALL_VALUE, label: "Todas las regiones" },
   ...regions.map((r) => ({ value: r.romanNumber, label: `${r.romanNumber} — ${r.name}` })),
 ]
 
 export function communeOptions(region: string): Option[] {
   if (region === ALL_VALUE) {
-    return [{ value: ALL_VALUE, label: "All communes" }]
+    return [{ value: ALL_VALUE, label: "Todas las comunas" }]
   }
   const regionRef = regions.find((r) => r.romanNumber === region)
   return [
-    { value: ALL_VALUE, label: "All communes" },
+    { value: ALL_VALUE, label: "Todas las comunas" },
     ...(regionRef?.communes.map((c) => ({
       value: c.identifier,
       label: `${c.name} (${c.identifier})`,

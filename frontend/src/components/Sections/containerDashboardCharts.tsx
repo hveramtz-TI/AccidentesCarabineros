@@ -12,7 +12,7 @@ type Props = {
 const ContainerDashboardCharts = ({ data }: Props) => {
   return (
     <section
-      aria-label="Trend, severity, and territorial analysis charts"
+      aria-label="Gráficos de tendencia, gravedad y análisis territorial"
       className="flex min-w-0 flex-col gap-4"
     >
       {data ? (
@@ -44,22 +44,22 @@ const ContainerDashboardCharts = ({ data }: Props) => {
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
             <div className="min-w-0 lg:col-span-4">
               <ChartSkeleton
-                title="Monthly trend"
-                description="Loading data for the current period"
+                title="Tendencia mensual"
+                description="Cargando datos del período seleccionado"
                 bodyClass="h-64 w-full"
               />
             </div>
             <div className="min-w-0 lg:col-span-3">
               <ChartSkeleton
-                title="Severity distribution"
-                description="Loading data for the current period"
+                title="Distribución por gravedad"
+                description="Cargando datos del período seleccionado"
                 bodyClass="h-64 w-full"
               />
             </div>
           </div>
           <ChartSkeleton
-            title="Top territories by accidents"
-            description="Loading territorial data"
+            title="Territorios con más siniestros"
+            description="Cargando datos territoriales"
             bodyClass="h-80 w-full"
           />
         </>

@@ -29,10 +29,10 @@ interface Props {
 }
 
 const config = {
-  accidents: { label: "Accidents", color: "var(--color-chart-1)" },
-  fatalities: { label: "Fatalities", color: "var(--color-chart-4)" },
-  injuries: { label: "Injuries", color: "var(--color-chart-3)" },
-  seriousInjuries: { label: "Serious injuries", color: "var(--color-chart-2)" },
+  accidents: { label: "Siniestros", color: "var(--color-chart-1)" },
+  fatalities: { label: "Fallecidos", color: "var(--color-chart-4)" },
+  injuries: { label: "Lesionados", color: "var(--color-chart-3)" },
+  seriousInjuries: { label: "Lesionados graves", color: "var(--color-chart-2)" },
 } satisfies ChartConfig
 
 export default function TrendChart({ monthlyTrend, scopeLabel }: Props) {
@@ -41,15 +41,15 @@ export default function TrendChart({ monthlyTrend, scopeLabel }: Props) {
   return (
     <Card className="glass-card rounded-lg shadow-none">
       <CardHeader>
-        <CardTitle className="text-base">Monthly trend</CardTitle>
+        <CardTitle className="text-base">Tendencia mensual</CardTitle>
         <CardDescription className="font-mono text-xs">
-          {scopeLabel} — accidents, fatalities and serious injuries per month
+          {scopeLabel} — siniestros, fallecidos y lesionados por mes
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div
           role="img"
-              aria-label={`Line chart of accidents, fatalities and injuries by month for ${scopeLabel}. Series names are shown in the legend.`}
+          aria-label={`Gráfico de líneas de siniestros, fallecidos y lesionados por mes en ${scopeLabel}. Las series se identifican en la leyenda.`}
         >
           <ChartContainer config={config} className="h-64 w-full">
             <LineChart data={monthlyTrend} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
@@ -66,7 +66,7 @@ export default function TrendChart({ monthlyTrend, scopeLabel }: Props) {
                 axisLine={false}
                 width={52}
                 tick={{ fontSize: 11 }}
-                tickFormatter={(value: number) => value.toLocaleString("en-US")}
+                tickFormatter={(value: number) => value.toLocaleString("es-CL")}
               />
               <ChartTooltip content={<ChartTooltipContent />} cursor={{ stroke: "var(--color-ring)" }} />
               <ChartLegend content={<ChartLegendContent />} />

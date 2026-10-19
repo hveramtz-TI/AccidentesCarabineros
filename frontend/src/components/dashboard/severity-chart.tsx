@@ -17,7 +17,7 @@ interface Props {
 }
 
 const config = {
-  count: { label: "Cases", color: "var(--color-chart-1)" },
+  count: { label: "Siniestros", color: "var(--color-chart-1)" },
 } satisfies ChartConfig
 
 /** Category colors are decorative; category names are always labeled. */
@@ -34,15 +34,15 @@ export default function SeverityChart({ severityDistribution, scopeLabel }: Prop
   return (
     <Card className="glass-card rounded-lg shadow-none">
       <CardHeader>
-        <CardTitle className="text-base">Severity distribution</CardTitle>
+        <CardTitle className="text-base">Distribución por gravedad</CardTitle>
         <CardDescription className="font-mono text-xs">
-          {scopeLabel} — MECE severity buckets from the API
+          {scopeLabel} — categorías de gravedad
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div
           role="img"
-            aria-label={`Bar chart of accident severity categories for ${scopeLabel}. Categories are labeled on the axis and counts are printed above each bar.`}
+          aria-label={`Gráfico de barras de siniestros por gravedad en ${scopeLabel}. Las categorías se indican en el eje y las cantidades sobre cada barra.`}
         >
           <ChartContainer config={config} className="h-64 w-full">
             <BarChart
@@ -62,7 +62,7 @@ export default function SeverityChart({ severityDistribution, scopeLabel }: Prop
                 axisLine={false}
                 width={52}
                 tick={{ fontSize: 11 }}
-                tickFormatter={(value: number) => value.toLocaleString("en-US")}
+                tickFormatter={(value: number) => value.toLocaleString("es-CL")}
               />
               <ChartTooltip content={<ChartTooltipContent hideLabel={false} />} />
               <Bar dataKey="count" radius={[2, 2, 0, 0]} isAnimationActive={!reducedMotion}>
@@ -75,7 +75,7 @@ export default function SeverityChart({ severityDistribution, scopeLabel }: Prop
                 <LabelList
                   dataKey="count"
                   position="top"
-                  formatter={(value) => Number(value).toLocaleString("en-US")}
+                  formatter={(value) => Number(value).toLocaleString("es-CL")}
                   style={{ fontSize: 10, fontFamily: "var(--font-mono)" }}
                 />
               </Bar>
