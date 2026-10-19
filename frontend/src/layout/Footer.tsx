@@ -9,7 +9,7 @@ const Footer = () => {
             id="footer-resources-title"
             className="font-heading text-sm font-semibold text-foreground"
           >
-            Institutional resources
+            Recursos institucionales
           </h2>
           <a
             href="https://www.carabineros.cl/"
@@ -25,18 +25,16 @@ const Footer = () => {
             id="footer-data-title"
             className="font-heading text-sm font-semibold text-foreground"
           >
-            Data and scope
+            Fuente y alcance
           </h2>
           <p className="max-w-prose text-sm leading-6 text-muted-foreground">
-            Aggregate road-safety analytics for demonstration. No personal data
-            is shown.
+            Fuente: datos oficiales publicados por Carabineros de Chile para
+            2025. Este tablero presenta cifras agregadas y no muestra datos
+            personales.
           </p>
-          <p className="chip chip-warning w-fit" role="status">
-            <span
-              aria-hidden="true"
-              className="h-1.5 w-1.5 rounded-full bg-current"
-            />
-            Synthetic example data — not official statistics
+          <p className="max-w-prose text-xs leading-5 text-muted-foreground">
+            La visualización no implica respaldo institucional de Carabineros
+            de Chile.
           </p>
         </section>
 
@@ -49,17 +47,17 @@ const Footer = () => {
           </span>
           <div>
             <p className="font-heading text-sm font-semibold text-foreground">
-              Traffic Accident Telemetry
+              Siniestros viales de Chile
             </p>
-            <p className="metric-label">Carabineros de Chile</p>
+            <p className="metric-label">Datos agregados · período 2025</p>
           </div>
         </div>
       </div>
 
       <div className="border-t border-border/70 bg-background/60">
         <div className="mx-auto flex max-w-[1600px] flex-col gap-2 px-4 py-4 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-          <span>AccidentesCarabineros · Road-safety analytics</span>
-          <span className="font-mono tabular-nums">Obsidian Telemetry · build 0.1</span>
+          <span>AccidentesCarabineros · Análisis de siniestros viales</span>
+          <span className="font-mono tabular-nums">Versión 0.1</span>
         </div>
       </div>
     </footer>
