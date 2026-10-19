@@ -35,6 +35,7 @@ export interface DashboardApiResponse {
   territories: {
     scope: "region" | "commune"
     items: Array<{ code: string; name: string; accidents: number; fatalities: number }>
+    all: Array<{ code: string; name: string; accidents: number; fatalities: number }>
     outsideTopCount: number
     outsideAccidents: number
     zeroAccidentCount: number

@@ -37,6 +37,7 @@ export function adaptDashboardResponse(response: DashboardApiResponse): Dashboar
     territories: {
       scope: response.territories.scope,
       rows: response.territories.items,
+      all: response.territories.all,
       outsideTopCount: response.territories.outsideTopCount,
       outsideAccidents: response.territories.outsideAccidents,
     },

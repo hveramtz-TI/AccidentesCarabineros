@@ -16,12 +16,25 @@ function App() {
   const params = useMemo(() => filtersToQueryParams(filters), [filters])
   const query = useDashboardQuery(params)
 
+  // The choropleth always shows the national series for the active period
+  // (S3/S4). While no territory filter narrows the main response it already
+  // carries that series, so no second request is made; with a region/commune
+  // selected a quiet national query feeds the map colors only.
+  const territoryFilterActive = filters.region !== ALL_VALUE || filters.commune !== ALL_VALUE
+  const mapParams = useMemo(
+    () => filtersToQueryParams({ period: filters.period, region: ALL_VALUE, commune: ALL_VALUE }),
+    [filters.period],
+  )
+  const mapQuery = useDashboardQuery(mapParams, territoryFilterActive)
+  const regionSeries = (territoryFilterActive ? mapQuery.data : query.data)?.territories.all ?? null
+
   return (
     <Layout>
       <DashboardView
         query={query}
         filters={filters}
         onFiltersChange={setFilters}
+        regionSeries={regionSeries}
       />
     </Layout>
   )

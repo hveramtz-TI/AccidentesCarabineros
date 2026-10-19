@@ -55,6 +55,8 @@ export interface TerritoryRow {
 export interface TerritoryRankingData {
   scope: "region" | "commune"
   rows: TerritoryRow[]
+  /** Full series including zero-accident territories (map layer source). */
+  all: TerritoryRow[]
   outsideTopCount: number
   outsideAccidents: number
 }

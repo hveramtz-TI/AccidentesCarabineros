@@ -43,7 +43,7 @@ function describeError(error: unknown): string {
   return "the dashboard request failed"
 }
 
-export function useDashboardQuery(params: DashboardQueryParams): DashboardQueryState {
+export function useDashboardQuery(params: DashboardQueryParams, enabled = true): DashboardQueryState {
   const [state, dispatch] = useReducer(reducer, { status: "loading", data: null, error: null })
   const [attempt, setAttempt] = useState(0)
 
@@ -52,6 +52,7 @@ export function useDashboardQuery(params: DashboardQueryParams): DashboardQueryS
   const paramsKey = `${params.from ?? ""}|${params.to ?? ""}|${params.regionId ?? ""}|${params.communeId ?? ""}`
 
   useEffect(() => {
+    if (!enabled) return
     const controller = new AbortController()
     dispatch({ type: "loading" })
     fetchDashboard(params, controller.signal)
@@ -64,9 +65,10 @@ export function useDashboardQuery(params: DashboardQueryParams): DashboardQueryS
       })
     return () => controller.abort()
     // `paramsKey` is the primitive identity of `params`; `attempt` forces a
-    // manual refetch with identical params.
+    // manual refetch with identical params; `enabled` gates the fetch (the
+    // map query stays quiet while no territory filter narrows the scope).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paramsKey, attempt])
+  }, [paramsKey, attempt, enabled])
 
   return { ...state, retry }
 }

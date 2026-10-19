@@ -53,6 +53,16 @@
   --chart-4: #8b9793; /* gray       – fatalities / fatal          */
   --chart-5: #c3ccc9; /* light gray – faint reference series      */
 
+  /* Choropleth ramp (region map): darkened steps of the same gray→emerald
+     family, readable on the #0a0b0d canvas plane. Top bins reuse --chart-2/1. */
+  --map-bin-1: #1c2f2a;
+  --map-bin-2: #24463c;
+  --map-bin-3: #2f6a56;
+  --map-bin-4: var(--chart-2);
+  --map-bin-5: var(--chart-1);
+  --map-zero: #14151a; /* territory with no accidents in the period */
+  --map-nodata: transparent; /* failed join: dashed outline only   */
+
   --radius: 0.5rem;
 
   --sidebar: #0a0b0d;
@@ -249,4 +259,56 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Interactive region map (choropleth filter). Fills are inline SVG
+   attributes; interaction states live here so they stay token-driven. */
+.rsm-geography {
+  cursor: pointer;
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 1;
+  outline: none;
+  transition: opacity 0.15s ease, filter 0.15s ease;
+}
+.rsm-geography:hover {
+  filter: brightness(1.2);
+}
+.rsm-geography:focus-visible {
+  stroke: var(--chart-1);
+  stroke-width: 2.5;
+}
+.region-selected {
+  stroke: var(--chart-1);
+  stroke-width: 2.5;
+  filter: brightness(1.25);
+}
+.region-dim {
+  opacity: 0.32;
+}
+.region-nodata {
+  stroke-dasharray: 4 3;
+  cursor: default;
+}
+.map-reduced-motion .rsm-geography {
+  transition: none;
+}
+.map-tooltip-box {
+  fill: rgba(24, 25, 27, 0.95);
+  stroke: rgba(0, 229, 153, 0.25);
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.8));
+}
+.map-tooltip-title {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  fill: var(--foreground, #e4f1eb);
+}
+.map-tooltip-value {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  fill: var(--chart-1);
+}
+.map-tooltip-hint {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 10px;
+  fill: var(--muted-foreground, #8b9793);
 }
