@@ -132,7 +132,7 @@ export default function RegionMap({ series, activeRegion, onSelectRegion }: Prop
   return (
     <section
       aria-label="Chile region map. Select a region to filter the dashboard."
-      className={cn("relative h-full min-h-[100dvh] w-full overflow-hidden rounded-lg", reducedMotion && "map-reduced-motion")}
+      className={cn("relative h-full w-full overflow-hidden rounded-lg", reducedMotion && "map-reduced-motion")}
     >
       <ComposableMap
         projection={chileProjection}
