@@ -10,7 +10,7 @@ Test runner: backend `npm test` and `npm run build`; frontend `npm run build` an
 
 The dashboard is connected to Carabineros de Chile accident data, but its header navigation is not consistently right-aligned, the map tooltip can report “No data for this period,” and the footer still labels the data synthetic. Most visible interface copy is also in English. These issues reduce clarity and make the displayed source and data state misleading.
 
-## Current state (verified in the repository)
+## Initial state before implementation (verified 2026-10-19)
 
 - `frontend/src/layout/Header.tsx` applies `md:justify-center` after `sm:justify-end`, which centers the navigation at medium and larger breakpoints. The visible “coming soon” text is currently screen-reader-only.
 - `frontend/src/layout/Footer.tsx` says “Synthetic example data — not official statistics,” although the dashboard reads the API-backed dataset. It also contains English product and scope copy.
@@ -59,10 +59,11 @@ The dashboard is connected to Carabineros de Chile accident data, but its header
   - Frontend test-first exception: no frontend test runner is configured. Evidence: `npm run build` exit 0 (existing >500 kB chunk warning) and `npm run lint` exit 0. Manual responsive/browser check remains in T5.
   - Route: inline. Risk: none (internal header/layout presentation; no API or shared public contract changed). Commit: `ef4565d`. RDD: medium, review not due (`under_budget`).
 
-- [ ] **T3 — Replace footer disclaimer with verified attribution (S5, S6)**
-  - Remove the synthetic-example warning and English-only product/scope descriptions.
-  - Add concise Spanish attribution that identifies Carabineros de Chile as the publisher of the official 2025 source data, explains that the dashboard shows aggregate results, and states that it does not display personal data.
-  - Preserve a clear distinction between the source publisher and the dashboard; do not imply institutional endorsement.
+- [x] **T3 — Replace footer disclaimer with verified attribution (S5, S6)**
+  - Removed the synthetic-example warning and localized footer headings, product description, and version label.
+  - Added Spanish attribution to official 2025 Carabineros de Chile source data, clarified that the dashboard presents aggregate figures without personal data, and stated that this visualization does not imply institutional backing.
+  - Preserved the existing institutional link. Frontend test-first exception: no frontend test runner is configured. Evidence: `npm run build` exit 0 (existing >500 kB chunk warning) and `npm run lint` exit 0; browser content check remains in T5.
+  - Route: inline. Risk: none (footer copy/presentation only; API and shared contracts unchanged). Commit: `4e4b12e`. RDD: medium, review not due (`under_budget`).
 
 - [ ] **T4 — Localize dashboard content and formatting (S6, S7)**
   - Audit visible strings and accessible labels across dashboard filters, KPI cards, charts, map, tooltips, status and skeleton components.
@@ -101,7 +102,7 @@ The dashboard is connected to Carabineros de Chile accident data, but its header
 
 ## Next step
 
-Continue with T3 (official-source footer attribution), then T4 (complete Spanish localization) and T5 verification. The user authorized implementation on the existing `feat/interactive-geojson-map` branch; do not create another branch or deploy to Fly without separate authorization.
+Continue with T4 (complete Spanish localization) and T5 verification. The user authorized implementation on the existing `feat/interactive-geojson-map` branch; do not create another branch or deploy to Fly without separate authorization.
 
 ## Log
 
@@ -112,3 +113,4 @@ Continue with T3 (official-source footer attribution), then T4 (complete Spanish
 - **L5** Route: Writer trigger not fired (sequential dependent units, no parallel disjoint writes) → all tasks inline with per-work-unit commits on `feat/interactive-geojson-map`. RDD: global on (read before first commit).
 - **L6** (2026-10-19, T1 native review): The accumulated candidate was medium (22 paths, 1,078 lines), received explicit user consent, two lenses, and approved acknowledgement. No blockers; two advisory-only findings: (a) a transient failure of the separate national map query has no in-context retry; (b) a pre-existing geometry comment describes a tooltip-anchor fallback not implemented by the component. These findings did not reopen the frozen candidate and were not expanded into scope. T1 assessment itself was medium / `review_due=false` (`under_budget`).
 - **L7** (2026-10-19, T2): Fixed right alignment and translated header labels; build and lint pass. Commit `ef4565d`; RDD assessment: medium / `review_due=false` (`under_budget`). Visual/browser confirmation is deferred to T5.
+- **L8** (2026-10-19, T3): Footer now attributes the official 2025 Carabineros source, describes aggregation/no personal data, and avoids implying institutional backing; the synthetic-data warning is removed. Commit `4e4b12e`; frontend build/lint pass; RDD assessment: medium / `review_due=false` (`under_budget`).
