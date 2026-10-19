@@ -2,7 +2,7 @@
 
 Objective: fix the header navigation alignment, make regional map hover values reliable and understandable, identify the official data source in the footer, and present the dashboard in Chilean Spanish.
 
-Branch: `feat/interactive-geojson-map`; user explicitly authorized staying on this branch. Preserve the untracked screenshot `Captura de pantalla_20261019_145323.png`.
+Branch: `feat/interactive-geojson-map`; user explicitly authorized staying on this branch. Preserve the untracked screenshots `Captura de pantalla_20261019_145323.png` and `Captura de pantalla_20261019_160734.png`.
 Delivery strategy: user-facing dashboard refinement; keep API and UI changes in reviewable work units, splitting the work if the implementation exceeds the established review-size limit.
 Test runner: backend `npm test` and `npm run build`; frontend `npm run build` and `npm run lint`. The frontend has no configured test runner.
 
@@ -54,10 +54,10 @@ The dashboard is connected to Carabineros de Chile accident data, but its header
   - Route: inline. Risk: none (presentation + state threading; API contract unchanged; `map-first` behaviors preserved). Evidence: `npm run build` exit 0, `npm run lint` exit 0; live-API keys as above. Commit: `20e6ce8`. RDD: medium, review not due (`under_budget`); the parent then reviewed the accumulated range and acknowledged it approved (L6). Deploying the updated backend to Fly remains a human decision (L4).
 
 - [x] **T2 — Fix and localize the header (S4, S6, S7)**
-  - Removed the medium-breakpoint centering override and aligned navigation items to the right at all widths; wrapping remains enabled for narrow screens.
+  - Removed the medium-breakpoint centering override. The user’s mobile screenshot reproduced uneven wrapping, with Informes alone on a second row. At widths below `sm`, navigation now uses three equal columns with vertically stacked icon, label, and “Próximamente”; from `sm` up it returns to a right-aligned horizontal row.
   - Localized the product title/subtitle, primary-navigation accessible name, and labels to Spanish; “Próximamente” is now visible on disabled Mapas and Informes actions.
-  - Frontend test-first exception: no frontend test runner is configured. Evidence: `npm run build` exit 0 (existing >500 kB chunk warning) and `npm run lint` exit 0. Manual responsive/browser check remains in T5.
-  - Route: inline. Risk: none (internal header/layout presentation; no API or shared public contract changed). Commit: `ef4565d`. RDD: medium, review not due (`under_budget`).
+  - Frontend test-first exception: no frontend test runner is configured. Evidence: `npm run build` exit 0 (existing >500 kB chunk warning), `npm run lint` exit 0, and local Firefox screenshot at 375 px confirmed balanced three-column layout without horizontal overflow. Full 768/1024/1440 check remains in T5.
+  - Route: inline. Risk: none (internal header/layout presentation; no API or shared public contract changed). Commits: `ef4565d`, `25ea7c7`. RDD: medium, review not due (`under_budget`).
 
 - [x] **T3 — Replace footer disclaimer with verified attribution (S5, S6)**
   - Removed the synthetic-example warning and localized footer headings, product description, and version label.
@@ -116,3 +116,4 @@ Proceed to T5 verification on the existing `feat/interactive-geojson-map` branch
 - **L7** (2026-10-19, T2): Fixed right alignment and translated header labels; build and lint pass. Commit `ef4565d`; RDD assessment: medium / `review_due=false` (`under_budget`). Visual/browser confirmation is deferred to T5.
 - **L8** (2026-10-19, T3): Footer now attributes the official 2025 Carabineros source, describes aggregation/no personal data, and avoids implying institutional backing; the synthetic-data warning is removed. Commit `4e4b12e`; frontend build/lint pass; RDD assessment: medium / `review_due=false` (`under_budget`).
 - **L9** (2026-10-19, T4): Localized dashboard filters, KPIs, charts, map-adjacent feedback, tooltips/number formatting, skeletons, status messages, accessible labels, and document title to neutral Chilean Spanish. `lang="es-CL"`; visible numbers use `es-CL`; severity/scope labels are mapped client-side without changing the API. Build/lint pass; the targeted static-copy scan found no remaining matching English UI strings. Commit `b20dbd0`; RDD assessment: medium / `review_due=false` (`under_budget`). Browser/keyboard/responsive QA remains T5.
+- **L10** (2026-10-19, user, verbatim): “yo lo veo alineado en desktop, pero lo veo roto en mobile”. Reopened T2. The supplied screenshot showed two nav items on the first row and Informes alone below. Replaced mobile wrapping with a balanced three-column grid; Firefox screenshot at 375 px confirms all three destinations align without overflow. Commits: `25ea7c7` mobile correction; build/lint pass; RDD medium/under_budget.
