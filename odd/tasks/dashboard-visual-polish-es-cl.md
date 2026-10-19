@@ -2,7 +2,7 @@
 
 Objective: fix the header navigation alignment, make regional map hover values reliable and understandable, identify the official data source in the footer, and present the dashboard in Chilean Spanish.
 
-Branch: planning document created from `feat/interactive-geojson-map`; implementation branch is pending explicit authorization. Preserve the untracked screenshot `Captura de pantalla_20261019_145323.png`.
+Branch: `feat/interactive-geojson-map`; user explicitly authorized staying on this branch. Preserve the untracked screenshot `Captura de pantalla_20261019_145323.png`.
 Delivery strategy: user-facing dashboard refinement; keep API and UI changes in reviewable work units, splitting the work if the implementation exceeds the established review-size limit.
 Test runner: backend `npm test` and `npm run build`; frontend `npm run build` and `npm run lint`. The frontend has no configured test runner.
 
@@ -51,12 +51,13 @@ The dashboard is connected to Carabineros de Chile accident data, but its header
   - Compared the API response used by the frontend with the repository contract. Live probe of the configured Fly API (`VITE_API_BASE_URL` in `frontend/.env`, Bearer barrier, token never printed): HTTP 200, `kpis.accidents` = 73,081, `meta.synthetic` = false, but `territories` keys were `scope,items,outsideTopCount,outsideAccidents,zeroAccidentCount` — **`all` absent**. The deployed Fly backend predates commit `1ee379d`, which added the additive series. This is the direct cause of “No data for this period” on every region hover: the frontend receives no series.
   - Trace of the national map query confirmed the conflation: `series` stayed null on a successful-but-old response while `loading` became false, so the tooltip fell through to the “no data” branch.
   - Fix without a new endpoint (S2): a `RegionSeriesState` (`loading | ready | error | missing-series`) is derived in `App.tsx` from the query that feeds the series and threaded `DashboardView → ContainerMapFilter → RegionMap`. Tooltip, `aria-label`, fill and legend now distinguish loading, request failure, an API that does not deliver `territories.all`, a loaded zero (explicit count), and a genuinely absent region row.
-  - Route: inline. Risk: none (presentation + state threading; API contract unchanged; `map-first` behaviors preserved). Evidence: `npm run build` exit 0, `npm run lint` exit 0; live-API keys as above. Deploying the updated backend to Fly remains a human decision (L4).
+  - Route: inline. Risk: none (presentation + state threading; API contract unchanged; `map-first` behaviors preserved). Evidence: `npm run build` exit 0, `npm run lint` exit 0; live-API keys as above. Commit: `20e6ce8`. RDD: medium, review not due (`under_budget`); the parent then reviewed the accumulated range and acknowledged it approved (L6). Deploying the updated backend to Fly remains a human decision (L4).
 
-- [ ] **T2 — Fix and localize the header (S4, S6, S7)**
-  - Correct the breakpoint utilities so navigation is right-aligned at desktop widths.
-  - Localize the product title/subtitle and navigation labels. Make the forthcoming status visible while retaining accessible disabled semantics.
-  - Check narrow-width wrapping, keyboard focus, and link/button target usability.
+- [x] **T2 — Fix and localize the header (S4, S6, S7)**
+  - Removed the medium-breakpoint centering override and aligned navigation items to the right at all widths; wrapping remains enabled for narrow screens.
+  - Localized the product title/subtitle, primary-navigation accessible name, and labels to Spanish; “Próximamente” is now visible on disabled Mapas and Informes actions.
+  - Frontend test-first exception: no frontend test runner is configured. Evidence: `npm run build` exit 0 (existing >500 kB chunk warning) and `npm run lint` exit 0. Manual responsive/browser check remains in T5.
+  - Route: inline. Risk: none (internal header/layout presentation; no API or shared public contract changed). Commit: `ef4565d`. RDD: medium, review not due (`under_budget`).
 
 - [ ] **T3 — Replace footer disclaimer with verified attribution (S5, S6)**
   - Remove the synthetic-example warning and English-only product/scope descriptions.
@@ -100,7 +101,7 @@ The dashboard is connected to Carabineros de Chile accident data, but its header
 
 ## Next step
 
-Review this ODD, then authorize implementation on a dedicated feature branch. Start with T1 so the live map-data diagnosis informs the UI states and prevents unnecessary backend API work.
+Continue with T3 (official-source footer attribution), then T4 (complete Spanish localization) and T5 verification. The user authorized implementation on the existing `feat/interactive-geojson-map` branch; do not create another branch or deploy to Fly without separate authorization.
 
 ## Log
 
@@ -109,3 +110,5 @@ Review this ODD, then authorize implementation on a dedicated feature branch. St
 - **L3** (2026-10-19, T1 evidence): live probe of the configured Fly API returned 200 with `territories.all` **absent** — the deployed backend predates `1ee379d`. That is the confirmed cause of the “no data” tooltip on every region. Fixed client-side per S2 with the explicit `RegionSeriesState`; no new endpoint. The map shows real totals once the Fly backend is redeployed from this branch (or `VITE_API_BASE_URL` points at a local/dev backend that includes T2 of the map ODD).
 - **L4** Open for T5/deploy: redeploying Fly is a separate human decision; until then the honest live state is `missing-series` (“La API no entrega datos”), not an error.
 - **L5** Route: Writer trigger not fired (sequential dependent units, no parallel disjoint writes) → all tasks inline with per-work-unit commits on `feat/interactive-geojson-map`. RDD: global on (read before first commit).
+- **L6** (2026-10-19, T1 native review): The accumulated candidate was medium (22 paths, 1,078 lines), received explicit user consent, two lenses, and approved acknowledgement. No blockers; two advisory-only findings: (a) a transient failure of the separate national map query has no in-context retry; (b) a pre-existing geometry comment describes a tooltip-anchor fallback not implemented by the component. These findings did not reopen the frozen candidate and were not expanded into scope. T1 assessment itself was medium / `review_due=false` (`under_budget`).
+- **L7** (2026-10-19, T2): Fixed right alignment and translated header labels; build and lint pass. Commit `ef4565d`; RDD assessment: medium / `review_due=false` (`under_budget`). Visual/browser confirmation is deferred to T5.
