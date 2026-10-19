@@ -65,10 +65,11 @@ The dashboard is connected to Carabineros de Chile accident data, but its header
   - Preserved the existing institutional link. Frontend test-first exception: no frontend test runner is configured. Evidence: `npm run build` exit 0 (existing >500 kB chunk warning) and `npm run lint` exit 0; browser content check remains in T5.
   - Route: inline. Risk: none (footer copy/presentation only; API and shared contracts unchanged). Commit: `4e4b12e`. RDD: medium, review not due (`under_budget`).
 
-- [ ] **T4 — Localize dashboard content and formatting (S6, S7)**
-  - Audit visible strings and accessible labels across dashboard filters, KPI cards, charts, map, tooltips, status and skeleton components.
-  - Use consistent Spanish terms for “siniestros,” “fallecidos,” “lesionados,” regions, comunas, period, and severity; keep API-provided identifiers and contracts unchanged.
-  - Apply `es-CL` number/date formatting at display boundaries; preserve machine-readable ISO dates and API values.
+- [x] **T4 — Localize dashboard content and formatting (S6, S7)**
+  - Localized filter labels/options, KPI labels and accessible names, chart titles/descriptions/legends/tables, map and chart tooltip number formatting, loading/error/empty/skeleton copy, and the document title. `frontend/index.html` now declares `lang="es-CL"`.
+  - Added frontend-only translations for API severity keys and the “National (2025)” scope label. Replaced English month labels with Spanish abbreviations and formatted visible numeric values using `es-CL`; query parameters, response values and wire contract are unchanged.
+  - Static UI-copy scan found no remaining targeted English labels (remaining matches are identifiers/comments). Frontend test-first exception: no frontend test runner is configured. Evidence: `npm run build` exit 0 (existing >500 kB chunk warning), `npm run lint` exit 0. Browser/keyboard/responsive smoke remains T5.
+  - Route: inline. Risk: none (requested presentation/localization; no data/API contract change). Commit: `b20dbd0`. RDD: medium, review not due (`under_budget`).
 
 - [ ] **T5 — Verify the complete experience (S2–S7)**
   - Run backend tests/build and frontend build/lint.
@@ -102,7 +103,7 @@ The dashboard is connected to Carabineros de Chile accident data, but its header
 
 ## Next step
 
-Continue with T4 (complete Spanish localization) and T5 verification. The user authorized implementation on the existing `feat/interactive-geojson-map` branch; do not create another branch or deploy to Fly without separate authorization.
+Proceed to T5 verification on the existing `feat/interactive-geojson-map` branch. Do not create another branch or deploy to Fly without separate authorization.
 
 ## Log
 
@@ -114,3 +115,4 @@ Continue with T4 (complete Spanish localization) and T5 verification. The user a
 - **L6** (2026-10-19, T1 native review): The accumulated candidate was medium (22 paths, 1,078 lines), received explicit user consent, two lenses, and approved acknowledgement. No blockers; two advisory-only findings: (a) a transient failure of the separate national map query has no in-context retry; (b) a pre-existing geometry comment describes a tooltip-anchor fallback not implemented by the component. These findings did not reopen the frozen candidate and were not expanded into scope. T1 assessment itself was medium / `review_due=false` (`under_budget`).
 - **L7** (2026-10-19, T2): Fixed right alignment and translated header labels; build and lint pass. Commit `ef4565d`; RDD assessment: medium / `review_due=false` (`under_budget`). Visual/browser confirmation is deferred to T5.
 - **L8** (2026-10-19, T3): Footer now attributes the official 2025 Carabineros source, describes aggregation/no personal data, and avoids implying institutional backing; the synthetic-data warning is removed. Commit `4e4b12e`; frontend build/lint pass; RDD assessment: medium / `review_due=false` (`under_budget`).
+- **L9** (2026-10-19, T4): Localized dashboard filters, KPIs, charts, map-adjacent feedback, tooltips/number formatting, skeletons, status messages, accessible labels, and document title to neutral Chilean Spanish. `lang="es-CL"`; visible numbers use `es-CL`; severity/scope labels are mapped client-side without changing the API. Build/lint pass; the targeted static-copy scan found no remaining matching English UI strings. Commit `b20dbd0`; RDD assessment: medium / `review_due=false` (`under_budget`). Browser/keyboard/responsive QA remains T5.
