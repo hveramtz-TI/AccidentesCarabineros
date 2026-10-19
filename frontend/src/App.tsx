@@ -4,7 +4,7 @@ import { useDashboardQuery } from "@/hooks/use-dashboard-query"
 import { filtersToQueryParams } from "@/lib/dashboard-query"
 import Layout from "@/layout/Layout"
 import { ALL_VALUE } from "@/types/dashboard"
-import type { DashboardFilters } from "@/types/dashboard"
+import type { DashboardFilters, RegionSeriesState } from "@/types/dashboard"
 
 function App() {
   const [filters, setFilters] = useState<DashboardFilters>({
@@ -26,10 +26,20 @@ function App() {
     [filters.period],
   )
   const mapQuery = useDashboardQuery(mapParams, territoryFilterActive)
-  const regionSeries = (territoryFilterActive ? mapQuery.data : query.data)?.territories.all ?? null
-  const regionSeriesLoading = territoryFilterActive
-    ? mapQuery.status === "loading" && !mapQuery.data
-    : query.status === "loading" && !query.data
+  const seriesQuery = territoryFilterActive ? mapQuery : query
+  const regionSeries = seriesQuery.data?.territories.all ?? null
+  // Honest state machine (ODD T1): loading, error, a response without
+  // territories.all (older deployment), and a loaded series never collapse
+  // into one another — "no data for this period" only means a loaded series
+  // that genuinely lacks the region row.
+  const regionSeriesState: RegionSeriesState =
+    seriesQuery.status === "loading" && !seriesQuery.data
+      ? "loading"
+      : seriesQuery.status === "error"
+        ? "error"
+        : seriesQuery.data?.territories.all
+          ? "ready"
+          : "missing-series"
 
   return (
     <Layout>
@@ -38,7 +48,7 @@ function App() {
         filters={filters}
         onFiltersChange={setFilters}
         regionSeries={regionSeries}
-        regionSeriesLoading={regionSeriesLoading}
+        regionSeriesState={regionSeriesState}
       />
     </Layout>
   )

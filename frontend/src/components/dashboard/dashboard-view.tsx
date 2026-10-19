@@ -2,7 +2,7 @@ import { useMemo } from "react"
 
 import type { DashboardQueryState } from "@/hooks/use-dashboard-query"
 import { adaptDashboardResponse } from "@/lib/dashboard-adapter"
-import type { DashboardFilters, TerritoryRow } from "@/types/dashboard"
+import type { DashboardFilters, RegionSeriesState, TerritoryRow } from "@/types/dashboard"
 import ContainerDashboardCharts from "../Sections/containerDashboardCharts"
 import ContainerMapFilter from "../Sections/containerMapFilter"
 import DashboardStatus from "./dashboard-status"
@@ -12,10 +12,10 @@ interface Props {
   filters: DashboardFilters
   onFiltersChange: (next: DashboardFilters) => void
   regionSeries: TerritoryRow[] | null
-  regionSeriesLoading: boolean
+  regionSeriesState: RegionSeriesState
 }
 
-export default function DashboardView({ query, filters, onFiltersChange, regionSeries, regionSeriesLoading }: Props) {
+export default function DashboardView({ query, filters, onFiltersChange, regionSeries, regionSeriesState }: Props) {
   const data = useMemo(
     () => (query.data ? adaptDashboardResponse(query.data) : null),
     [query.data],
@@ -36,7 +36,7 @@ export default function DashboardView({ query, filters, onFiltersChange, regionS
         data={data}
         loading={query.status === "loading" && !data}
         regionSeries={regionSeries}
-        regionSeriesLoading={regionSeriesLoading}
+        regionSeriesState={regionSeriesState}
       />
 
       <ContainerDashboardCharts data={data} />

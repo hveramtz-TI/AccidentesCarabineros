@@ -30,13 +30,13 @@ import {
 import { usePrefersReducedMotion } from "@/lib/use-prefers-reduced-motion"
 import { cn } from "@/lib/utils"
 import { ALL_VALUE } from "@/types/dashboard"
-import type { TerritoryRow } from "@/types/dashboard"
+import type { RegionSeriesState, TerritoryRow } from "@/types/dashboard"
 
 interface Props {
-  /** Full national region series (all 16 regions, zeros included), or null while loading. */
+  /** Full national region series (all 16 regions, zeros included), or null until ready. */
   series: TerritoryRow[] | null
-  /** True only while the series request is genuinely in flight. */
-  loading: boolean
+  /** Honest data state of the series (T1): never collapse error/missing into "no data". */
+  state: RegionSeriesState
   activeRegion: string
   onSelectRegion: (romanNumber: string | null) => void
 }
@@ -58,7 +58,21 @@ const BUCKET_VARS = [
   "var(--map-bin-5)",
 ] as const
 
-const fmt = (value: number) => value.toLocaleString("en-US")
+const fmt = (value: number) => value.toLocaleString("es-CL")
+
+/** Legend caption next to the color ramp; mirrors the series data state (T1/S3). */
+function legendCaption(state: RegionSeriesState, hasData: boolean): string {
+  switch (state) {
+    case "loading":
+      return "cargando…"
+    case "error":
+      return "error al cargar"
+    case "missing-series":
+      return "sin serie"
+    default:
+      return hasData ? "vista del período" : "sin serie"
+  }
+}
 
 function quantile(sorted: number[], q: number): number {
   if (sorted.length === 0) return 0
@@ -70,7 +84,7 @@ function quantile(sorted: number[], q: number): number {
   return lower + rest * (upper - lower)
 }
 
-export default function RegionMap({ series, loading, activeRegion, onSelectRegion }: Props) {
+export default function RegionMap({ series, state, activeRegion, onSelectRegion }: Props) {
   const reducedMotion = usePrefersReducedMotion()
   const [view, setView] = useState<{ center: [number, number]; zoom: number }>({
     center: chileMapCenter,
@@ -96,11 +110,36 @@ export default function RegionMap({ series, loading, activeRegion, onSelectRegio
     return regionByAbbreviation.get(iso)
   }
 
+  /** Row only when the series is genuinely loaded; every other state is data-unavailable. */
+  function rowFor(romanNumber: string): TerritoryRow | undefined {
+    return state === "ready" ? rowByRoman.get(romanNumber) : undefined
+  }
+
+  /**
+   * Honest per-state copy (T1/S3): loading, request failure, an API that does
+   * not deliver `territories.all`, a loaded zero, and a genuinely absent row
+   * are five different messages — never present unavailable data as zero.
+   */
+  function valueText(row: TerritoryRow | undefined): string {
+    if (row) return `${fmt(row.accidents)} siniestros · ${fmt(row.fatalities)} fallecidos`
+    switch (state) {
+      case "loading":
+        return "Cargando datos…"
+      case "error":
+        return "Error al cargar los datos"
+      case "missing-series":
+        return "La API no entrega datos"
+      default:
+        return "Sin datos para este período"
+    }
+  }
+
   function fillFor(iso: string): string {
     const link = linkFor(iso)
     if (!link) return "var(--map-nodata)"
-    const row = rowByRoman.get(link.romanNumber)
-    if (!row) return loading ? "var(--map-zero)" : "var(--map-nodata)"
+    if (state === "loading") return "var(--map-zero)"
+    const row = rowFor(link.romanNumber)
+    if (!row) return "var(--map-nodata)"
     if (row.accidents === 0) return "var(--map-zero)"
     const index = thresholds.findIndex((threshold) => row.accidents <= threshold)
     return BUCKET_VARS[index === -1 ? 4 : index]
@@ -116,14 +155,13 @@ export default function RegionMap({ series, loading, activeRegion, onSelectRegio
     const link = linkFor(iso)
     const px = regionCentersPx.get(iso)
     if (!link || !px) return
-    const row = rowByRoman.get(link.romanNumber)
     const selected = activeRegion === link.romanNumber
     setTooltip({
       x: Math.min(Math.max(px[0], 104), MAP_WIDTH - 104),
       y: px[1] < 150 ? px[1] + 24 : px[1] - 96,
       title: `${link.romanNumber} — ${link.name}`,
-      value: row ? `${fmt(row.accidents)} accidents · ${fmt(row.fatalities)} fatalities` : "No data for this period",
-      hint: selected ? "Click to clear the filter" : "Click to filter the dashboard",
+      value: valueText(rowFor(link.romanNumber)),
+      hint: selected ? "Clic para quitar el filtro" : "Clic para filtrar el panel",
     })
   }
 
@@ -133,7 +171,7 @@ export default function RegionMap({ series, loading, activeRegion, onSelectRegio
 
   return (
     <section
-      aria-label="Chile region map. Select a region to filter the dashboard."
+      aria-label="Mapa de las regiones de Chile. Selecciona una región para filtrar el panel."
       className={cn("relative h-full w-full overflow-hidden rounded-lg", reducedMotion && "map-reduced-motion")}
     >
       <ComposableMap
@@ -141,7 +179,7 @@ export default function RegionMap({ series, loading, activeRegion, onSelectRegio
         width={MAP_WIDTH}
         height={MAP_HEIGHT}
         role="group"
-        aria-label="Accidents per Chilean region"
+        aria-label="Siniestros por región de Chile"
         className="h-full w-full"
       >
         <ZoomableGroup
@@ -184,12 +222,10 @@ export default function RegionMap({ series, loading, activeRegion, onSelectRegio
                     role="button"
                     aria-label={
                       link
-                        ? `${link.romanNumber} ${link.name}: ${
-                            rowByRoman.get(link.romanNumber)
-                              ? `${fmt(rowByRoman.get(link.romanNumber)?.accidents ?? 0)} accidents`
-                              : "no data"
-                          }. ${selected ? "Selected, activate to clear" : "Activate to filter"}`
-                        : `Unmapped territory: no data`
+                        ? `${link.romanNumber} ${link.name}: ${valueText(rowFor(link.romanNumber))}. ${
+                            selected ? "Seleccionada: presiona para limpiar" : "Presiona para filtrar"
+                          }`
+                        : "Territorio sin mapear: sin datos"
                     }
                     aria-pressed={selected}
                     className={cn(
@@ -232,7 +268,7 @@ export default function RegionMap({ series, loading, activeRegion, onSelectRegio
           {joinedRegionCount < 16 && (
             <g transform={`translate(14,${MAP_HEIGHT - 28})`} aria-hidden="true">
               <text className="map-tooltip-hint">
-                {`map join: ${joinedRegionCount}/16 regions — see feature doc L9`}
+                {`unión del mapa: ${joinedRegionCount}/16 regiones`}
               </text>
             </g>
           )}
@@ -244,7 +280,7 @@ export default function RegionMap({ series, loading, activeRegion, onSelectRegio
           type="button"
           onClick={() => setView((v) => ({ ...v, zoom: Math.min(MAX_ZOOM, v.zoom * 1.6) }))}
           disabled={zoomInDisabled}
-          aria-label="Zoom in"
+          aria-label="Acercar"
           className={ZOOM_BUTTON_CLASS}
         >
           <Plus aria-hidden="true" size={20} />
@@ -253,7 +289,7 @@ export default function RegionMap({ series, loading, activeRegion, onSelectRegio
           type="button"
           onClick={() => setView((v) => ({ ...v, zoom: Math.max(1, v.zoom / 1.6) }))}
           disabled={zoomOutDisabled}
-          aria-label="Zoom out"
+          aria-label="Alejar"
           className={ZOOM_BUTTON_CLASS}
         >
           <Minus aria-hidden="true" size={20} />
@@ -262,11 +298,11 @@ export default function RegionMap({ series, loading, activeRegion, onSelectRegio
 
       <div className="glass-card absolute bottom-3 left-3 flex flex-col gap-1 rounded-md px-3 py-2" aria-hidden="true">
         <span className="metric-label text-[10px]">
-          Accidents · {hasData ? "period view" : loading ? "loading…" : "no series"}
+          Siniestros · {legendCaption(state, hasData)}
         </span>
         <div className="flex items-center gap-1">
           {BUCKET_VARS.map((variable, index) => (
-            <span key={variable} className="h-2.5 w-6 rounded-sm" style={{ background: variable }} title={`bucket ${index + 1}`} />
+            <span key={variable} className="h-2.5 w-6 rounded-sm" style={{ background: variable }} title={`rango ${index + 1}`} />
           ))}
           <span className="ml-1 h-2.5 w-6 rounded-sm border border-white/15" style={{ background: "var(--map-zero)" }} />
         </div>

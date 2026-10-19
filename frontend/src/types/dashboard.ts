@@ -105,3 +105,10 @@ export interface DashboardData {
   scopeLabel: string
   emptyScope: boolean
 }
+
+/**
+ * Data state of the choropleth series fed to RegionMap. Distinct states keep
+ * "still loading", "request failed", and "API without territories.all" from
+ * collapsing into a false "no data for this period" (ODD T1).
+ */
+export type RegionSeriesState = "loading" | "ready" | "error" | "missing-series"

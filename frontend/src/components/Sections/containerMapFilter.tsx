@@ -1,6 +1,6 @@
 import RegionMap from '../dashboard/region-map'
 import DashboardFiltersBar from '../dashboard/dashboard-filters'
-import type { DashboardData, DashboardFilters, TerritoryRow } from '@/types/dashboard'
+import type { DashboardData, DashboardFilters, RegionSeriesState, TerritoryRow } from '@/types/dashboard'
 import { ALL_VALUE } from '@/types/dashboard'
 import KpiCards from '../dashboard/kpi-cards'
 
@@ -11,7 +11,7 @@ type Props = {
   loading: boolean
   /** Full national region series (period view) driving the choropleth. */
   regionSeries: TerritoryRow[] | null
-  regionSeriesLoading: boolean
+  regionSeriesState: RegionSeriesState
 }
 
 const ContainerMapFilter = (props: Props) => {
@@ -24,7 +24,7 @@ const ContainerMapFilter = (props: Props) => {
       <div className="h-[60dvh] w-full lg:absolute lg:inset-y-0 lg:left-10 lg:h-full lg:w-1/2">
         <RegionMap
           series={props.regionSeries}
-          loading={props.regionSeriesLoading}
+          state={props.regionSeriesState}
           activeRegion={props.filters.region}
           onSelectRegion={(romanNumber) =>
             // Same cascade contract as the Region dropdown: a region click
