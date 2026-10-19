@@ -27,6 +27,9 @@ function App() {
   )
   const mapQuery = useDashboardQuery(mapParams, territoryFilterActive)
   const regionSeries = (territoryFilterActive ? mapQuery.data : query.data)?.territories.all ?? null
+  const regionSeriesLoading = territoryFilterActive
+    ? mapQuery.status === "loading" && !mapQuery.data
+    : query.status === "loading" && !query.data
 
   return (
     <Layout>
@@ -35,6 +38,7 @@ function App() {
         filters={filters}
         onFiltersChange={setFilters}
         regionSeries={regionSeries}
+        regionSeriesLoading={regionSeriesLoading}
       />
     </Layout>
   )

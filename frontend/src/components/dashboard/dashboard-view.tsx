@@ -12,9 +12,10 @@ interface Props {
   filters: DashboardFilters
   onFiltersChange: (next: DashboardFilters) => void
   regionSeries: TerritoryRow[] | null
+  regionSeriesLoading: boolean
 }
 
-export default function DashboardView({ query, filters, onFiltersChange, regionSeries }: Props) {
+export default function DashboardView({ query, filters, onFiltersChange, regionSeries, regionSeriesLoading }: Props) {
   const data = useMemo(
     () => (query.data ? adaptDashboardResponse(query.data) : null),
     [query.data],
@@ -35,6 +36,7 @@ export default function DashboardView({ query, filters, onFiltersChange, regionS
         data={data}
         loading={query.status === "loading" && !data}
         regionSeries={regionSeries}
+        regionSeriesLoading={regionSeriesLoading}
       />
 
       {data && (

@@ -33,8 +33,10 @@ import { ALL_VALUE } from "@/types/dashboard"
 import type { TerritoryRow } from "@/types/dashboard"
 
 interface Props {
-  /** Full national series (all 16 regions, zeros included), or null while loading. */
+  /** Full national region series (all 16 regions, zeros included), or null while loading. */
   series: TerritoryRow[] | null
+  /** True only while the series request is genuinely in flight. */
+  loading: boolean
   activeRegion: string
   onSelectRegion: (romanNumber: string | null) => void
 }
@@ -68,7 +70,7 @@ function quantile(sorted: number[], q: number): number {
   return lower + rest * (upper - lower)
 }
 
-export default function RegionMap({ series, activeRegion, onSelectRegion }: Props) {
+export default function RegionMap({ series, loading, activeRegion, onSelectRegion }: Props) {
   const reducedMotion = usePrefersReducedMotion()
   const [view, setView] = useState<{ center: [number, number]; zoom: number }>({
     center: chileMapCenter,
@@ -98,7 +100,7 @@ export default function RegionMap({ series, activeRegion, onSelectRegion }: Prop
     const link = linkFor(iso)
     if (!link) return "var(--map-nodata)"
     const row = rowByRoman.get(link.romanNumber)
-    if (!row) return "var(--map-nodata)"
+    if (!row) return loading ? "var(--map-zero)" : "var(--map-nodata)"
     if (row.accidents === 0) return "var(--map-zero)"
     const index = thresholds.findIndex((threshold) => row.accidents <= threshold)
     return BUCKET_VARS[index === -1 ? 4 : index]
@@ -259,7 +261,9 @@ export default function RegionMap({ series, activeRegion, onSelectRegion }: Prop
       </div>
 
       <div className="glass-card absolute bottom-3 left-3 flex flex-col gap-1 rounded-md px-3 py-2" aria-hidden="true">
-        <span className="metric-label text-[10px]">Accidents · {hasData ? "period view" : "loading"}</span>
+        <span className="metric-label text-[10px]">
+          Accidents · {hasData ? "period view" : loading ? "loading…" : "no series"}
+        </span>
         <div className="flex items-center gap-1">
           {BUCKET_VARS.map((variable, index) => (
             <span key={variable} className="h-2.5 w-6 rounded-sm" style={{ background: variable }} title={`bucket ${index + 1}`} />

@@ -11,6 +11,7 @@ type Props = {
   loading: boolean
   /** Full national region series (period view) driving the choropleth. */
   regionSeries: TerritoryRow[] | null
+  regionSeriesLoading: boolean
 }
 
 const ContainerMapFilter = (props: Props) => {
@@ -23,6 +24,7 @@ const ContainerMapFilter = (props: Props) => {
       <div className="h-[60dvh] w-full lg:absolute lg:inset-y-0 lg:left-10 lg:h-full lg:w-1/2">
         <RegionMap
           series={props.regionSeries}
+          loading={props.regionSeriesLoading}
           activeRegion={props.filters.region}
           onSelectRegion={(romanNumber) =>
             // Same cascade contract as the Region dropdown: a region click
