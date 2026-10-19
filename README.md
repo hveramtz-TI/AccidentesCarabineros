@@ -124,8 +124,10 @@ docker compose down -v             # teardown; -v drops the DB volume
   catalog `frontend/src/data/oversio-identifiers.json`; the root `.dockerignore`
   keeps datasets, `node_modules`, and `.env` out of every image.
 - Postgres is internal-only with throwaway local credentials
-  (`accidentes`/`accidentes_dev`); production injects a real Neon
-  `DATABASE_NEON_URL` for API traffic and `DIRECT_URL` for Prisma migrations.
+  (`accidentes`/`accidentes_dev`); production injects a single real Neon
+  `DATABASE_NEON_URL`, which backs both the API and the startup
+  `prisma migrate deploy` (there is no separate `DIRECT_URL` in the schema),
+  so in Fly it must be the direct, non-pooled endpoint.
 - The importer reuses the backend image and bind-mounts the root `*.xlsx`
   datasets read-only, asserting 73,081 / 148,252 / 130,234 rows; it is safe to
   re-run (idempotent).

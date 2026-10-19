@@ -39,7 +39,6 @@ services:
     image: accidentes-backend:local
     environment:
       DATABASE_NEON_URL: postgresql://accidentes:accidentes_dev@postgres:5432/accidentes?schema=public
-      DIRECT_URL: postgresql://accidentes:accidentes_dev@postgres:5432/accidentes?schema=public
       PORT: "8080"
       # Basic Bearer request barrier (NOT authentication). Value comes from
       # the ignored root .env (UUID_CONNECTION=...); never commit real tokens.
@@ -95,7 +94,6 @@ services:
     profiles: ["ops"]
     environment:
       DATABASE_NEON_URL: postgresql://accidentes:accidentes_dev@postgres:5432/accidentes?schema=public
-      DIRECT_URL: postgresql://accidentes:accidentes_dev@postgres:5432/accidentes?schema=public
     depends_on:
       postgres:
         condition: service_healthy
