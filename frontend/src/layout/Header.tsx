@@ -37,14 +37,14 @@ const Header = ({ navigation }: Props) => {
             aria-label="Navegación principal"
             className="order-3 w-full min-w-0 sm:order-none sm:w-auto sm:flex-1"
           >
-            <ul className="flex flex-wrap items-center justify-end gap-1">
+            <ul className="grid w-full grid-cols-3 items-stretch gap-1 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
               {navigation.map((item) => {
                 const Icon = item.icon
                 const className =
-                  "inline-flex min-h-11 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  "inline-flex min-h-11 w-full flex-col items-center justify-center gap-1 rounded-md px-1 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:w-auto sm:flex-row sm:gap-2 sm:px-3"
 
                 return (
-                  <li key={item.label}>
+                  <li key={item.label} className="min-w-0">
                     {item.active ? (
                       <a
                         href="/"
@@ -63,7 +63,9 @@ const Header = ({ navigation }: Props) => {
                       >
                         <Icon aria-hidden="true" size={16} />
                         {item.label}
-                        <span className="text-xs text-muted-foreground">(Próximamente)</span>
+                        <span className="whitespace-nowrap text-[10px] leading-none text-muted-foreground sm:text-xs">
+                          (Próximamente)
+                        </span>
                       </button>
                     )}
                   </li>
