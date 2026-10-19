@@ -25,19 +25,19 @@ const Header = ({ navigation }: Props) => {
             </span>
             <div className="flex min-w-0 flex-col justify-center">
               <h1 className="truncate font-heading text-sm font-semibold leading-tight text-foreground">
-                Traffic Accident Telemetry
+                Siniestros viales de Chile
               </h1>
               <span className="metric-label truncate">
-                Carabineros de Chile road-safety analytics
+                Análisis de siniestros viales
               </span>
             </div>
           </div>
 
           <nav
-            aria-label="Primary navigation"
+            aria-label="Navegación principal"
             className="order-3 w-full min-w-0 sm:order-none sm:w-auto sm:flex-1"
           >
-            <ul className="flex flex-wrap items-center justify-center gap-1 sm:justify-end md:justify-center">
+            <ul className="flex flex-wrap items-center justify-end gap-1">
               {navigation.map((item) => {
                 const Icon = item.icon
                 const className =
@@ -63,7 +63,7 @@ const Header = ({ navigation }: Props) => {
                       >
                         <Icon aria-hidden="true" size={16} />
                         {item.label}
-                        <span className="sr-only"> (coming soon)</span>
+                        <span className="text-xs text-muted-foreground">(Próximamente)</span>
                       </button>
                     )}
                   </li>

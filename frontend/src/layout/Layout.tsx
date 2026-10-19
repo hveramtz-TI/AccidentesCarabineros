@@ -13,9 +13,9 @@ interface Props {
 }
 
 const NAV_ITEMS: NavigationItem[] = [
-  { label: "Dashboard", icon: LayoutDashboard, active: true },
-  { label: "Maps", icon: Map, active: false },
-  { label: "Reports", icon: FileChartColumn, active: false },
+  { label: "Panel", icon: LayoutDashboard, active: true },
+  { label: "Mapas", icon: Map, active: false },
+  { label: "Informes", icon: FileChartColumn, active: false },
 ]
 
 const Layout = ({ children }: Props) => {
