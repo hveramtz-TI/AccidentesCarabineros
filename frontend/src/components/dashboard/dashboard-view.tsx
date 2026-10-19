@@ -39,14 +39,7 @@ export default function DashboardView({ query, filters, onFiltersChange, regionS
         regionSeriesLoading={regionSeriesLoading}
       />
 
-      {data && (
-        <ContainerDashboardCharts
-          monthlyTrend={data.monthlyTrend}
-          severityDistribution={data.severityDistribution}
-          territories={data.territories}
-          scopeLabel={data.scopeLabel}
-        />
-      )}
+      <ContainerDashboardCharts data={data} />
     </div>
   )
 }
