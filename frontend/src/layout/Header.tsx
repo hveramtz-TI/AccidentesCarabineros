@@ -35,13 +35,13 @@ const Header = ({ navigation }: Props) => {
 
           <nav
             aria-label="Navegación principal"
-            className="order-3 w-full min-w-0 sm:order-none sm:w-auto sm:flex-1"
+            className="order-3 w-full min-w-0 lg:order-none lg:w-auto lg:flex-1"
           >
-            <ul className="grid w-full grid-cols-3 items-stretch gap-1 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
+            <ul className="grid w-full grid-cols-3 items-stretch gap-1 lg:flex lg:w-auto lg:flex-wrap lg:justify-end">
               {navigation.map((item) => {
                 const Icon = item.icon
                 const className =
-                  "inline-flex min-h-11 w-full flex-col items-center justify-center gap-1 rounded-md px-1 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:w-auto sm:flex-row sm:gap-2 sm:px-3"
+                  "inline-flex min-h-11 w-full flex-col items-center justify-center gap-1 rounded-md px-1 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background lg:w-auto lg:flex-row lg:gap-2 lg:px-3"
 
                 return (
                   <li key={item.label} className="min-w-0">
@@ -63,7 +63,7 @@ const Header = ({ navigation }: Props) => {
                       >
                         <Icon aria-hidden="true" size={16} />
                         {item.label}
-                        <span className="whitespace-nowrap text-[10px] leading-none text-muted-foreground sm:text-xs">
+                        <span className="whitespace-nowrap text-[10px] leading-none text-muted-foreground lg:text-xs">
                           (Próximamente)
                         </span>
                       </button>
