@@ -28,7 +28,7 @@ pnpm-debug.log*
 
 # Machine-local assistant indexes and generated registry
 /.atl/
-/.codegraph/
+**/.codegraph/
 
 # Untracked source datasets and image; commit only after an explicit decision
 /Personas_2025(1).xlsx

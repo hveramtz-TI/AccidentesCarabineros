@@ -30,16 +30,35 @@ export default function DashboardView({ query, filters, onFiltersChange, regionS
         onRetry={query.retry}
       />
 
-      <ContainerMapFilter
-        filters={filters}
-        onFiltersChange={onFiltersChange}
-        data={data}
-        loading={query.status === "loading" && !data}
-        regionSeries={regionSeries}
-        regionSeriesState={regionSeriesState}
-      />
+      <section aria-labelledby="dashboard-overview-title" className="min-w-0">
+        <h2
+          id="dashboard-overview-title"
+          className="mb-4 border-b border-border/70 pb-3 font-heading text-lg font-semibold text-foreground"
+        >
+          Mapa e indicadores
+        </h2>
+        <ContainerMapFilter
+          filters={filters}
+          onFiltersChange={onFiltersChange}
+          data={data}
+          loading={query.status === "loading" && !data}
+          regionSeries={regionSeries}
+          regionSeriesState={regionSeriesState}
+        />
+      </section>
 
-      <ContainerDashboardCharts data={data} />
+      <section
+        aria-labelledby="dashboard-analysis-title"
+        className="min-w-0 space-y-4 border-t border-border/70 pt-6"
+      >
+        <h2
+          id="dashboard-analysis-title"
+          className="font-heading text-lg font-semibold text-foreground"
+        >
+          Tendencia y gravedad
+        </h2>
+        <ContainerDashboardCharts data={data} />
+      </section>
     </div>
   )
 }

@@ -1,4 +1,6 @@
-import { Activity, ArrowUpRight } from "lucide-react"
+import { ArrowUpRight } from "lucide-react"
+import gobiernoLogo from "@/assets/LogoGobierno de Chile.svg"
+import CollaborationMark from "./CollaborationMark"
 
 const Footer = () => {
   return (
@@ -39,18 +41,19 @@ const Footer = () => {
         </section>
 
         <div className="flex items-center gap-3 lg:justify-self-end">
-          <span
-            aria-hidden="true"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground"
-          >
-            <Activity size={18} />
-          </span>
+          <CollaborationMark compact />
           <div>
             <p className="font-heading text-sm font-semibold text-foreground">
               Siniestros viales de Chile
             </p>
             <p className="metric-label">Datos agregados · período 2025</p>
           </div>
+          <span aria-hidden="true" className="h-8 w-px bg-border" />
+          <img
+            src={gobiernoLogo}
+            alt="Gobierno de Chile"
+            className="h-9 w-auto shrink-0 object-contain"
+          />
         </div>
       </div>
 
