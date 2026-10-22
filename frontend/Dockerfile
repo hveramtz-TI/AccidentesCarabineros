@@ -3,7 +3,7 @@
 # artifact goes to Cloudflare Pages; the nginx image only proves the flow
 # locally. Build context: ./frontend
 
-FROM node:22-slim AS build
+FROM node:24.22.1-slim AS build
 WORKDIR /app
 # Vite embeds VITE_* at build time; compose (or CI) passes local values here.
 # Defaults keep the image buildable without secrets; the backend token must

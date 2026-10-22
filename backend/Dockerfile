@@ -1,13 +1,13 @@
 # Production-shaped image for the Fastify API + Excel importer (Cloud Run
 # container contract: bind 0.0.0.0 + injected $PORT, default 8080).
-# Base is node:22-slim, NOT alpine: Prisma query engines need glibc.
+# Base is node:22.23.4-slim, NOT alpine: Prisma query engines need glibc.
 #
 # The build context MUST be the repo root, because the canonical territory
 # catalog lives under frontend/src/data/:
 #   docker build -f backend/Dockerfile .
 # The root .dockerignore governs that context.
 
-FROM node:22-slim AS build
+FROM node:22.23.4-slim AS build
 WORKDIR /app
 # The OpenSSL CLI lets Prisma detect/download the matching engine on slim images.
 RUN apt-get update \
@@ -21,7 +21,7 @@ RUN npm run db:generate
 COPY backend/ ./
 RUN npm run build
 
-FROM node:22-slim AS runtime
+FROM node:22.23.4-slim AS runtime
 ENV NODE_ENV=production \
     PORT=8080
 WORKDIR /app
