@@ -265,7 +265,7 @@
    attributes; interaction states live here so they stay token-driven. */
 .rsm-geography {
   cursor: pointer;
-  stroke: rgba(255, 255, 255, 0.16);
+  stroke: #ffffff;
   stroke-width: 1;
   outline: none;
   transition: opacity 0.15s ease, filter 0.15s ease;
