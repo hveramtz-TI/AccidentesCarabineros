@@ -1,0 +1,196 @@
+# EXP-06 — Informes: Preview, CSV, and Print
+
+Brainstorm idea: #2 Informes
+Execution order: 06
+Risk: 3/5
+Cost: 4/5
+Depends on: EXP-00, EXP-02
+Status: planned
+
+## Objective
+
+Add an Informes page with a territory report preview, a server-generated
+aggregate CSV download, and a browser print layout. Add the “Ficha territorial”
+link from the Mapas table into the report.
+
+## Current state
+
+- EXP-00 provides routing and URL filters.
+- EXP-02 provides the `/mapas` territory table and its zero-row contract.
+- `GET /api/dashboard` already returns the territory list, KPIs, and filters.
+- There is no CSV endpoint, report page, or print stylesheet.
+- The user explicitly ruled out server-side PDF/Excel.
+- No schema change is needed.
+
+## Why
+
+Analysts need to take the dashboard into a meeting or a written report. A
+server-generated CSV avoids client-side serialization bugs and a browser print
+view covers the narrative artifact. Both stay aggregate: no fact rows, no PII,
+and no heavy report worker on the 1 GB / 1 vCPU service.
+
+## Scope
+
+1. Add `GET /api/dashboard/export.csv` returning the **territory report** for the
+   current filter scope:
+   `nivel, codigo_region, region, codigo_comuna, comuna, siniestros, fallecidos,
+   participacion`.
+2. National scope exports regions; a selected region exports its communes; a
+   selected commune exports that one row. One row per returned territory,
+   including zero-accident catalog territories.
+3. CSV rules: UTF-8 with BOM, CRLF line endings, RFC 4180 quoting, Spanish
+   headers, the API/catalog territory identifiers only (region roman number /
+   commune identifier), no internal database IDs or PII.
+4. Sanitize text cells that start with `=`, `+`, `-`, `@`, tab, or carriage
+   return by prefixing `'`; numeric cells remain numeric.
+5. Set `Content-Type: text/csv; charset=utf-8`, a safe filename such as
+   `accidentes-2025-territorios.csv`, and `Cache-Control: no-store`; enforce
+   Bearer before any query.
+6. Reuse the dashboard filter schema and territory query; do not load fact rows
+   into Node. Cap the export at the territory cardinality (≤346 rows) and
+   ≤50 KB.
+7. Add `/informes` with:
+   - a report header (title, period, scope, source, generated date);
+   - a KPI summary (siniestros, fallecidos, territories, leading territory);
+   - a preview of the territory table (first rows, with a note that the CSV has
+     all rows);
+   - a “Descargar CSV” link that carries the current filters;
+   - a “Imprimir” button using `window.print()`.
+8. Add a print stylesheet: hide the app header/footer/nav/buttons/filters; white
+   background, dark text, table borders, repeated table headers, no row splits,
+   and a print-only title/source line.
+9. Add a “Ficha territorial” link in `TerritoryTable` rows that navigates to
+   `/informes` with the row’s region/commune filters; the report then shows that
+   territory.
+10. Update `/mapas` to expose the link without changing its sorting behavior.
+
+## Out of scope
+
+- Server-side PDF, Excel, or a headless browser.
+- Raw siniestro/person/vehicle rows or a full data dump.
+- Cause, vehicle, or person CSVs; this ODD exports territory aggregates only.
+- A report builder, saved reports, scheduled emails, or sharing links.
+- Charts in the report beyond the existing preview table.
+- Schema changes or new dependencies for CSV generation.
+
+## Constraints and rules
+
+- The CSV is an aggregate territory report, not a raw export. It must reconcile
+  with the Mapas table and `/api/dashboard` KPIs.
+- `participacion` is the share of accidents in the current scope, one decimal,
+  using a dot or comma consistently per RFC 4180; document the choice.
+- Formula-injection sanitization applies to every text cell, including region
+  and commune names. Prefix with a single quote; do not strip legitimate text.
+- API/catalog territory identifiers are allowed; internal database IDs are not.
+- A valid scope with zero accidents returns its territory rows with `0`; a scope
+  with no territories at all returns the header row only with `200`, not an
+  error.
+- The export must not exceed 50 KB or 346 rows; if it would, reject with `400`
+  and a clear message rather than truncating silently.
+- Print must be usable in black and white and must not depend on hover or color
+  alone.
+- No secrets, tokens, or PII in logs, filenames, or error bodies.
+- No server-side PDF/Excel, no new worker, no extra container.
+
+## Tasks
+
+- [ ] T1 — Fix the CSV contract
+  - Confirm the territory dataset, column order, Spanish headers, numeric
+    format, and zero-row behavior with the user.
+  - Document the endpoint, filename, caps, and sanitization in
+    `backend/docs/reports-api.md`.
+  - Decide whether `participacion` uses a dot or comma; keep it consistent.
+
+- [ ] T2 — Implement the CSV endpoint
+  - Reuse the shared guard and dashboard filter schema.
+  - Reuse the dashboard territory aggregate; expose a shared helper from the
+    dashboard service if needed rather than duplicating the SQL.
+  - Serialize with a small RFC 4180 helper: BOM, CRLF, quoting, escaping,
+    formula-injection prefix.
+  - Enforce the row and byte caps; return `400` before streaming if exceeded.
+  - Set the content headers and `no-store`; `401` before any query.
+
+- [ ] T3 — Add backend tests
+  - Header, BOM, CRLF, quoting, and numeric formatting.
+  - Formula injection for `=`, `+`, `-`, `@`, tab, and CR.
+  - Row count and totals reconcile with `/api/dashboard`.
+  - A zero-accident territory returns a row with `0`; a no-territory scope
+    returns header only; caps return `400`.
+  - Auth, validation, content type, filename, and cache header.
+  - No raw IDs or PII in the output.
+
+- [ ] T4 — Build `/informes`
+  - Add the route and enable the Informes nav item.
+  - Read URL filters, request `/api/dashboard`, and render header, KPI summary,
+    and a capped preview table.
+  - Add the CSV link with the same filters and a disabled state while loading.
+  - Add the print button and a print-only report header.
+  - Handle loading, error, empty scope, and retry.
+
+- [ ] T5 — Add print styles
+  - Add `@media print` rules that hide chrome and controls, force readable
+    colors, repeat table headers, and avoid row splits.
+  - Ensure the report fits A4 portrait; landscape is not required.
+  - Verify no clipped columns and no blank first page.
+
+- [ ] T6 — Add the Mapas ficha link
+  - Add a “Ficha territorial” link per table row with region/commune params.
+  - Keep sorting and keyboard behavior unchanged; the link must not trigger row
+    sort.
+  - Verify the report opens with the same territory and period.
+
+- [ ] T7 — Verify and update the index
+  - Reconcile CSV rows, preview, Mapas table, and KPIs.
+  - Open the CSV in a spreadsheet and confirm the BOM and columns.
+  - Print to PDF from the browser and inspect page breaks.
+  - Run backend tests/build and frontend lint/build.
+  - Record evidence in the index.
+
+## Acceptance criteria
+
+- `/informes` shows a coherent territory report for the current filters.
+- The CSV downloads with BOM, correct headers, CRLF, quoting, and sanitized text.
+- CSV rows and totals reconcile with the Mapas table and KPIs.
+- Zero-accident territories appear with `0`; a no-territory scope returns a
+  header-only CSV.
+- The export is capped and never streams fact rows or PII.
+- Print hides chrome, repeats headers, and produces a readable A4 report.
+- The Mapas “Ficha territorial” link opens the correct report scope.
+- Backend tests/build and frontend lint/build pass.
+
+## Checks
+
+- `cd backend && npm test && npm run build`
+- `cd frontend && npm run lint && npm run build`
+- `curl -D -` the CSV with valid/invalid/missing Bearer; inspect headers.
+- Spreadsheet import: BOM, columns, accents, numeric cells, zero rows.
+- Reconcile CSV vs Mapas table vs `kpis.totalAccidents`.
+- Print preview: A4 portrait, page breaks, repeated headers, black and white.
+- `wc -c` and row count against the caps.
+
+## User decision gates
+
+- **Dataset scope:** territory aggregates only. If the user wants causes,
+  vehicles, or persons in the CSV, open a follow-up ODD; do not silently widen
+  this export.
+- **Number format:** dot vs comma for `participacion`. Confirm before T2.
+- **Print identity:** confirm whether the report needs the Carabineros logo or
+  institutional header; adding an image is a separate asset decision.
+- **Filename:** `accidentes-2025-territorios.csv` is the default. Confirm if a
+  date-stamped filename is preferred.
+
+## Delivery
+
+- One backend endpoint + tests, one report page, print CSS, and the Mapas link.
+- Do not push, open a PR, or deploy without explicit authorization.
+- Update the index status and evidence after verification.
+
+## Next step
+
+After EXP-06, EXP-07 (Tendencias) is the remaining feature ODD. Any raw export or
+server-side PDF requires a new, separate ODD.
+
+## Progress
+
+- **2026-10-23 — ODD created:** CSV contract, report page, print rules, Mapas
+  link, caps, and acceptance defined; implementation not started.
