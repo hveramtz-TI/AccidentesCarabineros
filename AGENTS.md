@@ -1,104 +1,181 @@
 # AGENTS.md
 
-Road-safety (traffic accident) analysis for Carabineros de Chile: normalize crash
-Excel into a relational DB, expose it over REST, and visualize it in a web dashboard.
+Road-safety (traffic accident) analysis for Carabineros de Chile: normalized 2025
+crash Excel data in PostgreSQL (Neon), read-only Fastify aggregate API, React
+dashboard.
 
-## Current state — read this first
+## Layout — two independent packages, no workspace
 
-- `HEAD` (`9bdba01 "delete"`, `origin/main`) contains only `README.md` and
-  `.gitattributes`. **A fresh clone has no application code.**
-- The **live scaffold** (`backend/`, `frontend/`, `.atl/`, this file) is **untracked**
-  in this worktree. Do not assume any of it exists on the remote.
-- The **prior implementation** is recoverable from history (`HEAD~1` = `d204968`):
-  `git show HEAD~1:<path>`, or list with
-  `git ls-tree -r --name-only HEAD~1 | grep -v node_modules`.
-  Includes `app.py`, `excel/`, `backend/`, `frontend/`.
+No root `package.json`; install and run each app from its own directory.
 
-## Active scaffold (untracked) and how to run it
+- `backend/` — Fastify 5 + Prisma 6 (PostgreSQL/Neon) + Excel importer. ESM
+  (`"type": "module"`, `moduleResolution: NodeNext`): **every relative import
+  needs a `.js` extension**, even from `.ts` files.
+- `frontend/` — Vite 8 + React 19 + TS 6 + Tailwind v4 + shadcn/radix.
+- `odd/tasks/*.md` — ODD feature docs (`T#` tasks, `L#` log entries, commit
+  evidence). Update the matching doc when you finish work; the index file owns
+  execution order.
+- Raw `*_2025(1).xlsx` at the repo root are gitignored inputs, not artifacts.
+  Filenames contain spaces/parens — quote paths.
 
-No root `package.json` or workspace — each app is installed and run from its own dir.
+## Commands
 
-- **frontend/** — Vite 8 + React 19 + TypeScript 6 + Tailwind v4 + React Compiler.
-  - `cd frontend && npm install`
-  - `npm run dev` — Vite dev server
-  - `npm run build` — runs `tsc -b` then `vite build`; type errors fail the build and
-    there is no separate typecheck script
-  - `npm run lint` — ESLint
-  - `npm run preview` — serve the built `dist/`
-- **backend/** — only a `package.json` with `fastify ^5.12.5`; **no `src/`, no scripts,
-  no entrypoint**. `npm start` / `npm run dev` do not exist here yet.
+Backend (`cd backend`):
 
-### frontend quirks (verified)
+- `npm test` — `node --import tsx --test`, 31 tests, **needs no database**
+  (routes/services tested through `buildApp({ dashboardService, authToken })`
+  injection).
+- The `test` script lists files explicitly (`src/import/*.test.ts` glob + three
+  named files). **A new test file outside that list silently does not run** —
+  add it to the script.
+- Single file: `node --import tsx --test src/services/dashboard-service.test.ts`
+- `npm run build` — `tsc` → `dist/`
+- `npm run dev` — tsx watch, loads `backend/.env` via `--env-file`
+- `npm run db:migrate:dev` (create) / `db:migrate` (`migrate deploy`) /
+  `db:generate` (client) / `db:check` (needs `backend/.env`)
+- `npm run db:import` — runs **compiled** output from the repo root
+  (`cd .. && node backend/dist/import/cli.js`), so `npm run build` must happen
+  first, and `DATABASE_NEON_URL` must be in the environment. Flags:
+  `--dir --catalog --report --reset --expect-siniestros/--expect-personas/--expect-vehiculos`.
 
-- **Tailwind v4 is CSS-first**: wired through the `@tailwindcss/vite` plugin in
-  `vite.config.ts` plus `@import "tailwindcss";` in `src/index.css`. There is no
-  `tailwind.config.js` — do not create one unless deliberately switching to config mode.
-- **React Compiler** is enabled via the `reactCompilerPreset()` Babel preset
-  (`@rolldown/plugin-babel` in `vite.config.ts`); it impacts dev/build performance.
-- **TS flags that will fail your build** (`tsconfig.app.json`):
-  `erasableSyntaxOnly` (no `enum`, `namespace`, or constructor parameter properties),
-  `verbatimModuleSyntax` (type-only imports must use `import type`),
-  `noUnusedLocals` / `noUnusedParameters`.
-- `index.html` links `/src/style.css`, which **does not exist** — the real stylesheet is
-  `src/index.css` (imported by `main.tsx`). Don't go hunting for it.
-- `src/App.tsx` / `src/App.css` are the Vite demo template — replace, don't extend.
-- **No test runner is configured** (no vitest/jest/playwright). Do not invent `npm test`.
+Frontend (`cd frontend`):
 
-## Code and style conventions
+- `npm run lint` — ESLint (flat config)
+- `npm run build` — `tsc -b && vite build`; type errors fail the build, there is
+  no separate typecheck script
+- `npm run dev` / `npm run preview`
+- **No frontend test runner exists.** Do not invent `npm test`.
 
-- **SOLID**: one responsibility per component/module, small focused functions,
-  depend on abstractions (props, types, interfaces) at boundaries, and extend by
-  adding new pieces rather than editing unrelated ones.
-- **KISS**: pick the simplest thing that works. No premature abstraction, no
-  clever indirection, no helper for a one-off. Readable beats flexible-but-opaque.
-- **Tailwind (frontend)**:
-  - Short, flat utility strings; put classes on the element they control.
-  - Use the standard spacing scale (`p-3`, `p-4`, `px-10`, `md:p-10`).
-  - Mobile-first: unprefixed for the base, then `sm:`, `md:`, `lg:`, `xl:`,
-    `2xl:` variants.
-  - Avoid arbitrary values (`max-w-[1600px]`), arbitrary child selectors
-    (`[&>section]:...`), overriding from the parent, and `!important`.
-  - Prefer `w-full` over `w-screen`: `100vw` includes the scrollbar width and can
-    cause horizontal overflow now that `html` uses `scrollbar-gutter: stable`.
-- **Chart colors** live as the `--chart-1..5` tokens in `frontend/src/index.css`
-  (neutral gray → `#00e599`). Change the palette there, not per component.
+Verification order per change: backend `npm test` → `npm run build`; frontend
+`npm run lint` → `npm run build`. CI runs neither — GitHub Actions only manages
+Neon PR branches (`.github/workflows/neon-pr-branches.yml`).
 
-## Unsettled stack decision — confirm before building
+Full local stack: `docker compose up -d --build` (frontend `:3200`, API `:8080`,
+Postgres has no host port), then `docker compose run --rm importer` (profile
+`ops`, not started by `up`). `docker compose down -v` drops the DB volume.
 
-Engram (project `accidentescarabineros`, obs `#919`/`#920`, 2026-09-25) records a
-decision for **NestJS + Prisma + Postgres (Neon)**. The live scaffold instead uses
-**Fastify** with no ORM, and history used **Express + Sequelize + MySQL**. These
-conflict: confirm the target backend/DB stack with the user before scaffolding or
-wiring a database.
+## Data and API rules (verified, not guessed)
 
-## Gotchas
+- 2025 only. Dates outside `2025-01-01..2025-12-31` are a `400` validation
+  error, never an empty result. `communeId` matches `^[IVX]+-[0-9]+$` (e.g.
+  `XIII-1`) and **wins over** `regionId`; region always resolves via
+  `siniestro.comuna_id → comuna.region_id`, never through `zona`.
+- Metric formulas, national baselines, and mandatory caveats live in
+  `backend/docs/dashboard-metrics.md` (approved). The API may not introduce an
+  indicator absent from that doc, and no number ships without its caveat. HTTP
+  surface is fixed by `backend/docs/dashboard-api.md`: one `GET /api/dashboard`
+  returning every section in one pass — no endpoint per section, no selector
+  endpoint, unless a real consumer exists.
+- Fixed vocabularies to reuse, not redefine (`backend/src/services/dashboard-service.ts`):
+  severity keys `fatal | serious | minor | onlyIlesos`; `AGE_BANDS` = `0-17`,
+  `18-25`, `26-40`, `41-64`, `65+`, `unknown`; 3-hour buckets starting `0,3,…,21`.
+  234 siniestros have an exact `00:00:00` time — they stay in the 00–03 bucket
+  with a disclosure (`midnightArtifactCount`), never reassigned.
+- Vehicle-type and cause shares are **non-additive / top-10**: one siniestro can
+  involve several vehicle types, so type shares may exceed 100%; person rows are
+  a different grain from siniestros and must never share an axis.
+- Row counts the importer asserts: 73,081 siniestros / 148,252 personas /
+  130,234 vehículos. `territories.all` includes the 6 catalog communes with zero
+  accidents — zero must stay distinguishable from missing.
+- `territories.all` grain changes with scope: national scope lists the 16
+  **regions** (none zero, so the 6 zero communes only surface once their region
+  is selected), a region scope lists all its catalog communes including zeros,
+  and a commune scope returns that single row. `territories.items` is top-10 of
+  **nonzero** rows only; `zeroAccidentCount` counts catalog comunas with zero in
+  the active filter, not rows missing from `all`.
+- `frontend/src/data/oversio-identifiers.json` is the canonical territory
+  catalog (16 regions / ~350 communes). The backend Dockerfile copies it into the
+  image at `/app/catalog/` — that is why the backend image builds from the
+  **repo root** context: `docker build -f backend/Dockerfile .`. Keep this file
+  and the importer catalog in sync; never duplicate it.
+- Import normalization is `normalizeLabel()` in `backend/src/import/normalize.ts`:
+  trim → NFKD → strip combining marks → uppercase → keep `[A-Z0-9]`. Apply the
+  same function to source and catalog labels or ID joins break; commune name
+  variants resolve through the `comuna_alias` table.
 
-- **No root `.gitignore`, and `backend/` has none.** `git add backend` would stage
-  `node_modules`. Add a `.gitignore` first; never commit `node_modules`.
-  (`frontend/.gitignore` already ignores `node_modules` and `dist`.)
-- **Credentials leaked in history**: `backend/src/database/.env` was committed with
-  `DB_NAME/USER/PASS/HOST/PORT` (still in `HEAD~1`). Do not recreate it; keep `.env` ignored.
-- The prior DB layer created its schema via `sequelize.sync()` — **no migrations** — and
-  used MySQL-specific SQL (`YEAR()`, `GROUP BY` aliases), not portable to Postgres as-is.
-- Data cleanup in `app.py` (history): trim → uppercase → strip accents (NFKD) → remove
-  dots, then join on those normalized values via `excel/{comunas,Causas,accdt}.json`.
-  Keep producers and consumers aligned or ID joins break.
-- `.atl/skill-registry.md` is auto-generated by `gentle-ai skill-registry refresh`; do not
-  edit by hand.
+## Auth, CORS, migrations
 
-## Prior stack (history only, not in HEAD)
+- `Authorization: Bearer $UUID_CONNECTION` is a request barrier, **not** user
+  authentication: `VITE_UUID_CONNECTION` is compiled into the public bundle and
+  dev/prod must use different values. Backend fails closed — an unset
+  `UUID_CONNECTION` returns `500 AUTH_NOT_CONFIGURED`. The check runs in
+  `preValidation`, before schema validation, controller, and Prisma. `/health`
+  stays public.
+- CORS is a hand-rolled `onRequest` hook in `backend/src/app.ts` (allowlist from
+  `CORS_ALLOWED_ORIGINS`, defaults `http://localhost:3200,http://localhost:5173`).
+  Preflight `OPTIONS` answers 204 before auth, and the error handler keeps CORS
+  headers so browsers can read `400/401/500`. Do not add `@fastify/cors`.
+- Env files are three different things: root `.env` = compose interpolation;
+  `backend/.env` = `npm run dev`/`db:check`; `frontend/.env.local` = Vite dev.
+  All ignored. Never commit token values; `backend/src/database/.env` (old
+  MySQL creds) is still reachable in history (`9bdba01`, `5778e93`) — do not
+  recreate that file.
+- Prisma uses a **single** `DATABASE_NEON_URL` with no `DIRECT_URL`, so it must
+  be the Neon **direct (non-pooled)** endpoint: `prisma migrate deploy` runs from
+  the container startup CMD (`sh -c "prisma migrate deploy && exec node dist/server.js"`),
+  which is also why health checks need a long grace period. Base image is
+  `node:22.23.4-slim`, not alpine — Prisma engines need glibc.
+- `buildApp()` is the only composition point; `server.ts` is the only place that
+  calls `listen`. Bind `0.0.0.0` + injected `PORT`.
 
-- **backend/** — Node + Express 5 + Sequelize 6, `mysql2`, `dotenv`. Entry `src/index.js`
-  → `src/app.js`; layout `src/{controllers,models,routes,database}`. Scripts:
-  `start` = `node src/index.js`, `dev` = `nodemon src/index.js`.
-- **frontend/** — React 19 + Vite 7 + TypeScript + SCSS (`sass-embedded`), ECharts, GSAP,
-  Lenis, React Compiler. The current Tailwind-only scaffold replaced this.
-- **Data pipeline** — `app.py` (pandas) maps text columns in `excel/*.xlsx` to numeric
-  IDs, writing `*_id.xlsx`.
+## Frontend quirks
 
-## Untracked data (do not commit casually)
+- **Tailwind v4 is CSS-first**: `@tailwindcss/vite` plugin +
+  `@import "tailwindcss";` in `src/index.css`. There is no `tailwind.config.js`;
+  do not create one unless deliberately switching modes. shadcn is configured
+  through `frontend/components.json` (`radix-nova`, `cn` aliases under `@/`).
+- **React Compiler** runs via the `reactCompilerPreset()` Babel preset
+  (`@rolldown/plugin-babel` in `vite.config.ts`) — it affects dev/build cost.
+- TS flags that fail the build (`tsconfig.app.json`): `erasableSyntaxOnly` (no
+  `enum`, `namespace`, or constructor parameter properties),
+  `verbatimModuleSyntax` (type-only imports must be `import type`),
+  `noUnusedLocals` / `noUnusedParameters`, `allowImportingTsExtensions`.
+- **Routing is `react-router` v7** (`BrowserRouter` + `Routes` in `src/App.tsx`).
+  `src/pages/*-page.tsx` are routed pages (`/` = Panel, `/mapas` = map +
+  `TerritoryTable`), `src/routes/route-error-boundary.tsx` and
+  `src/routes/route-fallback.tsx` keep one broken or lazy page from blanking the
+  shell (both live in `src/layout/Layout.tsx`, so a new section is one `<Route>`
+  plus one nav flag), and `Layout.tsx` owns the nav table (Mapas enabled;
+  Análisis/Informes are `enabled: false` placeholders). Panel keeps the base
+  document title; other pages call `usePageEffects(pageTitle("…"))`. Dashboard
+  filters live in the URL (`period`, `region`, `commune`), parsed and serialized
+  by `src/lib/filters-url.ts` and read through `src/hooks/use-url-filters.ts` —
+  never add a separate filter store. `src/hooks/use-dashboard-workspace.ts` owns
+  the "one filtered query + one quiet national query for the map" rule; do not
+  re-derive it per page.
+- GeoJSON map: `d3-geo` `geoPath` requires **clockwise outer rings** (spherical
+  right-hand rule). `mapshaper -o format=geojson` rewrites rings to RFC 7946
+  CCW, which inverts every polygon (each `geoArea` ≈ 99.99% of the sphere) and
+  breaks clicks. Validate any map asset with per-feature `geoArea` and
+  `geoPath().bounds()`, never by projecting raw vertices. Join key is
+  `properties.iso` ↔ region `abbreviation` (16/16), not numeric `codregion`;
+  the projection fits mainland only (offshore islands would collapse the scale).
+- Chart colors are the `--chart-1..5` and `--map-bin-*` tokens in
+  `frontend/src/index.css` — change the palette there, not per component.
 
-- `Siniestros_2025(1).xlsx` (~7.8 MB), `Personas_2025(1).xlsx` (~8.4 MB),
-  `Vehiculos_2025(1).xlsx` (~5.6 MB) — 2025 datasets. Names contain spaces/parens; quote paths.
-- `carabineros_de_chile.png`.
-- Treat these as inputs, not artifacts; commit only on an explicit decision.
+## Conventions
+
+- UI copy, labels, and formatting are Chilean Spanish (`es-CL`); code, comments,
+  docs, and commit messages are English. Conventional Commit messages, no AI
+  attribution trailers.
+- SOLID/KISS: one responsibility per component, small focused functions, props
+  and types at boundaries, extend by adding rather than editing unrelated code;
+  no premature abstraction.
+- Tailwind style: short flat utility strings on the element they control,
+  standard spacing scale, mobile-first (`sm:`/`md:`/`lg:` prefixes), prefer
+  `w-full` over `w-screen` (`html` uses `scrollbar-gutter: stable`). Avoid
+  arbitrary values, arbitrary child selectors, parent-driven overrides,
+  `!important`.
+- `.atl/skill-registry.md` is auto-generated by `gentle-ai skill-registry
+  refresh`; never hand-edit it.
+
+## Deployment notes
+
+- Production targets are Cloud Run (API) + Cloudflare Pages (SPA) + Neon (DB);
+  production deploy is still an open ODD item
+  (`odd/tasks/production-deployment-neon-cloud-run-pages.md`). A `fly.toml` also
+  exists (`backend-dawn-meadowland-5739`, 1 GB / 1 shared vCPU) from an earlier
+  trial — confirm the target before touching deploy config, and never deploy,
+  push, open a PR, or run remote operations without explicit user authorization.
+- The API container and Neon branch previews assume 1 GB / 1 shared vCPU: keep
+  aggregation in SQL and never load fact rows into Node.
