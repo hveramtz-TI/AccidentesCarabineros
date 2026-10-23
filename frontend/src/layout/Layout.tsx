@@ -31,16 +31,20 @@ import RouteFallback from "@/routes/route-fallback"
 const NAV_ITEMS: NavigationItem[] = [
   { label: "Panel", icon: LayoutDashboard, to: "/", enabled: true },
   { label: "Mapas", icon: Map, to: "/mapas", enabled: true },
-  { label: "Análisis", icon: ScanSearch, to: "/analisis", enabled: false },
+  { label: "Análisis", icon: ScanSearch, to: "/analisis", enabled: true },
   { label: "Informes", icon: FileChartColumn, to: "/informes", enabled: false },
 ]
 
 const Layout = () => {
   const location = useLocation()
+  // Switching into the analysis area keeps the active period/territory filters.
+  const navigation = NAV_ITEMS.map((item) =>
+    item.to === "/analisis" ? { ...item, to: { pathname: item.to, search: location.search } } : item,
+  )
 
   return (
     <div className="flex min-h-svh min-w-0 flex-col">
-      <Header navigation={NAV_ITEMS} />
+      <Header navigation={navigation} />
       <main className="dot-grid min-w-0 flex-1">
         <RouteErrorBoundary key={location.pathname}>
           <Suspense fallback={<RouteFallback />}>

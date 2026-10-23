@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react"
-import { NavLink } from "react-router"
+import { NavLink, type To } from "react-router"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import CollaborationMark from "./CollaborationMark"
@@ -13,7 +13,7 @@ import HamburgerMenu from "./HamburgerMenu"
 export interface NavigationItem {
   label: string
   icon: LucideIcon
-  to: string
+  to: To
   enabled: boolean
 }
 

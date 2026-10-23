@@ -61,6 +61,8 @@ Top N (por defecto 10) por accidentes, con `nombre_normal` y `region_id`/`numero
 
 Top 10 por accidentes + bucket "otras". Base: "conductor no atento…" 32.999 (45,1 %); ebriedad 5.444; 7 de 70 causas tienen <10 accidentes (van a "otras"). Columna secundaria `fallecidos` por causa: velocidad no razonable produce 253 muertes con solo 2.540 siniestros — la más letal; **no** ordenar el gráfico solo por accidentes si se quiere señalar letalidad (decisión de visualización, no de fórmula). Caveat: una causa por siniestro (columna fuente `CAUSA` única).
 
+**Participación acumulada (`CAU-2`, EXP-03):** suma corrida de las participaciones (accidentes acumulados / total filtrado) en el orden descendente de la API (`accidents` DESC, `name` ASC), expresada con un decimal. No es un campo de la respuesta: se calcula en el frontend sobre las 70 causas del catálogo y se rotula explícitamente como acumulada. Cuando el total filtrado es 0, todas las participaciones —incluida la acumulada— son 0.
+
 ### 3.9 Tipo y sector (`TIP-1`, `SEC-1`)
 
 Distribución de los 15 `tipo_siniestro` (colisión lateral 16,7 %, colisión 14,6 %, choque 12,3 %, …) y sector urbano/rural (74,2 % / 25,8 %). Caveat: `TIPO` de siniestros ≠ `TIPO` de vehículos; no compartir dominio.

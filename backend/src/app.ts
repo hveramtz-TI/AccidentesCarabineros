@@ -1,9 +1,11 @@
 import Fastify from "fastify";
 import type { FastifyInstance } from "fastify";
 
+import analysisRoutes from "./routes/analysis.js";
 import dashboardRoutes from "./routes/dashboard.js";
 import metaRoutes from "./routes/meta.js";
 import type { DashboardService } from "./types/dashboard-api.js";
+import type { AnalysisService } from "./types/insights-api.js";
 import type { MetaService } from "./types/meta-api.js";
 
 const DEFAULT_CORS_ORIGINS = Object.freeze(["http://localhost:3200", "http://localhost:5173"]);
@@ -15,6 +17,8 @@ export interface BuildAppOptions {
   dashboardService?: DashboardService;
   /** Deterministic metadata-service seam for API tests and alternate hosts. */
   metaService?: MetaService;
+  /** Deterministic analysis-service seam for API tests and alternate hosts. */
+  analysisService?: AnalysisService;
   /** Expected Bearer token for protected API routes; unset means auth is not configured. */
   authToken?: string | null;
   /** Exact browser origins allowed by the CORS allowlist. */
@@ -69,6 +73,11 @@ export function buildApp(opts: BuildAppOptions = {}): FastifyInstance {
 
   app.register(metaRoutes, {
     service: opts.metaService,
+    authToken: opts.authToken !== undefined ? opts.authToken : process.env.UUID_CONNECTION ?? null,
+  });
+
+  app.register(analysisRoutes, {
+    service: opts.analysisService,
     authToken: opts.authToken !== undefined ? opts.authToken : process.env.UUID_CONNECTION ?? null,
   });
 

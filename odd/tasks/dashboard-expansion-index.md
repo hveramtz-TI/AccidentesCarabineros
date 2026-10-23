@@ -69,7 +69,7 @@ reviewable. This index is the only source of execution order.
 | 00 | [EXP-00 Foundation](./dashboard-expansion-00-foundation.md) | prerequisite | Router, shell, URL state, shared guard, lazy routes | 3 | 3 | 6* | — | done |
 | 01 | [EXP-02 Map table](./dashboard-expansion-02-map-table.md) | #1 Mapas | `/mapas` table replaces KPIs; reuse dashboard | 2 | 2 | 4 | EXP-00 | done |
 | 02 | [EXP-01 Methodology](./dashboard-expansion-01-methodology.md) | #3 Metodología | `/metodologia` + `/api/meta` | 2 | 3 | 5 | EXP-00 | done |
-| 03 | [EXP-03 Causes](./dashboard-expansion-03-causes.md) | #6 Causas | `/api/analysis` skeleton + all causes | 3 | 3 | 6 | EXP-00 | planned |
+| 03 | [EXP-03 Causes](./dashboard-expansion-03-causes.md) | #6 Causas | `/api/analysis` skeleton + all causes | 3 | 3 | 6 | EXP-00 | in_progress |
 | 04 | [EXP-04 Vehicles](./dashboard-expansion-04-vehicles.md) | #5 Vehículos | Analysis `vehicles` + type×severity | 3 | 3 | 6 | EXP-03 | planned |
 | 05 | [EXP-05 Persons](./dashboard-expansion-05-persons.md) | #4 Personas | Analysis `persons` + crosstabs | 3 | 3 | 6 | EXP-03 | planned |
 | 06 | [EXP-06 Reports](./dashboard-expansion-06-reports.md) | #2 Informes | Preview + CSV + print | 3 | 4 | 7 | EXP-00, EXP-02 | planned |
@@ -227,4 +227,14 @@ EXP-06 must wait for EXP-00 and EXP-02.
   re-checking, the parent found that nginx answers `200 text/html` (SPA
   fallback) for missing assets, so earlier "chunk → 200" evidence was replaced by
   a `content-type` check in both affected ODDs.
+- **2026-10-23 — EXP-03 implemented (`in_progress`):** `GET /api/analysis` with an
+  additive `causes` section over all 70 catalog causes from one LEFT JOIN
+  aggregate (zeros preserved), 15 route tests (57/57 total), `/analisis` shell
+  with a single shared query, and the Causas tab (summary, CSS top-10 bars,
+  accent-insensitive search, full table with rank and cumulative share).
+  Live/SQL reconciliation: national 73,081 · XIII 20,293 · XIII-1 502 (34 zero
+  causes) · Q3 17,767 · empty 0 with 70 zero rows; payload 6.5 KB. Independent
+  verification: 0 blockers, 8/8 acceptance PASS; URL-filter preservation and two
+  regression tests added afterwards. Declared gap: no `statement_timeout` (shared
+  Prisma client, measured 2.6–18.6 ms). Remaining: browser pass, then commit.
 
