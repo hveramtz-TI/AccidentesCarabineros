@@ -122,22 +122,22 @@ export default function MethodologyPage() {
           </SectionCard>
 
           <SectionCard id="metodologia-universo" title="Universo">
-            <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <dl className="grid grid-cols-3 gap-6">
               <div>
                 <dt className="metric-label">Siniestros</dt>
-                <dd className="metric-value text-xl font-semibold text-foreground">
+                <dd className="metric-value text-lg font-semibold text-foreground sm:text-xl">
                   {formatCount(data.rowCounts.siniestros)}
                 </dd>
               </div>
               <div>
                 <dt className="metric-label">Personas</dt>
-                <dd className="metric-value text-xl font-semibold text-foreground">
+                <dd className="metric-value text-lg font-semibold text-foreground sm:text-xl">
                   {formatCount(data.rowCounts.personas)}
                 </dd>
               </div>
               <div>
                 <dt className="metric-label">Vehículos</dt>
-                <dd className="metric-value text-xl font-semibold text-foreground">
+                <dd className="metric-value text-lg font-semibold text-foreground sm:text-xl">
                   {formatCount(data.rowCounts.vehiculos)}
                 </dd>
               </div>
@@ -202,9 +202,20 @@ export default function MethodologyPage() {
           </SectionCard>
 
           <SectionCard id="metodologia-caveats" title="Caveats">
-            <ol className="list-decimal space-y-2 pl-5">
-              {data.caveats.map((caveat) => (
-                <li key={caveat}>{caveat}</li>
+            <ol className="space-y-3">
+              {data.caveats.map((caveat, index) => (
+                <li
+                  key={caveat}
+                  className="flex gap-3 border-b border-border/40 pb-3 last:border-b-0 last:pb-0"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="metric-value shrink-0 text-sm font-semibold text-foreground"
+                  >
+                    {index + 1}.
+                  </span>
+                  <span>{caveat}</span>
+                </li>
               ))}
             </ol>
           </SectionCard>

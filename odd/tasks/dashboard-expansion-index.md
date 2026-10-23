@@ -66,9 +66,9 @@ reviewable. This index is the only source of execution order.
 
 | Exec | ODD | Idea | Scope | Risk | Cost | Score | Depends on | Status |
 |---|---|---|---|---|---|---|---|---|
-| 00 | [EXP-00 Foundation](./dashboard-expansion-00-foundation.md) | prerequisite | Router, shell, URL state, shared guard, lazy routes | 3 | 3 | 6* | — | in_progress |
-| 01 | [EXP-02 Map table](./dashboard-expansion-02-map-table.md) | #1 Mapas | `/mapas` table replaces KPIs; reuse dashboard | 2 | 2 | 4 | EXP-00 | in_progress |
-| 02 | [EXP-01 Methodology](./dashboard-expansion-01-methodology.md) | #3 Metodología | `/metodologia` + `/api/meta` | 2 | 3 | 5 | EXP-00 | in_progress |
+| 00 | [EXP-00 Foundation](./dashboard-expansion-00-foundation.md) | prerequisite | Router, shell, URL state, shared guard, lazy routes | 3 | 3 | 6* | — | done |
+| 01 | [EXP-02 Map table](./dashboard-expansion-02-map-table.md) | #1 Mapas | `/mapas` table replaces KPIs; reuse dashboard | 2 | 2 | 4 | EXP-00 | done |
+| 02 | [EXP-01 Methodology](./dashboard-expansion-01-methodology.md) | #3 Metodología | `/metodologia` + `/api/meta` | 2 | 3 | 5 | EXP-00 | done |
 | 03 | [EXP-03 Causes](./dashboard-expansion-03-causes.md) | #6 Causas | `/api/analysis` skeleton + all causes | 3 | 3 | 6 | EXP-00 | planned |
 | 04 | [EXP-04 Vehicles](./dashboard-expansion-04-vehicles.md) | #5 Vehículos | Analysis `vehicles` + type×severity | 3 | 3 | 6 | EXP-03 | planned |
 | 05 | [EXP-05 Persons](./dashboard-expansion-05-persons.md) | #4 Personas | Analysis `persons` + crosstabs | 3 | 3 | 6 | EXP-03 | planned |
@@ -211,3 +211,20 @@ EXP-06 must wait for EXP-00 and EXP-02.
   + build (methodology chunk 8.29 kB), `/metodologia` served `200` on the compose
   stack. Independent verification: 0 blockers, two copy advisories fixed, two
   regression tests added. Remaining: browser pass, then commit.
+- **2026-10-23 — First browser pass:** the user approved `/` and `/mapas`;
+  `/metodologia` needed a desktop layout rework (six-column spans, compact
+  Universo row, explicit caveat numerals in white with dividers, stacked
+  Versionado). Lint/build pass and the page is served again for a second look.
+- **2026-10-23 — EXP-00, EXP-02, EXP-01 closed:** the user approved `/`,
+  `/mapas`, and `/metodologia` on desktop after the layout rework. Each ODD
+  declares its own verification gap (browser history, keyboard sorting, 360/768
+  px, and a real network failure were not exercised); none is claimed as passed.
+  Next slice in the ranked order: EXP-03 (Causas, `/api/analysis` + the Causas
+  tab), which then unlocks EXP-04, EXP-05, and EXP-07.
+- **2026-10-23 — Metodología layout corrected twice:** six-column spans were
+  reverted at the user's request; the page is back on the two-column grid,
+  keeping only the caveat numbering fix and a compact Universe row. While
+  re-checking, the parent found that nginx answers `200 text/html` (SPA
+  fallback) for missing assets, so earlier "chunk → 200" evidence was replaced by
+  a `content-type` check in both affected ODDs.
+

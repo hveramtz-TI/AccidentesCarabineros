@@ -5,7 +5,7 @@ Execution order: 02
 Risk: 2/5
 Cost: 3/5
 Depends on: EXP-00
-Status: in_progress
+Status: done
 
 ## Objective
 
@@ -131,7 +131,7 @@ disclaimers traceable to a single source.
     `DashboardStatus` gained an optional `subject` prop so its error copy no
     longer says "del panel" here.
 
-- [ ] T5 — Verify and update the index — data/build checks done, browser pass pending
+- [x] T5 — Verify and update the index
   - Compare the page counts with independent SQL.
   - Run backend tests/build and frontend lint/build.
   - Record evidence in the index.
@@ -146,7 +146,10 @@ disclaimers traceable to a single source.
     build clean; frontend lint clean and build clean
     (`methodology-page-*.js` 8.29 kB / 2.83 kB gzip, main chunk 1,012.33 kB).
     `docker compose up -d --build frontend` serves `/metodologia` → `200
-    text/html` and its chunk → `200`.
+    text/html`, and the page chunk was confirmed present by asking for its real
+    container-side filename and checking `content-type: application/javascript`
+    (8,523 bytes). **Correction:** a `200` alone is not proof of a chunk, since
+    nginx answers the SPA fallback with `200 text/html` for a missing asset.
   - Risk: item 2 (the Bearer barrier and error mapping are shared with the
     dashboard, so a wiring mistake could open or break a protected route;
     mitigated by the guard reuse, the auth-before-service tests, and the live
@@ -209,3 +212,33 @@ EXP-02 (Mapas, order 01) precedes this ODD. After EXP-01, execute EXP-03
   `/api/dashboard` untouched, `/metodologia` served `200`. Status stays
   `in_progress` until the browser pass (footer reachability, focus, error/retry,
   360/768/1280 px).
+- **2026-10-23 — Browser pass feedback (layout):** `/` and `/mapas` were approved
+  by the user; `/metodologia` was not homogeneous on desktop, Universo used more
+  space than its content, and the caveat numerals were hard to tell apart from
+  the trailing numbers of the previous caveat. Reworked the grid to six columns
+  with explicit spans (3+3, 6, 3+3, 4+2, no orphan card), Universo now renders
+  one compact row with its grain note beside it, Caveats uses an explicit
+  ordered list whose numeral is `text-foreground` and separated by hairline
+  dividers (the visual numeral is `aria-hidden`, the `<ol>` keeps the semantics),
+  and Versionado stacks its rows to fit the narrow column. The loading skeleton
+  mirrors the new spans. `npm run lint` and `npm run build` pass
+  (`methodology-page-*.js` 9.09 kB / 3.02 kB gzip); the compose stack serves
+  `/metodologia` → `200`. Needs a second visual pass before EXP-01 closes.
+
+## Verification gap (declared, not claimed)
+
+Desktop layout was reworked after the first browser pass (six-column spans,
+compact Universo row, explicit caveat numerals) and approved by the user at
+1280 px. The 360/768 px rendering, the error/retry state with a real network
+failure, and keyboard traversal of the footer link were not exercised in a
+browser.
+- **2026-10-23 — Layout reverted to the two-column grid:** after the six-column
+  rework, the user asked for the previous grid back. The page uses
+  `lg:grid-cols-2` again with the original card structure and the original
+  skeleton; the only kept change is the caveat list (white tabular numeral, 12px
+  gutter, hairline dividers, `aria-hidden` numeral) plus a compact Universe row
+  (`grid-cols-3`, no stacked `sm:grid-cols-1`) so it no longer overflows in
+  height. Lint and build pass (`methodology-page-*.js` 8.54 kB / 2.89 kB gzip)
+  and the container serves the rebuilt page (`application/javascript`, 8,523
+  bytes).
+

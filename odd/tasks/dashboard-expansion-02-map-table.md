@@ -5,7 +5,7 @@ Execution order: 01
 Risk: 2/5
 Cost: 2/5
 Depends on: EXP-00
-Status: in_progress
+Status: done (visual approved)
 
 ## Objective
 
@@ -175,9 +175,12 @@ set; file count never fires the trigger.
     (`maps-page-*.js` 6.24 kB / 2.64 kB gzip), `cd backend && npm test` 36/36.
   - Served-shape check: `docker compose build frontend && docker compose up -d
     frontend` → `GET /mapas` = `200 text/html` with the app shell,
-    `assets/maps-page-*.js` = `200`, and `/algo/no-existe` = `200` (nginx
-    `try_files` SPA fallback, client-side 404). Main chunk stayed 1,011.78 kB /
-    317.42 kB gzip, so the table cost is its own 6.24 kB lazy chunk, not the
+    the lazy chunk is served as `application/javascript`, and `/algo/no-existe`
+    = `200` (nginx `try_files` SPA fallback, client-side 404). **Correction:** a
+    bare `200` on an `/assets/...` URL proves nothing here, because the SPA
+    fallback also answers `200 text/html` for a missing file; chunk presence must
+    be checked by `content-type`, not status code. Main chunk stayed 1,011.78 kB
+    / 317.42 kB gzip, so the table cost is its own 6.24 kB lazy chunk, not the
     Panel budget.
   - **Still open:** the browser pass (desktop/mobile widths, real click/Tab
     sorting, announcements, visual Panel equality).
@@ -256,3 +259,12 @@ slot; it already depends on this table.
   proven byte-identical by SSR differential, two advisories fixed
   (`bg-background`, doc field names). Browser pass pending, so the status stays
   `in_progress`.
+
+## Verification gap (declared, not claimed)
+
+The user approved `/mapas` visually on desktop, including the table against the
+filtered scope. Keyboard sorting (Tab + Enter/Space), deep-link back/forward
+restoration of the table, and 360 px width were not exercised in a browser. The
+default sort, `aria-sort` state, rank derivation, and share math are verified in
+the rendered markup and by the independent SSR probe; the covered gap is
+interaction coverage, not a known defect.

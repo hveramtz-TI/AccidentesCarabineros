@@ -5,7 +5,7 @@ Execution order: 00
 Risk: 3/5
 Cost: 3/5
 Depends on: none
-Status: in_progress
+Status: done (desktop-approved)
 
 ## Objective
 
@@ -289,3 +289,11 @@ guard are stable, but remains order 03 in the ranked backlog.
   route error boundary + `usePageEffects`, shared `useApiQuery`, and
   `public/_redirects`. Frontend lint/build and backend test/build pass; three
   acceptance items stay open until a browser pass (no browser available here).
+
+## Verification gap (declared, not claimed)
+
+The user approved `/`, `/mapas`, and `/metodologia` visually on desktop. Browser
+history (back/forward), the mobile sheet at 360 px, and focus-ring rendering were
+not exercised in a browser; the code-level evidence for them (URL round-trip
+tests, `NavLink` state, `data-page-heading` focus) is recorded above. Nothing in
+this slice is known broken; the gap is coverage, not a failing check.
