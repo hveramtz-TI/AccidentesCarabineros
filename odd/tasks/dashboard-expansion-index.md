@@ -179,5 +179,8 @@ EXP-06 must wait for EXP-00 and EXP-02.
 - **2026-10-23 — EXP-00 in progress:** T5 shared backend guard committed
   (`6737386`) with byte-identical responses against `main`; T1-T4/T6/T7
   (router tree, shell, URL filters, lazy 404 + error boundary, `useApiQuery`,
-  `_redirects`) implemented and verified by backend 36/36 + build and frontend
-  lint + build. The manual browser pass and the C2 commit are outstanding.
+  `_redirects`) committed (`6c9fd76`). Backend 36/36 + build and frontend lint +
+  build pass. RDD assess over the branch (`--base-ref ecb291c --committed-only`)
+  returned `medium` / `review_due: false` (`under_budget`), so the review slice
+  stays open. EXP-00 remains `in_progress` until the manual browser pass
+  (back/forward, mobile menu, focus) is done.

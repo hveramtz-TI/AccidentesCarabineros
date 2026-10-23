@@ -92,7 +92,7 @@ shared hook) that must not be split into test/code/docs writers. Work-unit
 commits: C1 backend guard, C2 frontend routing foundation, C3 SPA fallback +
 docs evidence.
 
-- [x] T1 — Add the router dependency and route tree — route: inline — commit C2
+- [x] T1 — Add the router dependency and route tree — route: inline — commit `6c9fd76`
   - Add `react-router` to `frontend/package.json` and install it.
   - Create `frontend/src/pages/DashboardPage.tsx` from the current `App.tsx`
     composition; keep the existing `Layout` behavior.
@@ -104,7 +104,7 @@ docs evidence.
     `<Layout />`; `tsc -b && vite build` passes (2795 modules) and
     `vite preview` serves `/` with `200`.
 
-- [x] T2 — Convert the shell and navigation — route: inline — commit C2
+- [x] T2 — Convert the shell and navigation — route: inline — commit `6c9fd76`
   - Change `NavigationItem` to carry `to` and `enabled`; derive active state
     from `NavLink`.
   - Update `Header` and `HamburgerMenu`; close the mobile sheet after a link.
@@ -117,7 +117,7 @@ docs evidence.
     (its own `aria-current="page"`) for enabled items and keep the disabled
     “(Próximamente)” button; mobile links close the sheet on click.
 
-- [x] T3 — Move filters into the URL — route: inline — commit C2
+- [x] T3 — Move filters into the URL — route: inline — commit `6c9fd76`
   - Add a small `filters-url` module that parses and serializes
     `period`, `region`, and `commune`.
   - Validate region/commune against the canonical catalog; reject unknown values
@@ -135,7 +135,7 @@ docs evidence.
     Browser back/forward/refresh behavior is code-reviewed only: no browser or
     frontend test runner exists in this environment.
 
-- [x] T4 — Add route resilience — route: inline — commit C2
+- [x] T4 — Add route resilience — route: inline — commit `6c9fd76`
   - Lazy-load pages that are not the initial route (starting with future pages).
   - Add a Suspense skeleton and a route error boundary with a retry/home action.
   - Restore scroll and focus the page heading after navigation.
@@ -166,7 +166,7 @@ docs evidence.
     allowlist headers, and a disallowed origin (no `access-control-allow-origin`,
     `cache-control: no-store`).
 
-- [x] T6 — Add the shared query hook — route: inline — commit C2
+- [x] T6 — Add the shared query hook — route: inline — commit `6c9fd76`
   - Add an abortable `useApiQuery<T>` with explicit loading/error/data states.
   - Reimplement `useDashboardQuery` on top of it without changing its public
     shape.
@@ -177,7 +177,7 @@ docs evidence.
     query stays quiet with `enabled=false` while no territory filter is active
     (same gate as before).
 
-- [x] T7 — Configure the SPA fallback — route: inline — commit C2
+- [x] T7 — Configure the SPA fallback — route: inline — commit `6c9fd76`
   - Confirm the static host used for the frontend.
   - If it supports `_redirects`, add `frontend/public/_redirects` with
     `/* /index.html 200`; otherwise document the equivalent rewrite.
@@ -255,6 +255,14 @@ docs evidence.
 - One reviewable foundation slice; keep tests and docs with the behavior.
 - Do not push, open a PR, or deploy without explicit authorization.
 - Update the index status and evidence after verification.
+- **RDD record:** `gentle-ai review assess --base-ref ecb291c --committed-only`
+  over `0b96bae`+`6737386`+`6c9fd76` returned risk `medium`
+  (`configuration_change: backend/package.json`), 28 paths / 2,742 lines,
+  `review_due: false` (`under_budget`), with
+  `--untracked-scope=exclude --expected-untracked-inventory=sha256:2b8f340f…`
+  declared for the untracked scratch files that are not part of this candidate.
+  The slice stays open: a later commit that crosses the budget closes it, and the
+  reviewed boundary only advances on acknowledgement.
 
 ## Next step
 
@@ -270,7 +278,7 @@ guard are stable, but remains order 03 in the ranked backlog.
   `baseFilterSchema` / `createApiGuardError` extracted; `dashboardRoutes`
   registers through it. 36 backend tests pass, `tsc` clean, and a live
   differential run against `main` produced byte-identical responses.
-- **2026-10-23 — T1-T4, T6, T7 delivered (C2):** `react-router@7.18.4` route
+- **2026-10-23 — T1-T4, T6, T7 delivered (`6c9fd76`):** `react-router@7.18.4` route
   tree, `Layout` shell with `<Outlet />` and the enabled/disabled nav table,
   URL-backed filters (`lib/filters-url.ts`), lazy 404 + Suspense skeleton +
   route error boundary + `usePageEffects`, shared `useApiQuery`, and
