@@ -252,6 +252,11 @@ docs evidence.
 
 ## Delivery
 
+- Risk: item 2 for C1 (the Bearer barrier and error mapping moved, so a guard
+  mistake could open the protected endpoint) and item 6 for C2 (no frontend test
+  runner can catch a routing, filter, or Panel regression). C1 was neutralized by
+  the byte-identical differential against `main` plus the 5 new guard tests and
+  the 9 unchanged auth/validation tests; C2 stays exposed until the browser pass.
 - One reviewable foundation slice; keep tests and docs with the behavior.
 - Do not push, open a PR, or deploy without explicit authorization.
 - Update the index status and evidence after verification.

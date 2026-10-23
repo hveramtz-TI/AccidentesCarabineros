@@ -67,7 +67,7 @@ reviewable. This index is the only source of execution order.
 | Exec | ODD | Idea | Scope | Risk | Cost | Score | Depends on | Status |
 |---|---|---|---|---|---|---|---|---|
 | 00 | [EXP-00 Foundation](./dashboard-expansion-00-foundation.md) | prerequisite | Router, shell, URL state, shared guard, lazy routes | 3 | 3 | 6* | — | in_progress |
-| 01 | [EXP-02 Map table](./dashboard-expansion-02-map-table.md) | #1 Mapas | `/mapas` table replaces KPIs; reuse dashboard | 2 | 2 | 4 | EXP-00 | planned |
+| 01 | [EXP-02 Map table](./dashboard-expansion-02-map-table.md) | #1 Mapas | `/mapas` table replaces KPIs; reuse dashboard | 2 | 2 | 4 | EXP-00 | in_progress |
 | 02 | [EXP-01 Methodology](./dashboard-expansion-01-methodology.md) | #3 Metodología | `/metodologia` + `/api/meta` | 2 | 3 | 5 | EXP-00 | planned |
 | 03 | [EXP-03 Causes](./dashboard-expansion-03-causes.md) | #6 Causas | `/api/analysis` skeleton + all causes | 3 | 3 | 6 | EXP-00 | planned |
 | 04 | [EXP-04 Vehicles](./dashboard-expansion-04-vehicles.md) | #5 Vehículos | Analysis `vehicles` + type×severity | 3 | 3 | 6 | EXP-03 | planned |
@@ -184,3 +184,15 @@ EXP-06 must wait for EXP-00 and EXP-02.
   returned `medium` / `review_due: false` (`under_budget`), so the review slice
   stays open. EXP-00 remains `in_progress` until the manual browser pass
   (back/forward, mobile menu, focus) is done.
+- **2026-10-23 — EXP-02 implemented (`in_progress`):** territory contract
+  verified against the real database (national 16 regions `73081`, `regionId=13`
+  52 comunas `20293`, `regionId=15` 4 `1603`, `communeId=XIII-1` 1 row; the 6
+  zero communes present only in their region scope, `items` excluding zeros while
+  `all` keeps them). `/mapas` built from the extracted `MapExplorer` +
+  `TerritoryTable` + `use-dashboard-workspace`; nav item enabled; lazy chunk
+  6.24 kB. Independent verification (`gentle-ai-verify`, baseline `ecb291c`)
+  returned **0 blockers**, with the Panel extraction proven byte-identical by an
+  SSR differential and request-shape parity confirmed; its two advisories were
+  fixed. Frontend lint + build and backend 36/36 pass. Remaining before closure:
+  the user's browser pass (sorting by mouse/Tab, deep links, 360/768/1280 px,
+  Panel visual parity).
