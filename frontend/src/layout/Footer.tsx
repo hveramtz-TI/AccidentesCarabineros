@@ -1,4 +1,5 @@
 import { ArrowUpRight } from "lucide-react"
+import { Link } from "react-router"
 import gobiernoLogo from "@/assets/LogoGobierno de Chile.svg"
 import CollaborationMark from "./CollaborationMark"
 
@@ -38,6 +39,12 @@ const Footer = () => {
             La visualización no implica respaldo institucional de Carabineros
             de Chile.
           </p>
+          <Link
+            to="/metodologia"
+            className="inline-flex min-h-11 items-center gap-2 rounded-md text-sm text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+          >
+            Metodología
+          </Link>
         </section>
 
         <div className="flex items-center gap-3 lg:justify-self-end">

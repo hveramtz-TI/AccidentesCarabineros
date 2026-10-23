@@ -15,6 +15,7 @@ import Layout from "@/layout/Layout"
 
 // Lazy: a cold section must not enter the Panel chunk.
 const MapsPage = lazy(() => import("@/pages/maps-page"))
+const MethodologyPage = lazy(() => import("@/pages/methodology-page"))
 const NotFoundPage = lazy(() => import("@/pages/not-found-page"))
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
         <Route element={<Layout />}>
           <Route index element={<DashboardPage />} />
           <Route path="mapas" element={<MapsPage />} />
+          <Route path="metodologia" element={<MethodologyPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

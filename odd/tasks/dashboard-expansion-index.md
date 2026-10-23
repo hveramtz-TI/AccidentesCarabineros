@@ -68,7 +68,7 @@ reviewable. This index is the only source of execution order.
 |---|---|---|---|---|---|---|---|---|
 | 00 | [EXP-00 Foundation](./dashboard-expansion-00-foundation.md) | prerequisite | Router, shell, URL state, shared guard, lazy routes | 3 | 3 | 6* | — | in_progress |
 | 01 | [EXP-02 Map table](./dashboard-expansion-02-map-table.md) | #1 Mapas | `/mapas` table replaces KPIs; reuse dashboard | 2 | 2 | 4 | EXP-00 | in_progress |
-| 02 | [EXP-01 Methodology](./dashboard-expansion-01-methodology.md) | #3 Metodología | `/metodologia` + `/api/meta` | 2 | 3 | 5 | EXP-00 | planned |
+| 02 | [EXP-01 Methodology](./dashboard-expansion-01-methodology.md) | #3 Metodología | `/metodologia` + `/api/meta` | 2 | 3 | 5 | EXP-00 | in_progress |
 | 03 | [EXP-03 Causes](./dashboard-expansion-03-causes.md) | #6 Causas | `/api/analysis` skeleton + all causes | 3 | 3 | 6 | EXP-00 | planned |
 | 04 | [EXP-04 Vehicles](./dashboard-expansion-04-vehicles.md) | #5 Vehículos | Analysis `vehicles` + type×severity | 3 | 3 | 6 | EXP-03 | planned |
 | 05 | [EXP-05 Persons](./dashboard-expansion-05-persons.md) | #4 Personas | Analysis `persons` + crosstabs | 3 | 3 | 6 | EXP-03 | planned |
@@ -196,3 +196,18 @@ EXP-06 must wait for EXP-00 and EXP-02.
   fixed. Frontend lint + build and backend 36/36 pass. Remaining before closure:
   the user's browser pass (sorting by mouse/Tab, deep links, 360/768/1280 px,
   Panel visual parity).
+- **2026-10-23 — EXP-02 committed:** `a4d201c` (feat: `/mapas` table + shared
+  workspace) and `15f5935` (docs: refreshed agent instructions). RDD assess over
+  `--base-ref ecb291c --committed-only` re-run after the commits: `medium` /
+  `review_due: false` (`under_budget`, 36 paths / 3.554 changed lines mostly
+  lockfile), so the review slice stays open and no reviewer was launched.
+  `frontend/DESIGN.md` and the two unrelated ODD docs plus the two screenshots
+  were deliberately left out of both commits.
+- **2026-10-23 — EXP-01 implemented (`in_progress`):** `GET /api/meta` added
+  through the shared guard with `private, max-age=300`, one parameterless
+  subselect count query, and seven approved caveats; `/metodologia` page plus
+  footer-only link. Live counts `73081 / 148252 / 130234` match independent SQL;
+  `/api/dashboard` and `/health` unchanged. Backend 42/42 + build, frontend lint
+  + build (methodology chunk 8.29 kB), `/metodologia` served `200` on the compose
+  stack. Independent verification: 0 blockers, two copy advisories fixed, two
+  regression tests added. Remaining: browser pass, then commit.

@@ -5,7 +5,7 @@ Execution order: 02
 Risk: 2/5
 Cost: 3/5
 Depends on: EXP-00
-Status: planned
+Status: in_progress
 
 ## Objective
 
@@ -81,45 +81,93 @@ disclaimers traceable to a single source.
 
 ## Tasks
 
-- [ ] T1 — Define and document the `/api/meta` contract
+- [x] T1 — Define and document the `/api/meta` contract
   - Add the response type to `backend/src/types/` and mirror it in the frontend.
   - Fix field names, ordering, and the exact caveat list before implementation.
   - Record the endpoint in `backend/docs/dashboard-api.md` or a dedicated
     `backend/docs/meta-api.md`.
+  - Evidence: `backend/src/types/meta-api.ts` (`MetaResponse`, `MetaService`,
+    `MetaRepository`), `backend/docs/meta-api.md` (auth, cache policy, exact
+    payload, error codes, and the "Bearer is a request barrier, not user
+    authentication" note), mirrored shape in `frontend/src/lib/api/meta.ts`.
+    Field names and the seven caveats were fixed before implementation.
 
-- [ ] T2 — Implement the service and route
+- [x] T2 — Implement the service and route
   - Add a small service that runs one parameterless count query.
   - Register the route through the shared guard from EXP-00.
   - Return `401` before any query when the Bearer token is missing/invalid.
   - Set `Cache-Control: private, max-age=300` (or the approved public variant).
+  - Evidence: `backend/src/services/meta-service.ts` runs a single
+    parameterless `$queryRaw` with three subselects (`siniestro`, `persona`,
+    `vehiculo`) and converts the BigInt results; `backend/src/routes/meta.ts`
+    registers `/api/meta` through `applyApiGuard`, whose hook runs in
+    `preValidation`. `backend/src/app.ts` wires it with a `metaService`
+    injection seam next to the dashboard one. The guard sets `no-store`, and the
+    handler overwrites it with `private, max-age=300` only on success.
 
-- [ ] T3 — Add backend tests
+- [x] T3 — Add backend tests
   - Missing, invalid, and valid token behavior; service-not-called on rejection.
   - Counts match the verified 2025 baselines.
   - Response shape, caveat list, and cache header.
   - No database details or PII in errors.
+  - Evidence: `backend/src/routes/meta.test.ts`, six tests (auth before service
+    with `state.calls === 0`, shape plus cache header, the seven caveats in
+    order, sanitized failure, fail-closed without `UUID_CONNECTION`, and
+    rejections keeping `no-store`). Added to the explicit file list in
+    `backend/package.json`. `npm test` → 42 tests, 42 pass, 0 fail.
 
-- [ ] T4 — Build the frontend page
+- [x] T4 — Build the frontend page
   - Add `src/lib/api/meta.ts`, `src/hooks/use-meta-query.ts`, and
     `src/pages/MethodologyPage.tsx`.
   - Use the shared `QueryStatus`/error pattern; no synthetic fallback.
   - Render the approved sections with accessible headings and readable copy.
   - Add `/metodologia` to the route tree and enable the footer link.
+  - Evidence: `frontend/src/lib/api/meta.ts` (throws on any non-200, returns no
+    default counts), `frontend/src/hooks/use-meta-query.ts` on `useApiQuery`,
+    `frontend/src/pages/methodology-page.tsx` (Fuente, Cobertura, Universo,
+    Definiciones, Calidad del dato, Caveats, Versionado; every number and caveat
+    comes from the endpoint), lazy `/metodologia` route in `App.tsx`, and a
+    footer-only link in `Footer.tsx` (never the header). The shared
+    `DashboardStatus` gained an optional `subject` prop so its error copy no
+    longer says "del panel" here.
 
-- [ ] T5 — Verify and update the index
+- [ ] T5 — Verify and update the index — data/build checks done, browser pass pending
   - Compare the page counts with independent SQL.
   - Run backend tests/build and frontend lint/build.
   - Record evidence in the index.
+  - Evidence: live `GET /api/meta` returns `73081 / 148252 / 130234` with
+    `private, max-age=300` and 1,010 bytes; independent SQL agrees
+    (`73081|148252|130234`); `/health` and `/api/dashboard` unchanged (dashboard
+    `git diff` empty, KPI values identical); CORS preflight still 204.
+    Independent verification (`gentle-ai-verify`, baseline `15f5935`): **0
+    blockers**, 6 acceptance criteria PASS, two advisories fixed here (the
+    approved `0,3 %` qualifier restored in the caveat and its doc, and the shared
+    error copy), plus the two proposed regression tests added. Backend 42/42 and
+    build clean; frontend lint clean and build clean
+    (`methodology-page-*.js` 8.29 kB / 2.83 kB gzip, main chunk 1,012.33 kB).
+    `docker compose up -d --build frontend` serves `/metodologia` → `200
+    text/html` and its chunk → `200`.
+  - Risk: item 2 (the Bearer barrier and error mapping are shared with the
+    dashboard, so a wiring mistake could open or break a protected route;
+    mitigated by the guard reuse, the auth-before-service tests, and the live
+    valid/missing/wrong/unset-token probes) and item 6 for the page (no frontend
+    test runner).
 
 ## Acceptance criteria
 
-- `GET /api/meta` returns 73,081 / 148,252 / 130,234 for the current dataset.
-- The page shows source, coverage, universe, definitions, quality, caveats, and
-  version without inventing new metrics.
-- The Metodología link is reachable from the footer on desktop and mobile.
-- Missing/invalid Bearer returns `401` before any database work.
-- Loading, error, and retry states are explicit; no synthetic fallback.
-- Backend tests/build and frontend lint/build pass.
+- [x] `GET /api/meta` returns 73,081 / 148,252 / 130,234 for the current dataset
+  (live payload and independent SQL agree; the frontend holds no such literal).
+- [x] The page shows source, coverage, universe, definitions, quality, caveats, and
+  version without inventing new metrics (seven sections, each with an accessible
+  heading; copy traceable to `dashboard-metrics.md`).
+- [x] The Metodología link is reachable from the footer on desktop and mobile — it
+  is a real focusable link in `Footer.tsx`, and neither the header nor the mobile
+  menu gained an entry; the rendered check is part of the browser pass.
+- [x] Missing/invalid Bearer returns `401` before any database work (guard runs in
+  `preValidation`; the test asserts the service was never called), and an unset
+  `UUID_CONNECTION` still fails closed with `500 AUTH_NOT_CONFIGURED`.
+- [x] Loading, error, and retry states are explicit; no synthetic fallback.
+- [x] Backend tests/build and frontend lint/build pass.
 
 ## Checks
 
@@ -152,3 +200,12 @@ EXP-02 (Mapas, order 01) precedes this ODD. After EXP-01, execute EXP-03
 
 - **2026-10-23 — ODD created:** endpoint contract, page sections, caveats, tasks,
   and acceptance defined; implementation not started.
+- **2026-10-23 — T1-T4 implemented and verified:** contract in
+  `backend/docs/meta-api.md`; one subselect count query; `/api/meta` through the
+  shared guard with `private, max-age=300`; six route tests (42/42 backend);
+  `/metodologia` page plus footer link. Independent verification returned 0
+  blockers; its two copy advisories were fixed and its two proposed regression
+  tests added. Live checks: `73081|148252|130234` from the API and from SQL,
+  `/api/dashboard` untouched, `/metodologia` served `200`. Status stays
+  `in_progress` until the browser pass (footer reachability, focus, error/retry,
+  360/768/1280 px).
