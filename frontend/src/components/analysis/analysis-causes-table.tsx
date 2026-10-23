@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { Fragment, useMemo, useState } from "react"
 
 import { Input } from "@/components/ui/input"
 import type { AnalysisCauseRow } from "@/lib/api/analysis"
@@ -11,6 +11,8 @@ interface Props {
   /** Cumulative share per cause, preserved while searching. */
   cumulativeOf: Map<number, number>
   catalogCount: number
+  /** First cause whose cumulative share reaches 80 % (Pareto boundary). */
+  paretoCauseId?: number | null
 }
 
 const COUNT_FORMAT = new Intl.NumberFormat("es-CL")
@@ -31,6 +33,7 @@ export default function AnalysisCausesTable({
   rankOf,
   cumulativeOf,
   catalogCount,
+  paretoCauseId = null,
 }: Props) {
   const [query, setQuery] = useState("")
   const normalizedQuery = normalizeName(query.trim())
@@ -98,21 +101,34 @@ export default function AnalysisCausesTable({
           </thead>
           <tbody>
             {filtered.map((row) => (
-              <tr key={row.causeId} className="border-b border-border/40 last:border-0">
-                <td className="px-3 py-2 font-mono text-xs text-muted-foreground tabular-nums">
-                  {rankOf.get(row.causeId) ?? "—"}
-                </td>
-                <td className="px-3 py-2 text-foreground">{row.name}</td>
-                <td className="px-3 py-2 text-right font-mono tabular-nums">
-                  {COUNT_FORMAT.format(row.accidents)}
-                </td>
-                <td className="px-3 py-2 text-right font-mono tabular-nums">
-                  {SHARE_FORMAT.format(row.share)} %
-                </td>
-                <td className="px-3 py-2 text-right font-mono tabular-nums">
-                  {SHARE_FORMAT.format(cumulativeOf.get(row.causeId) ?? 0)} %
-                </td>
-              </tr>
+              <Fragment key={row.causeId}>
+                <tr className="border-b border-border/40 transition-colors last:border-0 hover:bg-muted/40">
+                  <td className="px-3 py-2 font-mono text-xs text-muted-foreground tabular-nums">
+                    {rankOf.get(row.causeId) ?? "—"}
+                  </td>
+                  <td className="px-3 py-2 text-foreground">{row.name}</td>
+                  <td className="px-3 py-2 text-right font-mono tabular-nums">
+                    {COUNT_FORMAT.format(row.accidents)}
+                  </td>
+                  <td className="px-3 py-2 text-right font-mono tabular-nums">
+                    {SHARE_FORMAT.format(row.share)} %
+                  </td>
+                  <td className="px-3 py-2 text-right font-mono tabular-nums">
+                    {SHARE_FORMAT.format(cumulativeOf.get(row.causeId) ?? 0)} %
+                  </td>
+                </tr>
+                {paretoCauseId !== null && row.causeId === paretoCauseId ? (
+                  <tr aria-label="Línea del 80 % acumulado" className="text-xs">
+                    <td
+                      colSpan={5}
+                      className="border-b-2 border-chart-1/60 px-3 py-1 font-mono text-right text-chart-1 tabular-nums"
+                    >
+                      ↑ Estas causas concentran el 80 % de los siniestros del
+                      alcance; el resto es la cola larga.
+                    </td>
+                  </tr>
+                ) : null}
+              </Fragment>
             ))}
           </tbody>
         </table>

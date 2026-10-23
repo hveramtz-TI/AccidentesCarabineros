@@ -216,4 +216,19 @@ EXP-07 (Tendencias, order 07) is the final feature and also extends `/api/analys
   regression tests added) and declared the missing `statement_timeout` as a gap
   instead of claiming it. Status stays `in_progress` until the browser pass
   (redirect, disabled tabs, search accents, keyboard sorting, 360 px).
+- **2026-10-23 — Visual review applied (items 1-4):** after a code-level design
+  review of the Causas tab: (1) the loading skeleton now mirrors the real page
+  (summary + bars + table blocks) instead of three cards, removing the large
+  layout jump on resolve; (2) the Top-10 section is not drawn at all for an
+  empty scope — its old `No hay siniestros...` paragraph duplicated the shared
+  `DashboardStatus` notice; (3) table rows gained `hover:bg-muted/40` so the eye
+  can track a wrapped cause name to its numbers; (4) a Pareto boundary row marks
+  where the cumulative share first reaches 80 % — nationally that is row 10
+  (`80.1 %` at `SEÑALIZACION, DESOBEDECER SEÑAL CEDA EL PASO`), which turns the
+  long-tail argument into something visible. The marker inherits the rank/cum
+  honesty rule: it is positioned by the full API order and disappears when the
+  search hides the boundary row rather than misleading about a subset. Items 5
+  (bar scaling by share) and 6 (capitalized display names) stay open decisions.
+  `npm run lint` and `npm run build` pass (`analysis-causes-page` 14.10 kB /
+  4.64 kB gzip); container rebuilt, chunk confirmed as `application/javascript`.
 

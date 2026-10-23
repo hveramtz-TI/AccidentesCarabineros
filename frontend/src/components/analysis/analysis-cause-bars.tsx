@@ -18,14 +18,9 @@ const SHARE_FORMAT = new Intl.NumberFormat("es-CL", {
  * and share in text.
  */
 export default function AnalysisCauseBars({ rows, totalAccidents }: Props) {
-  if (totalAccidents === 0) {
-    return (
-      <p role="status" className="text-sm text-muted-foreground">
-        No hay siniestros en el alcance seleccionado; las {rows.length} causas
-        visibles se muestran con 0.
-      </p>
-    )
-  }
+  // Defensive: an empty scope has no meaningful bars and the layout already
+  // announces it through DashboardStatus, so this section is simply not drawn.
+  if (totalAccidents === 0) return null
 
   const max = rows[0]?.accidents ?? 0
 

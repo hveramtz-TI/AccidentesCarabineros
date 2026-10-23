@@ -23,6 +23,19 @@ interface DerivedCauses {
   topTen: AnalysisCauseRow[]
   rankOf: Map<number, number>
   cumulativeOf: Map<number, number>
+  /** First cause whose cumulative share reaches 80 % (the Pareto boundary). */
+  paretoCauseId: number | null
+}
+
+/** Boundary between the vital few and the long tail, in the API's own order. */
+function buildParetoBoundary(
+  rows: AnalysisCauseRow[],
+  cumulativeOf: Map<number, number>,
+): number | null {
+  for (const row of rows) {
+    if ((cumulativeOf.get(row.causeId) ?? 0) >= 80) return row.causeId
+  }
+  return null
 }
 
 function buildRank(rows: AnalysisCauseRow[]): Map<number, number> {
@@ -48,10 +61,32 @@ function buildCumulative(rows: AnalysisCauseRow[], totalAccidents: number): Map<
 
 function CausesSkeleton() {
   return (
-    <div role="status" aria-label="Cargando causas" className="grid gap-3 sm:grid-cols-3">
-      {[0, 1, 2].map((card) => (
-        <div key={card} className="glass-card h-24 animate-pulse rounded-lg bg-muted" />
-      ))}
+    <div role="status" aria-label="Cargando causas" className="flex min-w-0 flex-col gap-4">
+      <div className="grid gap-3 sm:grid-cols-3">
+        {[0, 1, 2].map((card) => (
+          <div key={card} className="glass-card h-24 animate-pulse rounded-lg bg-muted" />
+        ))}
+      </div>
+      <div className="glass-card rounded-lg p-4 md:p-5">
+        <div className="h-4 w-40 animate-pulse rounded bg-muted" />
+        <div className="mt-4 space-y-3">
+          {[0, 1, 2, 3, 4].map((row) => (
+            <div key={row} className="space-y-1">
+              <div className="h-3 w-full animate-pulse rounded bg-muted" />
+              <div className="h-2 w-full animate-pulse rounded-full bg-muted/70" />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="glass-card rounded-lg p-4 md:p-5">
+        <div className="h-4 w-48 animate-pulse rounded bg-muted" />
+        <div className="mt-4 h-9 w-full max-w-sm animate-pulse rounded bg-muted" />
+        <div className="mt-3 space-y-2">
+          {[0, 1, 2, 3, 4, 5].map((row) => (
+            <div key={row} className="h-8 w-full animate-pulse rounded bg-muted" />
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
@@ -63,6 +98,7 @@ export default function AnalysisCausesPage() {
     if (!data) return null
     const rows = data.causes.rows
     const totalAccidents = data.causes.totalAccidents
+    const cumulative = buildCumulative(rows, totalAccidents)
     return {
       rows,
       totalAccidents,
@@ -70,7 +106,8 @@ export default function AnalysisCausesPage() {
       leadingCause: totalAccidents > 0 ? (rows[0] ?? null) : null,
       topTen: rows.slice(0, 10),
       rankOf: buildRank(rows),
-      cumulativeOf: buildCumulative(rows, totalAccidents),
+      cumulativeOf: cumulative,
+      paretoCauseId: buildParetoBoundary(rows, cumulative),
     }
   }, [data])
 
@@ -87,21 +124,23 @@ export default function AnalysisCausesPage() {
         leadingCause={derived.leadingCause}
       />
 
-      <section
-        aria-labelledby="analysis-top-causes"
-        className="glass-card rounded-lg p-4 md:p-5"
-      >
-        <h2
-          id="analysis-top-causes"
-          className="font-heading text-base font-semibold text-foreground"
+      {derived.totalAccidents > 0 ? (
+        <section
+          aria-labelledby="analysis-top-causes"
+          className="glass-card rounded-lg p-4 md:p-5"
         >
-          Causas principales
-        </h2>
-        <p className="mb-4 mt-1 text-xs text-muted-foreground">
-          Top 10 por siniestros; cada barra se escala sobre la causa principal.
-        </p>
-        <AnalysisCauseBars rows={derived.topTen} totalAccidents={derived.totalAccidents} />
-      </section>
+          <h2
+            id="analysis-top-causes"
+            className="font-heading text-base font-semibold text-foreground"
+          >
+            Causas principales
+          </h2>
+          <p className="mb-4 mt-1 text-xs text-muted-foreground">
+            Top 10 por siniestros; cada barra se escala sobre la causa principal.
+          </p>
+          <AnalysisCauseBars rows={derived.topTen} totalAccidents={derived.totalAccidents} />
+        </section>
+      ) : null}
 
       <section aria-labelledby="analysis-all-causes" className="min-w-0">
         <h2
@@ -120,6 +159,7 @@ export default function AnalysisCausesPage() {
           rankOf={derived.rankOf}
           cumulativeOf={derived.cumulativeOf}
           catalogCount={derived.rows.length}
+          paretoCauseId={derived.paretoCauseId}
         />
       </section>
     </div>
