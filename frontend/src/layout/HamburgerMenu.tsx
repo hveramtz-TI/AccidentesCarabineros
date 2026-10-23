@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { NavLink } from "react-router"
 import { Menu, X } from "lucide-react"
 
 import type { NavigationItem } from "./Header"
@@ -9,6 +10,9 @@ interface Props {
 
 const ICON_BUTTON_CLASS =
   "inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md border border-border text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+
+const MOBILE_LINK_CLASS =
+  "flex min-h-12 items-center gap-3 py-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
 
 export default function HamburgerMenu({ navigation }: Props) {
   const [isOpen, setIsOpen] = useState(false)
@@ -39,6 +43,14 @@ export default function HamburgerMenu({ navigation }: Props) {
       document.removeEventListener("pointerdown", handlePointerDown)
     }
   }, [isOpen])
+
+  /**
+   * Navigation closes the sheet first; focus then follows the route effect to
+   * the new page heading instead of staying on a hidden trigger.
+   */
+  function handleNavigate() {
+    setIsOpen(false)
+  }
 
   return (
     <div ref={rootRef} className="w-full">
@@ -73,16 +85,17 @@ export default function HamburgerMenu({ navigation }: Props) {
 
             return (
               <li key={item.label}>
-                {item.active ? (
-                  <a
-                    href="/"
-                    aria-current="page"
-                    onClick={() => setIsOpen(false)}
-                    className="flex min-h-12 items-center gap-3 py-3 text-sm font-medium text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                {item.enabled ? (
+                  <NavLink
+                    to={item.to}
+                    onClick={handleNavigate}
+                    className={({ isActive }) =>
+                      `${MOBILE_LINK_CLASS} ${isActive ? "text-primary" : "text-foreground"}`
+                    }
                   >
                     <Icon aria-hidden="true" size={18} />
                     {item.label}
-                  </a>
+                  </NavLink>
                 ) : (
                   <button
                     type="button"

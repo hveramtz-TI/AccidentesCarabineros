@@ -33,7 +33,9 @@ export default function DashboardView({ query, filters, onFiltersChange, regionS
       <section aria-labelledby="dashboard-overview-title" className="min-w-0">
         <h2
           id="dashboard-overview-title"
-          className="mb-4 border-b border-border/70 pb-3 font-heading text-lg font-semibold text-foreground"
+          data-page-heading
+          tabIndex={-1}
+          className="mb-4 border-b border-border/70 pb-3 font-heading text-lg font-semibold text-foreground outline-none"
         >
           Mapa e indicadores
         </h2>

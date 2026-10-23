@@ -5,7 +5,7 @@ Execution order: 00
 Risk: 3/5
 Cost: 3/5
 Depends on: none
-Status: planned
+Status: in_progress
 
 ## Objective
 
@@ -92,15 +92,19 @@ shared hook) that must not be split into test/code/docs writers. Work-unit
 commits: C1 backend guard, C2 frontend routing foundation, C3 SPA fallback +
 docs evidence.
 
-- [ ] T1 — Add the router dependency and route tree — route: inline — commit C2
+- [x] T1 — Add the router dependency and route tree — route: inline — commit C2
   - Add `react-router` to `frontend/package.json` and install it.
   - Create `frontend/src/pages/DashboardPage.tsx` from the current `App.tsx`
     composition; keep the existing `Layout` behavior.
   - Register `/` and a catch-all 404 route. Provide the composition point later
     ODDs extend.
   - Verify React 19 compatibility through the production build.
+  - Evidence: `react-router@7.18.4`; `frontend/src/pages/dashboard-page.tsx`
+    carries the old `App.tsx` composition; `/` eager + `*` lazy inside
+    `<Layout />`; `tsc -b && vite build` passes (2795 modules) and
+    `vite preview` serves `/` with `200`.
 
-- [ ] T2 — Convert the shell and navigation
+- [x] T2 — Convert the shell and navigation — route: inline — commit C2
   - Change `NavigationItem` to carry `to` and `enabled`; derive active state
     from `NavLink`.
   - Update `Header` and `HamburgerMenu`; close the mobile sheet after a link.
@@ -108,8 +112,12 @@ docs evidence.
     add Metodología to the header.
   - Preserve `aria-current`, focus rings, 44px targets, and the existing label
     copy.
+  - Evidence: `Layout.tsx` renders `<Outlet />` and declares Panel enabled,
+    Mapas/Análisis/Informes disabled; `Header`/`HamburgerMenu` use `NavLink`
+    (its own `aria-current="page"`) for enabled items and keep the disabled
+    “(Próximamente)” button; mobile links close the sheet on click.
 
-- [ ] T3 — Move filters into the URL
+- [x] T3 — Move filters into the URL — route: inline — commit C2
   - Add a small `filters-url` module that parses and serializes
     `period`, `region`, and `commune`.
   - Validate region/commune against the canonical catalog; reject unknown values
@@ -118,14 +126,28 @@ docs evidence.
     normalized to that commune’s parent before the API query.
   - Migrate Panel to URL state; keep `filtersToQueryParams` as the API mapper.
   - Verify deep links, refresh, back/forward, and browser history.
+  - Evidence (`frontend/src/lib/filters-url.ts`, run through `tsx`):
+    `?period=q3&region=XIII` → `{from:2025-07-01,to:2025-09-30,regionId:13}`;
+    `?commune=XV-2` → `{communeId:"XV-2"}`;
+    `?region=IX&commune=XIII-1` → commune wins → `{communeId:"XIII-1"}`;
+    `?period=nope&region=XX-99` and `?commune=ZZ-9` → national defaults.
+    Serialization drops defaults, so the bare URL stays clean.
+    Browser back/forward/refresh behavior is code-reviewed only: no browser or
+    frontend test runner exists in this environment.
 
-- [ ] T4 — Add route resilience
+- [x] T4 — Add route resilience — route: inline — commit C2
   - Lazy-load pages that are not the initial route (starting with future pages).
   - Add a Suspense skeleton and a route error boundary with a retry/home action.
   - Restore scroll and focus the page heading after navigation.
   - Set a document title per route.
+  - Evidence: `/` stays eager and `*` is `React.lazy` behind one Suspense
+    skeleton (`frontend/src/App.tsx`); `routes/route-error-boundary.tsx` wraps
+    the outlet in `Layout`, keyed by pathname, with Reintentar/Volver al panel;
+    `hooks/use-page-effects.ts` sets the title and restores scroll / focuses
+    `[data-page-heading]` (Panel `h2`, 404 `h1`), and ignores search-param
+    changes so filter edits never jump the viewport.
 
-- [ ] T5 — Extract the shared backend API guard
+- [x] T5 — Extract the shared backend API guard — route: inline — commit 6737386
   - Create `backend/src/routes/api-guard.ts` (or an equivalent single module)
     exporting the Bearer hook, `no-store` header, error handler, and base filter
     schema/validator.
@@ -134,37 +156,77 @@ docs evidence.
   - Add/adjust `node:test` coverage so a missing/invalid token still prevents
     service calls and validation behavior is unchanged.
   - Do not change the dashboard service or its query count.
+  - Evidence: `routes/api-guard.ts` (`applyApiGuard`, `baseFilterSchema`,
+    `createApiGuardError`); `dashboardRoutes` registers through it with
+    `internalMessage: "dashboard query failed"`. 5 new guard tests plus the 9
+    existing auth/validation tests pass (36 total), `tsc` clean. Differential
+    check against `main`: a baseline server on `:8081` and the refactored server
+    on `:8080` returned byte-identical output for `/health`, no-token 401,
+    wrong-token 401, out-of-range 400 with `details`, preflight 204 with the
+    allowlist headers, and a disallowed origin (no `access-control-allow-origin`,
+    `cache-control: no-store`).
 
-- [ ] T6 — Add the shared query hook
+- [x] T6 — Add the shared query hook — route: inline — commit C2
   - Add an abortable `useApiQuery<T>` with explicit loading/error/data states.
   - Reimplement `useDashboardQuery` on top of it without changing its public
     shape.
   - Confirm the map’s quiet national query still aborts correctly.
+  - Evidence: `hooks/use-api-query.ts` keys the effect on a primitive request
+    identity and aborts on change/unmount; `useDashboardQuery(params, enabled)`
+    keeps its exact signature and `{status,data,error,retry}` shape. The map
+    query stays quiet with `enabled=false` while no territory filter is active
+    (same gate as before).
 
-- [ ] T7 — Configure the SPA fallback
+- [x] T7 — Configure the SPA fallback — route: inline — commit C2
   - Confirm the static host used for the frontend.
   - If it supports `_redirects`, add `frontend/public/_redirects` with
     `/* /index.html 200`; otherwise document the equivalent rewrite.
   - Verify that refreshing a deep link does not 404.
+  - Evidence: `README.md` and `AGENTS.md` both name Cloudflare Pages as the
+    production frontend, so `frontend/public/_redirects` adds
+    `/*  /index.html  200`; the local nginx image already had
+    `try_files $uri $uri/ /index.html`. `vite preview` returns `200` with the
+    app shell for `/mapas` and `/ruta-inexistente`, so a refresh on a client
+    route does not 404.
 
-- [ ] T8 — Verify and update the index
+- [x] T8 — Verify and update the index — route: inline — evidence below
   - Run frontend lint/build and backend test/build.
   - Smoke the Panel, deep links, back/forward, mobile menu, and focus behavior.
   - Record evidence in the index and enable no feature items yet.
+  - Evidence: `cd frontend && npm run lint` clean; `npm run build` = 2795 modules,
+    `index-*.js` 1,010.71 kB (317.43 kB gzip) vs `main` baseline 964.75 kB
+    (300.82 kB gzip) → router cost ≈ +46 kB raw / +16.6 kB gzip, and
+    `not-found-page-*.js` is a separate 1.26 kB lazy chunk. `cd backend &&
+    npm test` = 36/36 pass; `npm run build` clean. `curl` smoke against the
+    running refactored server: `/health` 200, no/wrong Bearer 401 with
+    `no-store`, out-of-2025 `from` 400 with `details`, preflight 204 with the
+    allowlist headers, disallowed origin without CORS headers. `vite preview`
+    served `/`, `/mapas` and `/ruta-inexistente` as `200` with the app shell and
+    `dist/_redirects` present.
+  - **Pending (no browser in this environment):** visual Panel comparison, real
+    back/forward, mobile menu close, and keyboard focus must be eyeballed once
+    with `cd frontend && npm run dev`.
 
 ## Acceptance criteria
 
-- `/` renders the Panel with the same layout, data, filters, and states as before.
-- A deep link such as `/?period=q3&region=XIII` loads the correct filters and
-  survives a page refresh.
-- Back/forward and nav links preserve or restore filters correctly.
-- Mapas, Análisis, and Informes remain disabled; Metodología is not added to the
+- [/] `/` renders the Panel with the same layout, data, filters, and states as before
+  — composition moved untouched into `pages/dashboard-page.tsx`; visual
+  confirmation pending a browser pass.
+- [/] A deep link such as `/?period=q3&region=XIII` loads the correct filters and
+  survives a page refresh — parse → API params verified (`regionId:13`,
+  `2025-07-01..2025-09-30`) and refreshing a client path returns the app shell;
+  the rendered selection itself belongs to the pending browser pass.
+- [ ] Back/forward and nav links preserve or restore filters correctly — every
+  filter change pushes a history entry; not exercised in a real browser yet.
+- [x] Mapas, Análisis, and Informes remain disabled; Metodología is not added to the
   header (EXP-01 adds the footer link).
-- Mobile navigation closes after a link and returns focus to a sensible target.
-- `GET /api/dashboard` keeps its contract, `no-store`, 401/400 behavior, and
-  query count.
-- No new page content, endpoint, schema change, or remote configuration is added.
-- `cd frontend && npm run lint && npm run build` and
+- [ ] Mobile navigation closes after a link and returns focus to a sensible
+  target — `HamburgerMenu` closes on `NavLink` click; browser pass pending.
+- [x] `GET /api/dashboard` keeps its contract, `no-store`, 401/400 behavior, and
+  query count — responses byte-identical to `main`; the service was not touched.
+- [x] No new page content, endpoint, schema change, or remote configuration is
+  added.
+- [x] `cd frontend && npm run lint && npm run build` and
   `cd backend && npm test && npm run build` pass.
 
 ## Checks
@@ -204,3 +266,13 @@ guard are stable, but remains order 03 in the ranked backlog.
 
 - **2026-10-23 — ODD created:** scope, risk, cost, tasks, and acceptance defined;
   implementation not started.
+- **2026-10-23 — T5 delivered (`6737386`):** shared `applyApiGuard` /
+  `baseFilterSchema` / `createApiGuardError` extracted; `dashboardRoutes`
+  registers through it. 36 backend tests pass, `tsc` clean, and a live
+  differential run against `main` produced byte-identical responses.
+- **2026-10-23 — T1-T4, T6, T7 delivered (C2):** `react-router@7.18.4` route
+  tree, `Layout` shell with `<Outlet />` and the enabled/disabled nav table,
+  URL-backed filters (`lib/filters-url.ts`), lazy 404 + Suspense skeleton +
+  route error boundary + `usePageEffects`, shared `useApiQuery`, and
+  `public/_redirects`. Frontend lint/build and backend test/build pass; three
+  acceptance items stay open until a browser pass (no browser available here).

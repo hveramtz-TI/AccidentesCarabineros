@@ -1,56 +1,50 @@
-import { useMemo, useState } from "react"
-import DashboardView from "@/components/dashboard/dashboard-view"
-import { useDashboardQuery } from "@/hooks/use-dashboard-query"
-import { filtersToQueryParams } from "@/lib/dashboard-query"
+/**
+ * Route tree (EXP-00 T1/T4).
+ *
+ * `/` stays the eager Panel so the first paint and the existing bundle cost do
+ * not regress; anything that is not the initial route is lazy-loaded behind one
+ * Suspense fallback, and `*` lands on a real 404 page inside the shell instead
+ * of a blank screen. Later ODDs add their own `<Route>` here and enable their
+ * own navigation item in `layout/Layout.tsx`.
+ */
+
+import { Suspense, lazy } from "react"
+import { BrowserRouter, Route, Routes } from "react-router"
+
+import DashboardPage from "@/pages/dashboard-page"
 import Layout from "@/layout/Layout"
-import { ALL_VALUE } from "@/types/dashboard"
-import type { DashboardFilters, RegionSeriesState } from "@/types/dashboard"
+
+// Lazy: a cold 404 or a later section must not enter the Panel chunk.
+const NotFoundPage = lazy(() => import("@/pages/not-found-page"))
+
+function RouteFallback() {
+  return (
+    <div className="flex w-full flex-col gap-4 p-4 md:p-10">
+      <div role="status" aria-label="Cargando página" className="min-w-0">
+        <div className="h-8 w-64 animate-pulse rounded bg-muted" />
+        <div className="mt-6 h-[60dvh] w-full animate-pulse rounded bg-muted lg:h-96" />
+      </div>
+    </div>
+  )
+}
 
 function App() {
-  const [filters, setFilters] = useState<DashboardFilters>({
-    period: "all",
-    region: ALL_VALUE,
-    commune: ALL_VALUE,
-  })
-
-  const params = useMemo(() => filtersToQueryParams(filters), [filters])
-  const query = useDashboardQuery(params)
-
-  // The choropleth always shows the national series for the active period
-  // (S3/S4). While no territory filter narrows the main response it already
-  // carries that series, so no second request is made; with a region/commune
-  // selected a quiet national query feeds the map colors only.
-  const territoryFilterActive = filters.region !== ALL_VALUE || filters.commune !== ALL_VALUE
-  const mapParams = useMemo(
-    () => filtersToQueryParams({ period: filters.period, region: ALL_VALUE, commune: ALL_VALUE }),
-    [filters.period],
-  )
-  const mapQuery = useDashboardQuery(mapParams, territoryFilterActive)
-  const seriesQuery = territoryFilterActive ? mapQuery : query
-  const regionSeries = seriesQuery.data?.territories.all ?? null
-  // Honest state machine (ODD T1): loading, error, a response without
-  // territories.all (older deployment), and a loaded series never collapse
-  // into one another — "no data for this period" only means a loaded series
-  // that genuinely lacks the region row.
-  const regionSeriesState: RegionSeriesState =
-    seriesQuery.status === "loading" && !seriesQuery.data
-      ? "loading"
-      : seriesQuery.status === "error"
-        ? "error"
-        : seriesQuery.data?.territories.all
-          ? "ready"
-          : "missing-series"
-
   return (
-    <Layout>
-      <DashboardView
-        query={query}
-        filters={filters}
-        onFiltersChange={setFilters}
-        regionSeries={regionSeries}
-        regionSeriesState={regionSeriesState}
-      />
-    </Layout>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route index element={<DashboardPage />} />
+          <Route
+            path="*"
+            element={
+              <Suspense fallback={<RouteFallback />}>
+                <NotFoundPage />
+              </Suspense>
+            }
+          />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   )
 }
 

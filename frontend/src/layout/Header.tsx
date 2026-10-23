@@ -1,13 +1,20 @@
 import type { LucideIcon } from "lucide-react"
+import { NavLink } from "react-router"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import CollaborationMark from "./CollaborationMark"
 import HamburgerMenu from "./HamburgerMenu"
 
+/**
+ * `to` is the routed destination and `enabled` says whether that route exists
+ * yet. Disabled items keep the “(Próximamente)” pattern instead of linking to a
+ * page that would only 404.
+ */
 export interface NavigationItem {
   label: string
   icon: LucideIcon
-  active: boolean
+  to: string
+  enabled: boolean
 }
 
 interface Props {
@@ -16,6 +23,9 @@ interface Props {
 
 const NAV_ITEM_CLASS =
   "inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+
+const NAV_ACTIVE_CLASS = "bg-primary/10 text-primary hover:bg-primary/15"
+const NAV_INACTIVE_CLASS = "text-muted-foreground hover:bg-muted hover:text-foreground"
 
 const Header = ({ navigation }: Props) => {
   const isMobile = useIsMobile()
@@ -51,15 +61,16 @@ const Header = ({ navigation }: Props) => {
 
                   return (
                     <li key={item.label} className="min-w-0">
-                      {item.active ? (
-                        <a
-                          href="/"
-                          aria-current="page"
-                          className={`${NAV_ITEM_CLASS} bg-primary/10 text-primary hover:bg-primary/15`}
+                      {item.enabled ? (
+                        <NavLink
+                          to={item.to}
+                          className={({ isActive }) =>
+                            `${NAV_ITEM_CLASS} ${isActive ? NAV_ACTIVE_CLASS : NAV_INACTIVE_CLASS}`
+                          }
                         >
                           <Icon aria-hidden="true" size={16} />
                           {item.label}
-                        </a>
+                        </NavLink>
                       ) : (
                         <button
                           type="button"

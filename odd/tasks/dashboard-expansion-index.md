@@ -66,7 +66,7 @@ reviewable. This index is the only source of execution order.
 
 | Exec | ODD | Idea | Scope | Risk | Cost | Score | Depends on | Status |
 |---|---|---|---|---|---|---|---|---|
-| 00 | [EXP-00 Foundation](./dashboard-expansion-00-foundation.md) | prerequisite | Router, shell, URL state, shared guard, lazy routes | 3 | 3 | 6* | — | planned |
+| 00 | [EXP-00 Foundation](./dashboard-expansion-00-foundation.md) | prerequisite | Router, shell, URL state, shared guard, lazy routes | 3 | 3 | 6* | — | in_progress |
 | 01 | [EXP-02 Map table](./dashboard-expansion-02-map-table.md) | #1 Mapas | `/mapas` table replaces KPIs; reuse dashboard | 2 | 2 | 4 | EXP-00 | planned |
 | 02 | [EXP-01 Methodology](./dashboard-expansion-01-methodology.md) | #3 Metodología | `/metodologia` + `/api/meta` | 2 | 3 | 5 | EXP-00 | planned |
 | 03 | [EXP-03 Causes](./dashboard-expansion-03-causes.md) | #6 Causas | `/api/analysis` skeleton + all causes | 3 | 3 | 6 | EXP-00 | planned |
@@ -176,3 +176,8 @@ EXP-06 must wait for EXP-00 and EXP-02.
   objective, current state, scope, out-of-scope, constraints, tasks, acceptance,
   checks, decision gates, delivery, next step, and progress. Status remains
   `planned`; implementation has not started.
+- **2026-10-23 — EXP-00 in progress:** T5 shared backend guard committed
+  (`6737386`) with byte-identical responses against `main`; T1-T4/T6/T7
+  (router tree, shell, URL filters, lazy 404 + error boundary, `useApiQuery`,
+  `_redirects`) implemented and verified by backend 36/36 + build and frontend
+  lint + build. The manual browser pass and the C2 commit are outstanding.
