@@ -86,7 +86,7 @@ const Footer = () => {
         </section>
 
         <div className="flex items-center gap-3 lg:justify-self-end">
-          <CollaborationMark compact />
+          <CollaborationMark compact={false} />
           <div>
             <p className="font-heading text-sm font-semibold text-foreground">
               Siniestros viales de Chile

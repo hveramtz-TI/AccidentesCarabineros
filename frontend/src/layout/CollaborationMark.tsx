@@ -6,7 +6,7 @@ interface Props {
 }
 
 export default function CollaborationMark({ compact = false }: Props) {
-  const imageHeight = compact ? "h-6" : "h-8"
+  const imageHeight = compact ? "h-6" : "h-10"
 
   return (
     <span
