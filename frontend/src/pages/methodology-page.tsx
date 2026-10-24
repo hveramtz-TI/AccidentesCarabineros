@@ -11,7 +11,7 @@ import type { ReactNode } from "react"
 
 import DashboardStatus from "@/components/dashboard/dashboard-status"
 import { useMetaQuery } from "@/hooks/use-meta-query"
-import { pageTitle, usePageEffects } from "@/hooks/use-page-effects"
+import { usePageMeta } from "@/hooks/use-page-meta"
 
 const DATE_FORMAT = new Intl.DateTimeFormat("es-CL", { dateStyle: "long", timeZone: "UTC" })
 const DATE_TIME_FORMAT = new Intl.DateTimeFormat("es-CL", {
@@ -66,7 +66,7 @@ function MethodologySkeleton() {
 }
 
 export default function MethodologyPage() {
-  usePageEffects(pageTitle("Metodología"))
+  usePageMeta("methodology")
 
   const meta = useMetaQuery()
   const data = meta.data

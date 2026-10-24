@@ -7,10 +7,10 @@
 
 import { Link } from "react-router"
 
-import { pageTitle, usePageEffects } from "@/hooks/use-page-effects"
+import { usePageMeta } from "@/hooks/use-page-meta"
 
 export default function NotFoundPage() {
-  usePageEffects(pageTitle("Página no encontrada"))
+  usePageMeta("not-found")
 
   return (
     <div className="flex w-full flex-col gap-4 p-4 md:p-10">

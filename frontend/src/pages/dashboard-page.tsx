@@ -9,13 +9,14 @@
 
 import DashboardView from "@/components/dashboard/dashboard-view"
 import { useDashboardWorkspace } from "@/hooks/use-dashboard-workspace"
-import { usePageEffects, pageTitle } from "@/hooks/use-page-effects"
+import { usePageMeta } from "@/hooks/use-page-meta"
 import { useUrlFilters } from "@/hooks/use-url-filters"
+import { hasActiveFilters } from "@/lib/filters-url"
 
 export default function DashboardPage() {
-  usePageEffects(pageTitle())
-
   const [filters, setFilters] = useUrlFilters()
+  usePageMeta("home", { filtered: hasActiveFilters(filters) })
+
   const { query, regionSeries, regionSeriesState } = useDashboardWorkspace(filters)
 
   return (

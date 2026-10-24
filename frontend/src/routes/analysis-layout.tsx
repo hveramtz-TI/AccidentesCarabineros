@@ -12,12 +12,14 @@ import { NavLink, Outlet, useLocation } from "react-router"
 
 import DashboardFiltersBar from "@/components/dashboard/dashboard-filters"
 import DashboardStatus from "@/components/dashboard/dashboard-status"
+import routeMeta from "@/data/route-meta.json"
 import { useAnalysisQuery } from "@/hooks/use-analysis-query"
-import { pageTitle, usePageEffects } from "@/hooks/use-page-effects"
+import { usePageMeta, type RouteMetaKey } from "@/hooks/use-page-meta"
 import { useUrlFilters } from "@/hooks/use-url-filters"
 import type { AnalysisApiResponse } from "@/lib/api/analysis"
 import { filtersToQueryParams } from "@/lib/dashboard-query"
 import { periodOptions, regions } from "@/lib/data"
+import { hasActiveFilters } from "@/lib/filters-url"
 import { ALL_VALUE } from "@/types/dashboard"
 
 export interface AnalysisOutletContext {
@@ -47,6 +49,23 @@ const TAB_ACTIVE = "border-primary/40 bg-primary/10 text-primary"
 const TAB_INACTIVE = "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
 const TAB_DISABLED = "cursor-not-allowed border-border/60 text-muted-foreground/60"
 
+/**
+ * Each tab owns its own metadata (title, description, canonical, H1) so the
+ * search result matches the content the user lands on. Unknown or bare
+ * `/analisis` paths fall back to Causas, the canonical entry point.
+ */
+const TAB_ROUTE_KEYS: Record<string, RouteMetaKey> = {
+  causas: "analysis-causes",
+  vehiculos: "analysis-vehicles",
+  personas: "analysis-persons",
+  tendencias: "analysis-trends",
+}
+
+function analysisRouteKey(pathname: string): RouteMetaKey {
+  const segment = pathname.split("/").filter(Boolean).at(-1)
+  return segment ? (TAB_ROUTE_KEYS[segment] ?? "analysis-causes") : "analysis-causes"
+}
+
 function scopeLabel(region: string, commune: string): string {
   if (commune !== ALL_VALUE) {
     for (const entry of regions) {
@@ -62,10 +81,13 @@ function scopeLabel(region: string, commune: string): string {
 }
 
 export default function AnalysisLayout() {
-  usePageEffects(pageTitle("Análisis"))
-
   const location = useLocation()
   const [filters, setFilters] = useUrlFilters()
+  const routeKey = analysisRouteKey(location.pathname)
+  const pageMeta = routeMeta.routes[routeKey]
+
+  usePageMeta(routeKey, { filtered: hasActiveFilters(filters) })
+
   const params = useMemo(() => filtersToQueryParams(filters), [filters])
   const query = useAnalysisQuery(params)
   const data = query.data
@@ -94,12 +116,10 @@ export default function AnalysisLayout() {
           tabIndex={-1}
           className="mb-3 border-b border-border/70 pb-3 font-heading text-lg font-semibold text-foreground outline-none"
         >
-          Análisis de siniestros
+          {pageMeta.h1}
         </h1>
         <p className="max-w-prose text-sm leading-6 text-muted-foreground">
-          Detalle completo de las causas, los tipos de vehículo y las personas
-          involucradas en los siniestros viales del alcance seleccionado,
-          incluida la cola larga que no aparece en el Top 10.
+          {pageMeta.intro}
         </p>
       </header>
 

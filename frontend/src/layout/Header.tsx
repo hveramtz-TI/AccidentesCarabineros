@@ -45,9 +45,9 @@ const Header = ({ navigation }: Props) => {
             <div className="flex min-w-0 items-center gap-3">
               <CollaborationMark />
               <div className="flex min-w-0 flex-col justify-center">
-                <h1 className="truncate font-heading text-sm font-semibold leading-tight text-foreground">
+                <p className="truncate font-heading text-sm font-semibold leading-tight text-foreground">
                   Siniestros viales de Chile
-                </h1>
+                </p>
                 <span className="metric-label truncate">
                   Análisis de siniestros viales
                 </span>

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://accidentescarabineros.hveramtz-inf.workers.dev/sitemap.xml

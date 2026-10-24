@@ -14,8 +14,9 @@ import ReportActions from "@/components/reports/report-actions"
 import ReportHeader from "@/components/reports/report-header"
 import ReportKpiSummary from "@/components/reports/report-kpi-summary"
 import ReportTerritoryPreviewTable from "@/components/reports/report-territory-preview-table"
-import { pageTitle, usePageEffects } from "@/hooks/use-page-effects"
+import { usePageMeta } from "@/hooks/use-page-meta"
 import { useReportsPage } from "@/hooks/use-reports-page"
+import { hasActiveFilters } from "@/lib/filters-url"
 
 function ReportsSkeleton() {
   return (
@@ -32,10 +33,10 @@ function ReportsSkeleton() {
 }
 
 export default function ReportsPage() {
-  usePageEffects(pageTitle("Informes"))
-
   const { filters, setFilters, query, data, meta, loading, download, leadingTerritory, downloadCsv, print } =
     useReportsPage()
+
+  usePageMeta("reports", { filtered: hasActiveFilters(filters) })
 
   return (
     <div className="flex w-full flex-col gap-4 p-4 md:p-10">
