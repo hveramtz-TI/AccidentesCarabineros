@@ -72,7 +72,7 @@ reviewable. This index is the only source of execution order.
 | 03 | [EXP-03 Causes](./dashboard-expansion-03-causes.md) | #6 Causas | `/api/analysis` skeleton + all causes | 3 | 3 | 6 | EXP-00 | done |
 | 04 | [EXP-04 Vehicles](./dashboard-expansion-04-vehicles.md) | #5 Vehículos | Analysis `vehicles` + type×severity | 3 | 3 | 6 | EXP-03 | planned |
 | 05 | [EXP-05 Persons](./dashboard-expansion-05-persons.md) | #4 Personas | Analysis `persons` + crosstabs | 3 | 3 | 6 | EXP-03 | done |
-| 06 | [EXP-06 Reports](./dashboard-expansion-06-reports.md) | #2 Informes | Preview + CSV + print | 3 | 4 | 7 | EXP-00, EXP-02 | in progress |
+| 06 | [EXP-06 Reports](./dashboard-expansion-06-reports.md) | #2 Informes | Preview + CSV + print | 3 | 4 | 7 | EXP-00, EXP-02 | done |
 | 07 | [EXP-07 Trends](./dashboard-expansion-07-trends-compare.md) | #7 Tendencias | Trend + weekday×3-hour + comparator | 4 | 4 | 8 | EXP-03 | planned |
 
 \* EXP-00 is a hard prerequisite and is excluded from the idea ranking; it runs
@@ -271,4 +271,23 @@ EXP-06 must wait for EXP-00 and EXP-02.
   depends EXP-00+EXP-02, both done) and EXP-07 Tendencias (extends
   `/api/analysis` additively). Next session: read `AGENTS.md` + this index, then
   start EXP-06.
+- **2026-10-24 — Session checkpoint (EXP-06 done):** merged expansion branch
+  landed on `main` via PR #16; hardening phase 2 closed (`d5dbca3`). EXP-06
+  executed on `feat/dashboard-expansion-06-reports`:
+  `GET /api/dashboard/export.csv` (BOM+CRLF RFC 4180, es-CL comma shares
+  quoted, formula-injection prefix, 346-row/50 KB caps with `400 export /
+  too_large`, header-only `200` for empty scopes) documented in
+  `backend/docs/reports-api.md`; `/informes` report page with institutional
+  text header, KPI summary, preview table, blob CSV download, `window.print`
+  + `@media print` ink-on-paper block; "Ver ficha" column in `TerritoryTable`
+  linked through `filtersToSearchParams`. Delegation failed in the runtime and
+  the user ordered a direct parent build — evidence L4–L8 in the ODD. 86/86
+  backend tests, frontend lint/build green, CSV reconciled against SQL in all
+  scopes (73,081/1,507 national; XIII 52 rows 20,293/350; XIII-1 "100,0";
+  I-2 Camiña "0,0"). User browser pass approved. Commits `f6d46ff` + `7d6fa2f`,
+  not pushed. Remaining ranked: EXP-07 Tendencias only. Untracked leftovers
+  awaiting user decision: two root screenshots,
+  `dashboard-collaboration-ui-refresh.md`, `mobile-hamburger-menu.md`, and
+  `seo-indexability-and-growth.md` (appeared from the crashed writer's
+  protocol; never requested, never committed).
 

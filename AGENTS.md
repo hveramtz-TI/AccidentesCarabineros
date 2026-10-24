@@ -22,7 +22,7 @@ No root `package.json`; install and run each app from its own directory.
 
 Backend (`cd backend`):
 
-- `npm test` — `node --import tsx --test`, 71 tests, **needs no database**
+- `npm test` — `node --import tsx --test`, 86 tests, **needs no database**
   (routes/services tested through `buildApp({ dashboardService, metaService,
   analysisService, authToken })` injection).
 - The `test` script lists files explicitly (`src/import/*.test.ts` glob + the
@@ -64,8 +64,12 @@ Postgres has no host port), then `docker compose run --rm importer` (profile
 - Metric formulas, national baselines, and mandatory caveats live in
   `backend/docs/dashboard-metrics.md` (approved). The API may not introduce an
   indicator absent from that doc, and no number ships without its caveat. HTTP
-  surface is fixed by `backend/docs/dashboard-api.md`, `meta-api.md`, and
-  `analysis-api.md`: `GET /api/dashboard` (one pass, every section),
+  surface is fixed by `backend/docs/dashboard-api.md`, `meta-api.md`,
+  `analysis-api.md`, and `reports-api.md`: `GET /api/dashboard` (one pass,
+  every section), `GET /api/dashboard/export.csv` (aggregate territory CSV —
+  BOM+CRLF RFC 4180, es-CL comma `participacion` always quoted, formula-
+  injection `'` prefix, ≤346 rows / ≤50 KB with `400 export/to_large`,
+  header-only `200` for empty scopes; the plugin's shared guard covers it),
   `GET /api/meta` (dataset summary; row counts come from one subselect query,
   never hard-coded in the frontend), and `GET /api/analysis` — one endpoint
   extended **additively by section** (`causes`, then `vehicles`, then
@@ -156,13 +160,17 @@ Postgres has no host port), then `docker compose run --rm importer` (profile
   `noUnusedLocals` / `noUnusedParameters`, `allowImportingTsExtensions`.
 - **Routing is `react-router` v7** (`BrowserRouter` + `Routes` in `src/App.tsx`).
   `src/pages/*-page.tsx` are routed pages (`/` = Panel, `/mapas` = map +
-  `TerritoryTable`, `/metodologia` = footer-only methodology, `/analisis` =
+  `TerritoryTable`, `/metodologia` = footer-only methodology, `/informes` =
+  territory report with CSV download + `window.print` (its filters come from
+  the URL like every page; the download must use `fetch`+blob because the
+  endpoint is Bearer-protected — a plain anchor would 401), `/analisis` =
   redirect to `/analisis/causas`; tabs `causas`/`vehiculos`/`personas` are live,
   `tendencias` still disabled), `src/routes/route-error-boundary.tsx` and
   `src/routes/route-fallback.tsx` keep one broken or lazy page from blanking the
   shell (both live in `src/layout/Layout.tsx`, so a new section is one `<Route>`
-  plus one nav flag), and `Layout.tsx` owns the nav table (Panel, Mapas, and
-  Análisis enabled; Informes is the only `enabled: false` placeholder).
+  plus one nav flag), and `Layout.tsx` owns the nav table (all four sections —
+  Panel, Mapas, Análisis, Informes — are enabled; nav links into `/analisis`
+  and `/informes` carry the active `location.search`).
   `src/routes/analysis-layout.tsx` owns the **single** `useAnalysisQuery` and
   shares data through the router outlet context — tab pages are presentational
   and never fetch; tab links carry `location.search` so URL filters survive

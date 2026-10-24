@@ -5,7 +5,7 @@ Execution order: 06
 Risk: 3/5
 Cost: 4/5
 Depends on: EXP-00, EXP-02
-Status: in progress
+Status: done
 
 ## Objective
 
@@ -139,7 +139,7 @@ and no heavy report worker on the 1 GB / 1 vCPU service.
     sort.
   - Verify the report opens with the same territory and period.
 
-- [ ] T7 — Verify and update the index
+- [x] T7 — Verify and update the index
   - Reconcile CSV rows, preview, Mapas table, and KPIs.
   - Open the CSV in a spreadsheet and confirm the BOM and columns.
   - Print to PDF from the browser and inspect page breaks.
@@ -293,3 +293,12 @@ server-side PDF requires a new, separate ODD.
   kept under `/tmp/opencode/exp06/` (outside the repo, not committed).
   Remaining for the user: open the CSV in a spreadsheet and print-preview
   `/informes` (A4, repeated headers, hidden chrome) in the browser.
+- **2026-10-24 — L8 (user browser pass + commits, slice closed):** the user
+  tested `/informes` in the browser — CSV download/import, print view, and the
+  `/mapas` "Ver ficha" link — and approved closing T7 ("Listo lo probe,
+  cerramos T7"). Committed on `feat/dashboard-expansion-06-reports` after
+  explicit permission: `f6d46ff` (docs: production-hardening phase-2 record)
+  and `7d6fa2f` (feat: CSV export + `/informes`, 27 files). No push.
+  Process note kept in the record: the two parallel writers failed in the
+  runtime and the user ordered a direct build; the surviving frontend diff was
+  re-reviewed file by file by the parent before accepting it.
