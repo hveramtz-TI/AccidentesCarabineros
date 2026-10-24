@@ -12,7 +12,7 @@
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:import": "cd .. && node backend/dist/import/cli.js",
-    "test": "node --import tsx --test src/import/*.test.ts src/services/dashboard-service.test.ts src/routes/dashboard.test.ts src/routes/dashboard-auth.test.ts"
+    "test": "node --import tsx --test src/import/*.test.ts src/services/dashboard-service.test.ts src/routes/dashboard.test.ts src/routes/dashboard-auth.test.ts src/routes/api-guard.test.ts src/routes/meta.test.ts src/routes/analysis.test.ts"
   },
   "dependencies": {
     "@prisma/client": "6.19.3",

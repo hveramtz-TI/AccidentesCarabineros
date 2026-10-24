@@ -1,56 +1,45 @@
-import { useMemo, useState } from "react"
-import DashboardView from "@/components/dashboard/dashboard-view"
-import { useDashboardQuery } from "@/hooks/use-dashboard-query"
-import { filtersToQueryParams } from "@/lib/dashboard-query"
+/**
+ * Route tree (EXP-00 T1/T4, EXP-02 T4, EXP-03 T4, EXP-04 T5, EXP-05 T5).
+ *
+ * `/` stays the eager Panel so the first paint and the existing bundle cost do
+ * not regress; every other page is lazy-loaded. The Suspense fallback and the
+ * route error boundary live in the shell (`layout/Layout.tsx`), so adding a page
+ * here is the only edit a new section needs.
+ */
+
+import { lazy } from "react"
+import { BrowserRouter, Navigate, Route, Routes } from "react-router"
+
+import DashboardPage from "@/pages/dashboard-page"
 import Layout from "@/layout/Layout"
-import { ALL_VALUE } from "@/types/dashboard"
-import type { DashboardFilters, RegionSeriesState } from "@/types/dashboard"
+
+// Lazy: a cold section must not enter the Panel chunk.
+const MapsPage = lazy(() => import("@/pages/maps-page"))
+const MethodologyPage = lazy(() => import("@/pages/methodology-page"))
+const AnalysisLayout = lazy(() => import("@/routes/analysis-layout"))
+const AnalysisCausesPage = lazy(() => import("@/pages/analysis-causes-page"))
+const AnalysisVehiclesPage = lazy(() => import("@/pages/analysis-vehicles-page"))
+const AnalysisPersonsPage = lazy(() => import("@/pages/analysis-persons-page"))
+const NotFoundPage = lazy(() => import("@/pages/not-found-page"))
 
 function App() {
-  const [filters, setFilters] = useState<DashboardFilters>({
-    period: "all",
-    region: ALL_VALUE,
-    commune: ALL_VALUE,
-  })
-
-  const params = useMemo(() => filtersToQueryParams(filters), [filters])
-  const query = useDashboardQuery(params)
-
-  // The choropleth always shows the national series for the active period
-  // (S3/S4). While no territory filter narrows the main response it already
-  // carries that series, so no second request is made; with a region/commune
-  // selected a quiet national query feeds the map colors only.
-  const territoryFilterActive = filters.region !== ALL_VALUE || filters.commune !== ALL_VALUE
-  const mapParams = useMemo(
-    () => filtersToQueryParams({ period: filters.period, region: ALL_VALUE, commune: ALL_VALUE }),
-    [filters.period],
-  )
-  const mapQuery = useDashboardQuery(mapParams, territoryFilterActive)
-  const seriesQuery = territoryFilterActive ? mapQuery : query
-  const regionSeries = seriesQuery.data?.territories.all ?? null
-  // Honest state machine (ODD T1): loading, error, a response without
-  // territories.all (older deployment), and a loaded series never collapse
-  // into one another — "no data for this period" only means a loaded series
-  // that genuinely lacks the region row.
-  const regionSeriesState: RegionSeriesState =
-    seriesQuery.status === "loading" && !seriesQuery.data
-      ? "loading"
-      : seriesQuery.status === "error"
-        ? "error"
-        : seriesQuery.data?.territories.all
-          ? "ready"
-          : "missing-series"
-
   return (
-    <Layout>
-      <DashboardView
-        query={query}
-        filters={filters}
-        onFiltersChange={setFilters}
-        regionSeries={regionSeries}
-        regionSeriesState={regionSeriesState}
-      />
-    </Layout>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route index element={<DashboardPage />} />
+          <Route path="mapas" element={<MapsPage />} />
+          <Route path="analisis" element={<AnalysisLayout />}>
+            <Route index element={<Navigate to="causas" replace />} />
+            <Route path="causas" element={<AnalysisCausesPage />} />
+            <Route path="vehiculos" element={<AnalysisVehiclesPage />} />
+            <Route path="personas" element={<AnalysisPersonsPage />} />
+          </Route>
+          <Route path="metodologia" element={<MethodologyPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   )
 }
 

@@ -3,9 +3,17 @@ interface Props {
   error: string | null
   emptyScope: boolean
   onRetry: () => void
+  /** What the error copy refers to, e.g. "de metodología"; defaults to the panel. */
+  subject?: string
 }
 
-export default function DashboardStatus({ status, error, emptyScope, onRetry }: Props) {
+export default function DashboardStatus({
+  status,
+  error,
+  emptyScope,
+  onRetry,
+  subject = "del panel",
+}: Props) {
   if (status === "error") {
     return (
       <div
@@ -14,8 +22,8 @@ export default function DashboardStatus({ status, error, emptyScope, onRetry }: 
       >
         <span>
           {error
-            ? "No se pudieron cargar los datos del panel. Inténtalo nuevamente."
-            : "Ocurrió un error al cargar los datos del panel."}
+            ? `No se pudieron cargar los datos ${subject}. Inténtalo nuevamente.`
+            : `Ocurrió un error al cargar los datos ${subject}.`}
         </span>
         <button
           type="button"
