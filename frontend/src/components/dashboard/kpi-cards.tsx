@@ -1,8 +1,4 @@
 import { Card, CardContent } from "@/components/ui/card"
-import { ChartContainer } from "@/components/ui/chart"
-import type { ChartConfig } from "@/components/ui/chart"
-import { LineChart, Line, YAxis } from "recharts"
-import { usePrefersReducedMotion } from "@/lib/use-prefers-reduced-motion"
 import type { Kpis, MonthlyPoint } from "@/types/dashboard"
 
 interface Props {
@@ -14,31 +10,68 @@ interface Props {
 interface KpiSpec {
   key: keyof Kpis
   label: string
-  /** Token name in the sparkline ChartConfig below. */
-  token: string
+  /** Chart token used by the inline sparkline (no chart library needed). */
+  color: string
 }
 
 const KPI_SPECS: KpiSpec[] = [
-  { key: "accidents", label: "Siniestros", token: "accidents" },
-  { key: "fatalities", label: "Fallecidos", token: "fatalities" },
-  { key: "injuries", label: "Lesionados", token: "injuries" },
-  { key: "seriousInjuries", label: "Lesionados graves", token: "seriousInjuries" },
+  { key: "accidents", label: "Siniestros", color: "var(--color-chart-1)" },
+  { key: "fatalities", label: "Fallecidos", color: "var(--color-chart-4)" },
+  { key: "injuries", label: "Lesionados", color: "var(--color-chart-3)" },
+  { key: "seriousInjuries", label: "Lesionados graves", color: "var(--color-chart-2)" },
 ]
 
-const SPARK_CONFIG = {
-  accidents: { label: "Siniestros", color: "var(--color-chart-1)" },
-  fatalities: { label: "Fallecidos", color: "var(--color-chart-4)" },
-  injuries: { label: "Lesionados", color: "var(--color-chart-3)" },
-  seriousInjuries: { label: "Lesionados graves", color: "var(--color-chart-2)" },
-} satisfies ChartConfig
+const SPARK_WIDTH = 100
+const SPARK_HEIGHT = 32
+const SPARK_PADDING = 1
 
 function formatMetric(value: number): string {
   return value.toLocaleString("es-CL")
 }
 
-export default function KpiCards({ kpis, monthlyTrend, loading }: Props) {
-  const reducedMotion = usePrefersReducedMotion()
+/**
+ * Minimal sparkline drawn as a single `<polyline>`. Keeping it out of Recharts
+ * leaves the chart library in the deferred dashboard-charts chunk instead of the
+ * initial bundle, without changing the KPI card layout.
+ */
+function Sparkline({ values, color }: { values: number[]; color: string }) {
+  if (values.length < 2) return null
 
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  const span = max - min || 1
+  const stepX = SPARK_WIDTH / (values.length - 1)
+  const innerHeight = SPARK_HEIGHT - SPARK_PADDING * 2
+
+  const points = values
+    .map((value, index) => {
+      const x = index * stepX
+      const y = SPARK_PADDING + (1 - (value - min) / span) * innerHeight
+      return `${x.toFixed(2)},${y.toFixed(2)}`
+    })
+    .join(" ")
+
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox={`0 0 ${SPARK_WIDTH} ${SPARK_HEIGHT}`}
+      preserveAspectRatio="none"
+      className="h-full w-full"
+    >
+      <polyline
+        points={points}
+        fill="none"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  )
+}
+
+export default function KpiCards({ kpis, monthlyTrend, loading }: Props) {
   return (
     <section
       aria-label="Indicadores clave"
@@ -70,22 +103,10 @@ export default function KpiCards({ kpis, monthlyTrend, loading }: Props) {
               aria-label={`${spec.label}: tendencia mensual`}
             >
               {!loading && kpis && (
-                <ChartContainer
-                  config={SPARK_CONFIG satisfies ChartConfig}
-                  className="aspect-auto h-full w-full"
-                >
-                  <LineChart data={monthlyTrend} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
-                    <YAxis hide domain={["dataMin", "dataMax"]} />
-                    <Line
-                      type="linear"
-                      dataKey={spec.key}
-                      stroke={`var(--color-${spec.token})`}
-                      strokeWidth={1.5}
-                      dot={false}
-                      isAnimationActive={!reducedMotion}
-                    />
-                  </LineChart>
-                </ChartContainer>
+                <Sparkline
+                  values={monthlyTrend.map((point) => point[spec.key])}
+                  color={spec.color}
+                />
               )}
             </div>
           </CardContent>

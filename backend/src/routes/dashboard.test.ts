@@ -49,14 +49,14 @@ const emptyResponse: DashboardResponse = {
 
 const auth = { authorization: "Bearer test-token" };
 
-test("GET /api/dashboard returns the full payload and no-store for an injected service", async (t) => {
+test("GET /api/dashboard returns the full payload and a private cache header for an injected service", async (t) => {
   const app = buildApp({ logger: false, authToken: "test-token", dashboardService: { async getDashboard() { return emptyResponse; }, async getTerritoryReport() { throw new Error("must not be called"); } } });
   t.after(() => app.close());
 
   const response = await app.inject({ method: "GET", headers: auth, url: "/api/dashboard?unknown=ignored" });
 
   assert.equal(response.statusCode, 200);
-  assert.equal(response.headers["cache-control"], "no-store");
+  assert.equal(response.headers["cache-control"], "private, max-age=300");
   assert.deepEqual(response.json(), emptyResponse);
   assert.deepEqual((await app.inject({ method: "GET", url: "/health" })).json(), { status: "ok" });
 });

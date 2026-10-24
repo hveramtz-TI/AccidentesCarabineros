@@ -17,6 +17,8 @@ export default function CollaborationMark({ compact = false }: Props) {
       <img
         src={carabinerosLogo}
         alt=""
+        width={782}
+        height={364}
         className={`${imageHeight} w-auto max-w-20 object-contain`}
       />
       <span aria-hidden="true" className="font-heading text-sm font-semibold text-muted-foreground">
@@ -25,6 +27,8 @@ export default function CollaborationMark({ compact = false }: Props) {
       <img
         src={logoHv}
         alt=""
+        width={386}
+        height={293}
         className={`${imageHeight} w-auto max-w-16 object-contain invert`}
       />
     </span>

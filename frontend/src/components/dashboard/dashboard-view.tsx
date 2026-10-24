@@ -3,7 +3,7 @@ import { useMemo } from "react"
 import type { DashboardQueryState } from "@/hooks/use-dashboard-query"
 import { adaptDashboardResponse } from "@/lib/dashboard-adapter"
 import type { DashboardFilters, RegionSeriesState, TerritoryRow } from "@/types/dashboard"
-import ContainerDashboardCharts from "../Sections/containerDashboardCharts"
+import LazyDashboardCharts from "../Sections/lazy-dashboard-charts"
 import ContainerMapFilter from "../Sections/containerMapFilter"
 import DashboardStatus from "./dashboard-status"
 
@@ -64,7 +64,7 @@ export default function DashboardView({ query, filters, onFiltersChange, regionS
         >
           Tendencia y gravedad
         </h2>
-        <ContainerDashboardCharts data={data} />
+        <LazyDashboardCharts data={data} />
       </section>
     </div>
   )

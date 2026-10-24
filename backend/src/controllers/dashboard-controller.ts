@@ -28,7 +28,9 @@ export function createDashboardController(service: DashboardService) {
     try {
       validateDashboardFilters(filters);
       const result = await service.getDashboard(filters);
-      return reply.header("Cache-Control", "no-store").send(result);
+      // 2025 aggregates are immutable, so the browser may reuse a successful
+      // payload briefly; rejections and failures keep the guard's no-store.
+      return reply.header("Cache-Control", "private, max-age=300").send(result);
     } catch (error) {
       if (error instanceof DashboardValidationError) {
         return reply.code(400).send({

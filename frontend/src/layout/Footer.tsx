@@ -97,6 +97,8 @@ const Footer = () => {
           <img
             src={gobiernoLogo}
             alt="Gobierno de Chile"
+            width={250}
+            height={250}
             className="h-9 w-auto shrink-0 object-contain"
           />
         </div>

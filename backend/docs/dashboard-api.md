@@ -118,7 +118,7 @@ Todos los valores son conteos ≤ 148.252 → números JSON seguros (sin BigInt)
 
 ## 6. Cabeceras
 
-- `Cache-Control: no-store` (v1; el caching se decide con el wiring real).
+- `Cache-Control: private, max-age=300` en `200` (sobrescribe el `no-store` del guard). Los agregados de 2025 son inmutables; rechazos y fallos conservan `no-store`.
 - `X-Content-Type-Options: nosniff`.
 - `Referrer-Policy: no-referrer`.
 - `Strict-Transport-Security: max-age=31536000; includeSubDomains`.
