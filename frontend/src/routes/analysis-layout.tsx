@@ -33,12 +33,12 @@ interface AnalysisTab {
   enabled: boolean
 }
 
-/** Causas (EXP-03), Vehículos (EXP-04) and Personas (EXP-05) are live; Tendencias enables in EXP-07. */
+/** Causas (EXP-03), Vehículos (EXP-04), Personas (EXP-05) and Tendencias (EXP-07) are all live. */
 const ANALYSIS_TABS: AnalysisTab[] = [
   { label: "Personas", to: "personas", enabled: true },
   { label: "Vehículos", to: "vehiculos", enabled: true },
   { label: "Causas", to: "causas", enabled: true },
-  { label: "Tendencias", to: "tendencias", enabled: false },
+  { label: "Tendencias", to: "tendencias", enabled: true },
 ]
 
 const TAB_CLASS =

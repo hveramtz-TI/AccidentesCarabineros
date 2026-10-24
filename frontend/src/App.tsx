@@ -20,6 +20,7 @@ const AnalysisLayout = lazy(() => import("@/routes/analysis-layout"))
 const AnalysisCausesPage = lazy(() => import("@/pages/analysis-causes-page"))
 const AnalysisVehiclesPage = lazy(() => import("@/pages/analysis-vehicles-page"))
 const AnalysisPersonsPage = lazy(() => import("@/pages/analysis-persons-page"))
+const AnalysisTrendsPage = lazy(() => import("@/pages/analysis-trends-page"))
 const ReportsPage = lazy(() => import("@/pages/reports-page"))
 const NotFoundPage = lazy(() => import("@/pages/not-found-page"))
 
@@ -35,6 +36,7 @@ function App() {
             <Route path="causas" element={<AnalysisCausesPage />} />
             <Route path="vehiculos" element={<AnalysisVehiclesPage />} />
             <Route path="personas" element={<AnalysisPersonsPage />} />
+            <Route path="tendencias" element={<AnalysisTrendsPage />} />
           </Route>
           <Route path="metodologia" element={<MethodologyPage />} />
           <Route path="informes" element={<ReportsPage />} />

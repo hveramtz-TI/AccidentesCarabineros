@@ -313,6 +313,34 @@
   fill: var(--muted-foreground, #8b9793);
 }
 
+/* EXP-07 T6 — weekday × hour heatmap intensity. Six decorative steps from the
+   approved --primary token via color-mix (CSS-first, no config file); the
+   printed count inside each cell is the real channel, so black-and-white or
+   reduced-contrast rendering stays readable. */
+.heatmap-cell {
+  background: transparent;
+}
+
+.heatmap-level-1 {
+  background: color-mix(in oklab, var(--primary) 8%, transparent);
+}
+
+.heatmap-level-2 {
+  background: color-mix(in oklab, var(--primary) 18%, transparent);
+}
+
+.heatmap-level-3 {
+  background: color-mix(in oklab, var(--primary) 32%, transparent);
+}
+
+.heatmap-level-4 {
+  background: color-mix(in oklab, var(--primary) 50%, transparent);
+}
+
+.heatmap-level-5 {
+  background: color-mix(in oklab, var(--primary) 72%, transparent);
+}
+
 /* EXP-06 T5 — print layout for the /informes report.
    Tailwind `print:` variants hide the chrome the report page owns; this block
    covers what utilities cannot cleanly reach: the dark-theme tokens (they flip

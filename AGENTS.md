@@ -22,7 +22,7 @@ No root `package.json`; install and run each app from its own directory.
 
 Backend (`cd backend`):
 
-- `npm test` — `node --import tsx --test`, 86 tests, **needs no database**
+- `npm test` — `node --import tsx --test`, 109 tests, **needs no database**
   (routes/services tested through `buildApp({ dashboardService, metaService,
   analysisService, authToken })` injection).
 - The `test` script lists files explicitly (`src/import/*.test.ts` glob + the
@@ -74,7 +74,10 @@ Postgres has no host port), then `docker compose run --rm importer` (profile
   never hard-coded in the frontend), and `GET /api/analysis` — one endpoint
   extended **additively by section** (`causes`, then `vehicles`, then
   `persons`); later sections never rename or remove earlier ones, and tabs add
-  no per-section endpoint.
+  no per-section endpoint. `GET /api/compare` (`compare-api.md`) compares 1–4
+  catalog identifiers (`codes=XIII,XV`) at the level the filters imply —
+  national→regions, region→its communes, commune→`400 not_supported` (the UI
+  hides it); shares divide by the whole-scope total, never the selection.
 - Analysis invariants (verified cell-by-cell against SQL, `analysis-api.md`
   §4): `causes.rows` always holds all 70 catalog causes including zeros, ordered
   accidents DESC then name, cumulative share computed client-side (Pareto line
@@ -164,8 +167,8 @@ Postgres has no host port), then `docker compose run --rm importer` (profile
   territory report with CSV download + `window.print` (its filters come from
   the URL like every page; the download must use `fetch`+blob because the
   endpoint is Bearer-protected — a plain anchor would 401), `/analisis` =
-  redirect to `/analisis/causas`; tabs `causas`/`vehiculos`/`personas` are live,
-  `tendencias` still disabled), `src/routes/route-error-boundary.tsx` and
+  redirect to `/analisis/causas`; all four tabs `causas`/`vehiculos`/`personas`/`tendencias`
+  are live), `src/routes/route-error-boundary.tsx` and
   `src/routes/route-fallback.tsx` keep one broken or lazy page from blanking the
   shell (both live in `src/layout/Layout.tsx`, so a new section is one `<Route>`
   plus one nav flag), and `Layout.tsx` owns the nav table (all four sections —

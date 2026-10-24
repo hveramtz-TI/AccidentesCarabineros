@@ -117,7 +117,7 @@ queries.
     bucket if needed.
   - Keep `causes`, `vehicles`, and `persons` unchanged.
 
-- [ ] T4 — Implement `/api/compare`
+- [x] T4 — Implement `/api/compare`
   - Add the route through the shared guard.
   - Validate 1–4 codes against the current level; reject unknown/out-of-scope
     codes with `400`.
@@ -127,7 +127,7 @@ queries.
     `backend/docs/compare-api.md`; add the comparator-share definition to
     `backend/docs/dashboard-metrics.md`.
 
-- [ ] T5 — Add backend tests
+- [x] T5 — Add backend tests
   - Monthly sums equal scope totals; zero months are present.
   - Heatmap sums equal scope totals; midnight falls in 00–03; any unknown-time
     row reconciles.
@@ -136,7 +136,7 @@ queries.
   - Compare totals reconcile with SQL; auth, validation, payload, and headers.
   - Existing analysis tests remain green.
 
-- [ ] T6 — Build the Tendencias tab
+- [x] T6 — Build the Tendencias tab
   - Enable the tab and register `/analisis/tendencias`.
   - Render the monthly trend with a table fallback and labels.
   - Render the heatmap with visible counts, keyboard/table access, and the
@@ -261,3 +261,50 @@ raw export request requires a new ODD and data-source review.
   summing 17,767 in both sections with its own midnight count 64. National
   payload 26,809 bytes (< 100 KB cap). Scratch under `/tmp/opencode/exp07/`
   (outside the repo).
+- **2026-10-24 — L5 (T4/T5 evidence, /api/compare):** direct build,
+  test-first. `src/routes/compare.test.ts` written first (RED: module
+  missing, then 3 assertion corrections that were TEST errors: 5 entries of
+  one code de-dup to 4 and pass the cap — the cap test now uses 5 DISTINCT
+  codes; a two-region selection legitimately sums to ~100 because it covers
+  the whole scope — the assertion now pins each share against the scope total
+  73,081; `regionId=99` is caught by the schema before the service, so the
+  not_found test uses an in-range unknown id). Semantics fixed while writing:
+  shape-invalid → `invalid_format` before any query; right shape but not in
+  the level's catalog → `not_found`; commune code whose roman prefix is not
+  the selected region → `out_of_scope`; commune scope → `not_supported` before
+  any query; trends runs only AFTER every code passed membership (totals
+  aggregate doubles as the level catalog: one read gives codes, names, totals
+  and the scope denominator). New `types/compare-api.ts`,
+  `services/compare-service.ts` (dense months reuse the approved UTC walk;
+  `percent()` shared), `routes/compare.ts` (shared guard; success overwrites
+  to `private, max-age=60`), `app.ts` registration + `compareService` seam,
+  test file added to the explicit `test` script. Docs: new
+  `backend/docs/compare-api.md`, `dashboard-metrics.md` §3.14 (`CMP-1`), and
+  `analysis-api.md` §8 rewritten to point at both new endpoints.
+  `npm test` → 109/109 (93 + 16); `npm run build` → exit 0.
+- **2026-10-24 — L6 (live reconciliation, compare):** rebuilt backend.
+  `codes=XIII,XV` → XIII `20293/350 share 27.8`, XV `1603/27 share 2.2` (over
+  national total 73,081), 12 dense points, XV `2025-01=127` matched SQL;
+  region XIII `codes=XIII-32,XIII-1` → `1662 → 8.2` and `502 → 2.5` against
+  the REGION total (not the selection), both matching SQL exactly. Rejection
+  matrix via curl: dup-under-cap `200`, `XX` → `not_found`, `xiii` →
+  `invalid_format`, absent → `required`, `regionId=13&codes=XV-1` →
+  `out_of_scope`, commune scope → `not_supported`, `from=2026` →
+  `out_of_range`; headers `private, max-age=60` + nosniff, payload 1,717 B,
+  no token → `401`.
+- **2026-10-24 — L7 (T6 evidence, frontend):** `lib/api/compare.ts` (mirror
+  types + auth'd fetch), `hooks/use-compare.ts` (level derivation + opt-in
+  query keyed by filters+codes), three components under
+  `components/analysis/`: `trend-monthly-bars` (counts printed per column,
+  `details`-disclosed month/fatality table), `weekday-hour-heatmap` (the
+  matrix IS a `<table>` with day/bucket/grand totals and the 00:00 disclosure
+  line; shading is six decorative `color-mix` steps in `index.css` — never
+  the only channel), `territory-comparator` (chips from the local catalog,
+  aria-pressed, max 4 with disabled rest, level pruning DONE BY DERIVATION
+  not by a setState-in-effect (eslint `react-hooks/set-state-in-effect`),
+  sparkline `aria-hidden` + explicit "Mes pico" column, shares labeled over
+  scope). Page `analysis-trends-page.tsx` presentational, defensive on stale
+  server sections; tab enabled in order in `analysis-layout.tsx`; lazy route
+  in `App.tsx`; `monthLabel` shared in `lib/month-label.ts`.
+  `npm run lint` → 0 errors; `npm run build` → exit 0;
+  chunk `analysis-trends-page-*.js` emitted.
