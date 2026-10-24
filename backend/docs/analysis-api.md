@@ -1,10 +1,10 @@
 # Analysis API — `GET /api/analysis` contract
 
 **Status:** fixed for EXP-03 (Análisis: Causas); `vehicles` added additively by
-EXP-04 (Análisis: Vehículos). The metric definitions and caveats are the
-approved ones in `dashboard-metrics.md`; this document only fixes the HTTP
-surface. The endpoint is additive by section: later analysis tabs append new
-keys without renaming or removing `causes`.
+EXP-04 (Análisis: Vehículos) and `persons` by EXP-05 (Análisis: Personas). The
+metric definitions and caveats are the approved ones in `dashboard-metrics.md`;
+this document only fixes the HTTP surface. The endpoint is additive by section:
+later analysis tabs append new keys without renaming or removing `causes`.
 
 ## 1. Purpose
 
@@ -12,9 +12,10 @@ keys without renaming or removing `causes`.
 EXP-03 ships one section, `causes`, which exposes **every** catalog cause — not
 only the Top 10 — so the long tail and zero-accident causes stay visible.
 EXP-04 appends `vehicles`: the full vehicle-type distribution of the scope and
-the type × severity matrix, both counted in distinct siniestros. Later ODDs
-(`Personas`, `Tendencias`) extend the same response instead of adding one
-endpoint per tab.
+the type × severity matrix, both counted in distinct siniestros. EXP-05 appends
+`persons`: the person-grain demographic distributions (sex, age) and the two
+person crosstabs (sex × age, role × outcome). Later ODDs (`Tendencias`) extend
+the same response instead of adding one endpoint per tab.
 
 ## 2. Surface and auth
 
@@ -54,7 +55,8 @@ All values are counts ≤ 148.252, so they fit safely in JSON numbers (no BigInt
 `rows` always contains the whole catalog (currently 70 causes), including
 zero-accident causes. One aggregate query with a `LEFT JOIN` from `causa` builds
 the `causes` section; two further SQL aggregates build `vehicles` (the type ×
-severity matrix, and the no-vehicle coverage count). Fact rows are never loaded
+severity matrix, and the no-vehicle coverage count) and two more build `persons`
+(the sex × age matrix and the role × outcome matrix). Fact rows are never loaded
 into Node.
 
 ```jsonc
@@ -76,6 +78,28 @@ into Node.
     ],
     "byTypeSeverity": [
       { "typeId": 1, "name": "AUTOMOVIL", "severity": "fatal", "siniestros": 800 }
+    ]
+  },
+  "persons": {
+    "rows": 148252,
+    "unknownAge": 23918,
+    "unknownSex": 6448,
+    "bySex": [
+      { "sexId": 1, "name": "MASCULINO", "persons": 104536, "share": 70.5 }
+    ],
+    "byAge": [
+      { "bucket": "0-17", "persons": 5255, "share": 3.5 },
+      { "bucket": "18-25", "persons": 15942, "share": 10.8 },
+      { "bucket": "26-40", "persons": 45651, "share": 30.8 },
+      { "bucket": "41-64", "persons": 46236, "share": 31.2 },
+      { "bucket": "65+", "persons": 11250, "share": 7.6 },
+      { "bucket": "unknown", "persons": 23918, "share": 16.1 }
+    ],
+    "bySexAge": [
+      { "sexId": 1, "name": "MASCULINO", "bucket": "0-17", "persons": 2825 }
+    ],
+    "byQualityOutcome": [
+      { "qualityId": 1, "qualityName": "CONDUCTOR", "outcomeId": 2, "outcomeName": "ILESO", "persons": 80182 }
     ]
   }
 }
@@ -144,14 +168,67 @@ vehicle rows. The definitions are the approved §3.6 (severity buckets) and
 - An empty scope returns `totalSiniestros: 0`, `withoutVehicleRows: 0`, and
   both lists empty — never national data.
 
+### 4.5 Persons section (EXP-05)
+
+All counts are **personas** (`COUNT(*)` over `persona` rows joined through
+`siniestro` with the same date/territory clause), never distinct siniestros —
+one siniestro involves several people, so person counts must never be compared
+1:1 with accident counts or share an axis with them. The definitions are the
+approved §3.12 of `dashboard-metrics.md` (`PER-1`/`PER-2`).
+
+- Exactly **two new SQL aggregates** build the whole section: the sex × age
+  matrix (`GROUP BY sexo_id` + the age CASE verbatim from the dashboard) and the
+  role × outcome matrix (`GROUP BY calidad_persona_id, resultado_persona_id`).
+  Everything else derives from those matrices.
+- **MECE by construction:** every persona row has exactly one `sexo` (NOT NULL
+  FK; unknown sex is the catalog row `SE IGNORA` id 3, never NULL), falls in
+  exactly one age band (NULL `edad` → `unknown`, else the ordered CASE,
+  exhaustive via `ELSE 65+`), and has exactly one role and one outcome (NOT NULL
+  FKs over complete catalogs). Therefore `rows` equals the sum of **either**
+  matrix and `bySex`/`byAge` are exact marginals, not estimates — verified
+  cell-by-cell against independent SQL at national (18 + 19 populated cells)
+  and `XIII-1` scope (13 + 17 cells), 2026-10-23.
+- `rows` is the scope person count (national baseline: 148.252).
+- `unknownAge` is the `unknown` band marginal (national baseline: 23.918);
+  `unknownSex` is the sexId-3 marginal. Both are also present inside `byAge`/
+  `bySex`; the fields are coverage notes, never separate data. Nothing is
+  imputed or reassigned.
+- `bySex` is ordered by `sexId` **ASC** (matching the dashboard's sex grouping,
+  catalog `nombre_normal` labels). `byAge` always returns **all six bands** in
+  the exact `AGE_BANDS` order (`0-17, 18-25, 26-40, 41-64, 65+, unknown`),
+  including zero-valued bands, so the bands stay visible in every scope.
+- `bySexAge` lists the populated cells of the sex × age matrix, ordered
+  `sexId` ASC then band order. `byQualityOutcome` lists the populated cells of
+  the role × outcome matrix, ordered `persons` **DESC**, then `qualityId` ASC,
+  then `outcomeId` ASC. Cells with `persons = 0` are never emitted: a SQL
+  `GROUP BY` only produces populated groups, and the repository contract
+  returns exactly those cells (the service also filters any defensive zero from
+  a custom repository — same rule as the EXP-04 matrix). The frontend pads
+  missing matrix positions to 0.
+- `share` (in `bySex`/`byAge`) = `persons / rows * 100`, one decimal, same
+  rounding as `causes`; the denominator is `persons.rows`, **never**
+  `causes.totalAccidents`. `0` when the scope has no persons.
+- The outcome dimension is `resultado_persona` — the **person-level** outcome
+  (catalog ids: 1 LEVE, 2 ILESO, 3 MENOS GRAVE, 4 FALLECIDO, 5 GRAVE),
+  semantically distinct from the siniestro-level severity buckets used by
+  `vehicles`; the mapping between the two grains is the reconciliation table of
+  `dashboard-metrics.md` §4. Columns are ordered by `outcomeId`.
+- No PII: only catalog ids and labels appear; `persona_id` never does.
+- An empty scope returns `rows: 0`, `unknownAge: 0`, `unknownSex: 0`, empty
+  `bySex`, the six `byAge` bands with `persons: 0` and `share: 0` (no division
+  by zero), and both matrices empty — never national data.
+
 ## 5. Cache policy
 
 `Cache-Control: private, max-age=60` on a successful `200` (it overwrites the
 guard's `no-store`). Rejections and failures keep `no-store`. The payload is
-bounded by the 70-cause catalog plus at most 38 vehicle types × 5 severity
-buckets and stays well under the 100 KB cap (EXP-03 measured 6.5–6.8 KB
-causes-only; EXP-04 measured the national response with `vehicles` at 20,165
-bytes).
+bounded by the 70-cause catalog, at most 38 vehicle types × 5 severity buckets,
+and the person matrices (at most 3 sexes × 6 bands plus 4 roles × 5 outcomes)
+and stays well under the 100 KB cap (EXP-03 measured 6.5–6.8 KB causes-only;
+EXP-04 measured the national response with `vehicles` at 20,165 bytes; EXP-05
+measured the national response with `persons` at 23,657 bytes — 18 sex × age
+cells and 19 role × outcome cells, the 20th combination being a true zero that
+is never emitted).
 
 ## 6. Errors
 
@@ -176,16 +253,18 @@ bytes).
 
 ## 7. Additive rule
 
-`causes` is fixed for EXP-03 and `vehicles` is fixed for EXP-04. Later tabs add
-sibling keys (for example `persons`, `trends`) and may add fields inside their
-own section, but must not rename, remove, or change the meaning of `causes`,
-`vehicles`, `totalAccidents`, `share`, or the response envelope. `schemaVersion`
-is bumped only for a breaking change.
+`causes` is fixed for EXP-03, `vehicles` is fixed for EXP-04, and `persons` is
+fixed for EXP-05. Later tabs add sibling keys (for example `trends`) and may
+add fields inside their own section, but must not rename, remove, or change the
+meaning of `causes`, `vehicles`, `persons`, `totalAccidents`, `share`, or the
+response envelope. `schemaVersion` is bumped only for a breaking change.
 
 ## 8. Non-goals
 
-- No per-tab endpoint, no cause-to-person/vehicle crosstabs, no CSV export or
+- No per-tab endpoint, no cause-to-person/vehicle crosstabs (the EXP-05 matrices
+  cross sex × age and role × outcome, both at person grain), no CSV export or
   comparator (EXP-06/EXP-07).
 - No chart library, schema change, materialized view, or synthetic fallback.
-- No raw IDs beyond `causeId` and `typeId`; no PII, no vehicle rows, plates,
-  VINs, or brand/model/year.
+- No raw IDs beyond catalog identifiers (`causeId`, `typeId`, `sexId`,
+  `qualityId`, `outcomeId`); no PII, no `persona_id` or person rows, no vehicle
+  rows, plates, VINs, or brand/model/year.

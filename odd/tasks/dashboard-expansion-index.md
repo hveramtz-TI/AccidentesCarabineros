@@ -71,7 +71,7 @@ reviewable. This index is the only source of execution order.
 | 02 | [EXP-01 Methodology](./dashboard-expansion-01-methodology.md) | #3 Metodología | `/metodologia` + `/api/meta` | 2 | 3 | 5 | EXP-00 | done |
 | 03 | [EXP-03 Causes](./dashboard-expansion-03-causes.md) | #6 Causas | `/api/analysis` skeleton + all causes | 3 | 3 | 6 | EXP-00 | done |
 | 04 | [EXP-04 Vehicles](./dashboard-expansion-04-vehicles.md) | #5 Vehículos | Analysis `vehicles` + type×severity | 3 | 3 | 6 | EXP-03 | planned |
-| 05 | [EXP-05 Persons](./dashboard-expansion-05-persons.md) | #4 Personas | Analysis `persons` + crosstabs | 3 | 3 | 6 | EXP-03 | planned |
+| 05 | [EXP-05 Persons](./dashboard-expansion-05-persons.md) | #4 Personas | Analysis `persons` + crosstabs | 3 | 3 | 6 | EXP-03 | in_progress |
 | 06 | [EXP-06 Reports](./dashboard-expansion-06-reports.md) | #2 Informes | Preview + CSV + print | 3 | 4 | 7 | EXP-00, EXP-02 | planned |
 | 07 | [EXP-07 Trends](./dashboard-expansion-07-trends-compare.md) | #7 Tendencias | Trend + weekday×3-hour + comparator | 4 | 4 | 8 | EXP-03 | planned |
 
@@ -250,4 +250,14 @@ EXP-06 must wait for EXP-00 and EXP-02.
   is byte-identical to baseline in 5 scopes; SQL matched cell-by-cell in 4
   scopes; the query-count deviation (4 round-trips vs "one or two") is declared,
   not hidden. Remaining: browser pass, then commit.
+- **2026-10-23 — EXP-04 closed (`52fd101`):** browser pass approved; declared
+  gaps unchanged. Next: EXP-05 (Personas, order 05).
+- **2026-10-23 — EXP-05 implemented (`in_progress`):** `persons` added to
+  `/api/analysis` via exactly two new MECE aggregates (sex × age with the
+  verbatim dashboard CASE at person grain; role × outcome), everything else
+  marginals; `/analisis/personas` tab with grain disclosure, dense bands,
+  unknown rows visible, totals from marginals. 71/71 backend, payloads ≤ 23.6 KB.
+  Independent verification: 0 blockers, 7/7 acceptance PASS, 5/5 central claims
+  VERIFIED (cell-by-cell vs SQL in five scopes; XIII-1 proves 1,065 persons over
+  502 siniestros). Browser pass pending, then commit.
 

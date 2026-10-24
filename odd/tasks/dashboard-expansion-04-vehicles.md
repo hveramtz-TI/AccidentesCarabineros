@@ -5,7 +5,7 @@ Execution order: 04
 Risk: 3/5
 Cost: 3/5
 Depends on: EXP-03
-Status: in_progress
+Status: done
 
 ## Objective
 
@@ -140,7 +140,7 @@ non-additive type shares.
     a stale server without `vehicles` renders a status message instead of
     crashing.
 
-- [ ] T6 — Verify and update the index — checks done, browser pass pending
+- [x] T6 — Verify and update the index
   - Evidence: national API `byType[0]` = AUTOMOVIL 51,207 / 70.1 %; per-type and
     per-bucket counts match independent SQL cell-by-cell in four scopes
     (national 38 types/137 cells, XIII 36/107, XIII-1 19/42, Q3 36/109); the
@@ -177,8 +177,8 @@ non-additive type shares.
 - [x] The Vehículos tab works with URL filters and shares one analysis request —
   static proof (layout owns the only query; key is the four filters; tab link
   carries `location.search`); click-through is part of the browser pass.
-- [ ] Browser-only half of the criteria (scroll at 360 px, reading order,
-  filter-preserving tab click) not yet exercised.
+- [x] Browser-only half of the criteria (360 px scroll, reading order,
+  filter-preserving tab click): approved by the user on the browser pass.
 - [x] Backend tests/build and frontend lint/build pass — 65/65, tsc clean,
   eslint clean, `analysis-vehicles-page-*.js` 12.25 kB / 3.51 kB gzip.
 
@@ -223,4 +223,8 @@ extends the same analysis endpoint.
   acceptance PASS; its two actionable advisories applied. Compose stack rebuilt:
   `/analisis/vehiculos` → 200 and the chunk is real `application/javascript`.
   Status stays `in_progress` until the browser pass.
+- **2026-10-23 — EXP-04 closed:** the user approved `/analisis/vehiculos` on the
+  browser pass (disclosure order, matrix scroll, filter-preserving tab click).
+  Declared gaps stay declared: 4 round-trips vs "one or two" (intent met,
+  recorded), `statement_timeout` inherited from EXP-03.
 

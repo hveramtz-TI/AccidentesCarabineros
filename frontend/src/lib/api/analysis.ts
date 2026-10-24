@@ -47,6 +47,61 @@ export interface AnalysisVehiclesSection {
   byTypeSeverity: AnalysisVehicleSeverityRow[]
 }
 
+/** Mirrors the backend `AnalysisAgeBand` — the dashboard's approved AGE_BANDS. */
+export type AnalysisAgeBand = "0-17" | "18-25" | "26-40" | "41-64" | "65+" | "unknown"
+
+export interface AnalysisPersonSexRow {
+  sexId: number
+  /** Catalog label; `SE IGNORA` is a real category, never an imputation. */
+  name: string
+  /** Personas with this sex in the scope — PERSONS, not siniestros. */
+  persons: number
+  /** persons / `persons.rows` * 100, one decimal. */
+  share: number
+}
+
+export interface AnalysisPersonAgeRow {
+  bucket: AnalysisAgeBand
+  persons: number
+  share: number
+}
+
+export interface AnalysisPersonSexAgeRow {
+  sexId: number
+  name: string
+  bucket: AnalysisAgeBand
+  persons: number
+}
+
+export interface AnalysisPersonQualityOutcomeRow {
+  qualityId: number
+  qualityName: string
+  outcomeId: number
+  /** Person-level outcome (`resultado_persona`), NOT siniestro-level severity. */
+  outcomeName: string
+  persons: number
+}
+
+/**
+ * Added by EXP-05. Person grain throughout: `rows` is the persona-row count of
+ * the scope. `bySexAge` and `byQualityOutcome` are MECE partitions of the same
+ * set, so both sum exactly to `rows`, and `bySex`/`byAge` are exact marginals
+ * of the first. `unknownAge` equals the `unknown` band marginal; `unknownSex`
+ * equals the sexId-3 (`SE IGNORA`) marginal.
+ */
+export interface AnalysisPersonsSection {
+  rows: number
+  unknownAge: number
+  unknownSex: number
+  bySex: AnalysisPersonSexRow[]
+  /** Always the full six bands in order, including zero-valued ones. */
+  byAge: AnalysisPersonAgeRow[]
+  /** Populated cells only; ordered sexId ASC then band order. */
+  bySexAge: AnalysisPersonSexAgeRow[]
+  /** Populated cells only; ordered persons DESC, qualityId ASC, outcomeId ASC. */
+  byQualityOutcome: AnalysisPersonQualityOutcomeRow[]
+}
+
 export interface AnalysisFilters {
   from: string
   to: string
@@ -68,6 +123,11 @@ export interface AnalysisApiResponse {
    * `undefined` at runtime.
    */
   vehicles: AnalysisVehiclesSection
+  /**
+   * Added by EXP-05. Same defensive rule as `vehicles`: a stale server without
+   * this section returns `undefined` at runtime.
+   */
+  persons: AnalysisPersonsSection
 }
 
 export interface AnalysisQueryParams {

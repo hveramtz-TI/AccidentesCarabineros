@@ -1,12 +1,13 @@
 /**
- * Analysis aggregate service (EXP-03 T2, extended by EXP-04 T3).
+ * Analysis aggregate service (EXP-03 T2, extended by EXP-04 T3 and EXP-05 T3).
  *
  * `/api/analysis` returns every catalog cause, including the zero-accident tail,
  * from one LEFT JOIN aggregate, plus the vehicle-type distribution and the
- * type × severity matrix from two more SQL aggregates. Fact rows never leave
- * PostgreSQL. Validation is the dashboard's own `validateDashboardFilters`, so
- * `/api/analysis` and `/api/dashboard` reject the same inputs with the same 400
- * contract.
+ * type × severity matrix from two more SQL aggregates, plus the person-grain
+ * sex × age and role × outcome crosstabs from two further SQL aggregates. Fact
+ * rows never leave PostgreSQL. Validation is the dashboard's own
+ * `validateDashboardFilters`, so `/api/analysis` and `/api/dashboard` reject the
+ * same inputs with the same 400 contract.
  */
 
 import { Prisma, PrismaClient } from "@prisma/client";
@@ -14,6 +15,8 @@ import { Prisma, PrismaClient } from "@prisma/client";
 import { prisma as sharedPrisma } from "../db/conection.js";
 import { DashboardValidationError, type DashboardFilters } from "../types/dashboard-api.js";
 import type {
+  AnalysisAgeBand,
+  AnalysisPersonsSection,
   AnalysisResponse,
   AnalysisService,
   AnalysisSeverityBucket,
@@ -39,11 +42,42 @@ export interface AnalysisVehicleSeverityCount {
   siniestros: number;
 }
 
+/**
+ * One (sex, age band) cell from the SQL matrix. `persons` is `COUNT(*)` over
+ * persona rows (person grain — never distinct siniestros). Every persona row
+ * has exactly one `sexo_id` (NOT NULL FK) and lands in exactly one band (the
+ * CASE maps NULL to `unknown` and covers the whole integer line), so the cells
+ * are a MECE partition of the person set and the marginals derived from them
+ * are exact.
+ */
+export interface AnalysisPersonSexAgeCount {
+  sexId: number;
+  name: string;
+  bucket: AnalysisAgeBand;
+  persons: number;
+}
+
+/**
+ * One (role, outcome) cell from the SQL matrix. `calidad_persona_id` and
+ * `resultado_persona_id` are NOT NULL FKs to complete catalogs, so this matrix
+ * is a second MECE partition of the same person set: it must sum to the very
+ * same `rows` as the sex × age matrix.
+ */
+export interface AnalysisPersonQualityOutcomeCount {
+  qualityId: number;
+  qualityName: string;
+  outcomeId: number;
+  outcomeName: string;
+  persons: number;
+}
+
 export interface AnalysisRepository {
   resolveTerritory(filters: DashboardFilters): Promise<ResolvedTerritory>;
   loadCauseCounts(filters: DashboardFilters, territory: ResolvedTerritory): Promise<AnalysisCauseCount[]>;
   loadVehicleSeverityCounts(filters: DashboardFilters, territory: ResolvedTerritory): Promise<AnalysisVehicleSeverityCount[]>;
   loadSiniestrosWithoutVehicleCount(filters: DashboardFilters, territory: ResolvedTerritory): Promise<number>;
+  loadSexAgeCounts(filters: DashboardFilters, territory: ResolvedTerritory): Promise<AnalysisPersonSexAgeCount[]>;
+  loadQualityOutcomeCounts(filters: DashboardFilters, territory: ResolvedTerritory): Promise<AnalysisPersonQualityOutcomeCount[]>;
   close?(): Promise<void>;
 }
 
@@ -110,6 +144,100 @@ function orderMatrix(
     .map(({ typeId, name, severity, siniestros }) => ({ typeId, name, severity, siniestros }));
 }
 
+/**
+ * Verbatim copy of the dashboard's approved `AGE_BANDS` (dashboard-service.ts
+ * line 64; that const is module-private, and importing it would couple the two
+ * services). Changing these strings is a metric-definition change requiring
+ * approval (`dashboard-metrics.md` §3.12), which is why the order is pinned by
+ * the analysis tests rather than shared by reference.
+ */
+const AGE_BANDS: readonly AnalysisAgeBand[] = ["0-17", "18-25", "26-40", "41-64", "65+", "unknown"];
+const AGE_BAND_RANK = new Map<string, number>(AGE_BANDS.map((band, index) => [band, index]));
+
+/**
+ * Catalog row 3 is `SE IGNORA` (verified live: unknown sex is a real catalog
+ * row, never a NULL `sexo_id`). `unknownSex` is that sexId's marginal.
+ */
+const UNKNOWN_SEX_ID = 3;
+
+/**
+ * Derive the whole persons section from the two MECE crosstab matrices, the
+ * same structural approach EXP-04 used for `byType`:
+ *
+ * - Every persona row has exactly one `sexo_id` (NOT NULL FK to a 3-row
+ *   catalog) and falls in exactly one age band (NULL `edad` → `unknown`, else
+ *   the ordered integer CASE, exhaustive via `ELSE '65+'`). So the sex × age
+ *   cells partition the person set: `rows` is their sum and `bySex`/`byAge`
+ *   marginals are exact by construction.
+ * - Every persona row also has exactly one role and one outcome (both NOT NULL
+ *   FKs), so the role × outcome cells partition the SAME set and must sum to
+ *   the same `rows` — asserted by tests for every fixture.
+ * - Zero-valued sex × age cells never surface: a SQL `GROUP BY` only produces
+ *   populated groups, and any defensive zero from a custom repository is
+ *   filtered here (the EXP-04 matrix rule). `byAge` is the exception on
+ *   purpose: all six approved bands are always returned, zero-valued included,
+ *   so the bands stay visible in every scope.
+ */
+function buildPersonsSection(
+  sexAgeCells: AnalysisPersonSexAgeCount[],
+  qualityOutcomeCells: AnalysisPersonQualityOutcomeCount[],
+): AnalysisPersonsSection {
+  const populated = sexAgeCells.filter((cell) => cell.persons > 0);
+  const rows = populated.reduce((sum, cell) => sum + cell.persons, 0);
+
+  const sexTotals = new Map<number, { sexId: number; name: string; persons: number }>();
+  const ageTotals = new Map<string, number>();
+  for (const cell of populated) {
+    const sex = sexTotals.get(cell.sexId);
+    if (sex) sex.persons += cell.persons;
+    else sexTotals.set(cell.sexId, { sexId: cell.sexId, name: cell.name, persons: cell.persons });
+    ageTotals.set(cell.bucket, (ageTotals.get(cell.bucket) ?? 0) + cell.persons);
+  }
+
+  const bySex = [...sexTotals.values()]
+    .sort((a, b) => a.sexId - b.sexId)
+    .map(({ sexId, name, persons }) => ({ sexId, name, persons, share: percent(persons, rows) }));
+
+  const byAge = AGE_BANDS.map((band) => {
+    const persons = ageTotals.get(band) ?? 0;
+    return { bucket: band, persons, share: percent(persons, rows) };
+  });
+
+  const bySexAge = [...populated]
+    .sort(
+      (a, b) =>
+        a.sexId - b.sexId ||
+        (AGE_BAND_RANK.get(a.bucket) ?? AGE_BANDS.length) - (AGE_BAND_RANK.get(b.bucket) ?? AGE_BANDS.length),
+    )
+    .map(({ sexId, name, bucket, persons }) => ({ sexId, name, bucket, persons }));
+
+  const byQualityOutcome = [...qualityOutcomeCells]
+    .filter((cell) => cell.persons > 0)
+    .sort(
+      (a, b) =>
+        b.persons - a.persons ||
+        a.qualityId - b.qualityId ||
+        a.outcomeId - b.outcomeId,
+    )
+    .map(({ qualityId, qualityName, outcomeId, outcomeName, persons }) => ({
+      qualityId,
+      qualityName,
+      outcomeId,
+      outcomeName,
+      persons,
+    }));
+
+  return {
+    rows,
+    unknownAge: ageTotals.get("unknown") ?? 0,
+    unknownSex: sexTotals.get(UNKNOWN_SEX_ID)?.persons ?? 0,
+    bySex,
+    byAge,
+    bySexAge,
+    byQualityOutcome,
+  };
+}
+
 export function createAnalysisService(
   repository: AnalysisRepository = createPrismaAnalysisRepository(),
   now: () => Date = () => new Date(),
@@ -119,10 +247,12 @@ export function createAnalysisService(
     async getAnalysis(filters) {
       validateDashboardFilters(filters);
       const territory = await repository.resolveTerritory(filters);
-      const [counts, severityCells, withoutVehicleRows] = await Promise.all([
+      const [counts, severityCells, withoutVehicleRows, sexAgeCells, qualityOutcomeCells] = await Promise.all([
         repository.loadCauseCounts(filters, territory),
         repository.loadVehicleSeverityCounts(filters, territory),
         repository.loadSiniestrosWithoutVehicleCount(filters, territory),
+        repository.loadSexAgeCounts(filters, territory),
+        repository.loadQualityOutcomeCounts(filters, territory),
       ]);
       const totalAccidents = counts.reduce((sum, row) => sum + row.accidents, 0);
       // SQL already orders; sorting again keeps the contract deterministic for
@@ -166,6 +296,7 @@ export function createAnalysisService(
           })),
         },
         vehicles,
+        persons: buildPersonsSection(sexAgeCells, qualityOutcomeCells),
       };
     },
   };
@@ -274,6 +405,76 @@ function createPrismaAnalysisRepository(prisma: PrismaClient = sharedPrisma): An
         WHERE s.fecha >= ${filters.from}::date AND s.fecha <= ${filters.to}::date${restriction}
           AND NOT EXISTS (SELECT 1 FROM vehiculo v WHERE v.siniestro_id = s.siniestro_id)`);
       return countNumber(rows[0]?.count);
+    },
+
+    async loadSexAgeCounts(filters, territory) {
+      const restriction = siniestroTerritoryClause(territory);
+      // One aggregate builds the whole sex × age matrix: COUNT(*) over persona
+      // rows (person grain — never distinct siniestros) grouped by sex and the
+      // age CASE. The CASE is **verbatim** the dashboard's approved band
+      // definition (dashboard-service queryAgeBands, `dashboard-metrics.md`
+      // §3.12): NULL edad → `unknown`, then 17/25/40/64 boundaries, ELSE 65+.
+      // `sexo` is a NOT NULL FK, so the catalog JOIN can never drop a person
+      // (0 NULL sexo verified live), which keeps the partition MECE.
+      const rows = await prisma.$queryRaw<Array<{
+        sexId: number;
+        name: string;
+        bucket: AnalysisAgeBand;
+        persons: bigint;
+      }>>(Prisma.sql`
+        SELECT sx.sexo_id AS "sexId", sx.nombre_normal AS "name",
+          CASE
+            WHEN p.edad IS NULL THEN 'unknown'
+            WHEN p.edad <= 17 THEN '0-17'
+            WHEN p.edad <= 25 THEN '18-25'
+            WHEN p.edad <= 40 THEN '26-40'
+            WHEN p.edad <= 64 THEN '41-64'
+            ELSE '65+'
+          END AS bucket,
+          COUNT(*) AS persons
+        FROM persona p
+        JOIN siniestro s ON s.siniestro_id = p.siniestro_id
+          AND s.fecha >= ${filters.from}::date AND s.fecha <= ${filters.to}::date${restriction}
+        JOIN sexo sx ON sx.sexo_id = p.sexo_id
+        GROUP BY 1, 2, 3`);
+      return rows.map((row) => ({
+        sexId: row.sexId,
+        name: row.name,
+        bucket: row.bucket,
+        persons: countNumber(row.persons),
+      }));
+    },
+
+    async loadQualityOutcomeCounts(filters, territory) {
+      const restriction = siniestroTerritoryClause(territory);
+      // One aggregate builds the role × outcome matrix with the same person-
+      // grain COUNT(*) and the same date/territory clause. Both FKs are NOT
+      // NULL over complete catalogs (0 nulls verified live), so every person
+      // lands in exactly one cell and this matrix partitions the same set the
+      // sex × age matrix does.
+      const rows = await prisma.$queryRaw<Array<{
+        qualityId: number;
+        qualityName: string;
+        outcomeId: number;
+        outcomeName: string;
+        persons: bigint;
+      }>>(Prisma.sql`
+        SELECT cp.calidad_persona_id AS "qualityId", cp.nombre_normal AS "qualityName",
+          rp.resultado_persona_id AS "outcomeId", rp.nombre_normal AS "outcomeName",
+          COUNT(*) AS persons
+        FROM persona p
+        JOIN siniestro s ON s.siniestro_id = p.siniestro_id
+          AND s.fecha >= ${filters.from}::date AND s.fecha <= ${filters.to}::date${restriction}
+        JOIN calidad_persona cp ON cp.calidad_persona_id = p.calidad_persona_id
+        JOIN resultado_persona rp ON rp.resultado_persona_id = p.resultado_persona_id
+        GROUP BY 1, 2, 3, 4`);
+      return rows.map((row) => ({
+        qualityId: row.qualityId,
+        qualityName: row.qualityName,
+        outcomeId: row.outcomeId,
+        outcomeName: row.outcomeName,
+        persons: countNumber(row.persons),
+      }));
     },
   };
 }

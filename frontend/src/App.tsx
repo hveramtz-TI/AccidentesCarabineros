@@ -1,5 +1,5 @@
 /**
- * Route tree (EXP-00 T1/T4, EXP-02 T4, EXP-03 T4, EXP-04 T5).
+ * Route tree (EXP-00 T1/T4, EXP-02 T4, EXP-03 T4, EXP-04 T5, EXP-05 T5).
  *
  * `/` stays the eager Panel so the first paint and the existing bundle cost do
  * not regress; every other page is lazy-loaded. The Suspense fallback and the
@@ -19,6 +19,7 @@ const MethodologyPage = lazy(() => import("@/pages/methodology-page"))
 const AnalysisLayout = lazy(() => import("@/routes/analysis-layout"))
 const AnalysisCausesPage = lazy(() => import("@/pages/analysis-causes-page"))
 const AnalysisVehiclesPage = lazy(() => import("@/pages/analysis-vehicles-page"))
+const AnalysisPersonsPage = lazy(() => import("@/pages/analysis-persons-page"))
 const NotFoundPage = lazy(() => import("@/pages/not-found-page"))
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
             <Route index element={<Navigate to="causas" replace />} />
             <Route path="causas" element={<AnalysisCausesPage />} />
             <Route path="vehiculos" element={<AnalysisVehiclesPage />} />
+            <Route path="personas" element={<AnalysisPersonsPage />} />
           </Route>
           <Route path="metodologia" element={<MethodologyPage />} />
           <Route path="*" element={<NotFoundPage />} />
