@@ -13,6 +13,10 @@ function trackingService(): DashboardService & { calls: number } {
       service.calls += 1;
       throw new Error("service reached");
     },
+    async getTerritoryReport() {
+      service.calls += 1;
+      throw new Error("service reached");
+    },
   };
   return service;
 }

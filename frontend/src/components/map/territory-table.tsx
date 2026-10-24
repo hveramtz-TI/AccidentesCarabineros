@@ -1,17 +1,24 @@
 /**
- * Sortable territory table for `/mapas` (EXP-02 T3).
+ * Sortable territory table for `/mapas` (EXP-02 T3, EXP-06 T6).
  *
  * One row per territory returned by `GET /api/dashboard` (`territories.all`),
  * zeros included: a zero is a real value, not "no data". The rank column is
  * derived after sorting and is never sortable itself, and the share denominator
  * is the filtered accident total so the column always reads against the scope the
- * user actually selected.
+ * user actually selected. Each row also links to its ficha territorial in
+ * `/informes`, carrying the current period and the row's territory as URL
+ * filters; the link never touches the sort logic.
  */
 
 import { useMemo, useState } from "react"
+import { Link } from "react-router"
+import type { To } from "react-router"
 
+import { useUrlFilters } from "@/hooks/use-url-filters"
 import { regions } from "@/lib/data"
-import type { TerritoryRow } from "@/types/dashboard"
+import { filtersToSearchParams } from "@/lib/filters-url"
+import { ALL_VALUE } from "@/types/dashboard"
+import type { DashboardFilters, PeriodId, TerritoryRow } from "@/types/dashboard"
 
 type SortKey = "name" | "accidents" | "fatalities" | "share"
 type SortDirection = "asc" | "desc"
@@ -39,6 +46,21 @@ function regionNameFor(communeId: string): string | null {
 }
 
 /**
+ * `/informes` destination for one row (EXP-06 T6): region rows carry the
+ * region code, commune rows carry the commune identifier (its parent region is
+ * re-derived by `parseFilters`), always with the currently selected period.
+ * Serialized through `filtersToSearchParams` so the URL shape stays exactly
+ * what `filters-url.ts` encodes — no hand-built query strings.
+ */
+function fichaDestination(row: TerritoryRow, scope: "region" | "commune", period: PeriodId): To {
+  const filters: DashboardFilters =
+    scope === "region"
+      ? { period, region: row.code, commune: ALL_VALUE }
+      : { period, region: ALL_VALUE, commune: row.code }
+  return { pathname: "/informes", search: filtersToSearchParams(filters).toString() }
+}
+
+/**
  * `share` is `accidents / totalAccidents` with a constant denominator, so its
  * order is identical to the accident order — sorting it separately would only
  * invent a second code path.
@@ -58,6 +80,8 @@ function compare(left: TerritoryRow, right: TerritoryRow, key: SortKey): number 
 export default function TerritoryTable({ rows, scope, totalAccidents }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>("accidents")
   const [direction, setDirection] = useState<SortDirection>("desc")
+  // The URL is the filter store: the ficha links carry the active period.
+  const [currentFilters] = useUrlFilters()
 
   const sorted = useMemo(() => {
     const factor = direction === "asc" ? 1 : -1
@@ -82,12 +106,13 @@ export default function TerritoryTable({ rows, scope, totalAccidents }: Props) {
     )
   }
 
-  const columns: Array<{ key: SortKey | "rank"; label: string; numeric: boolean }> = [
+  const columns: Array<{ key: SortKey | "rank" | "ficha"; label: string; numeric: boolean }> = [
     { key: "rank", label: "#", numeric: false },
     { key: "name", label: scope === "region" ? "Región" : "Comuna", numeric: false },
     { key: "accidents", label: "Siniestros", numeric: true },
     { key: "fatalities", label: "Fallecidos", numeric: true },
     { key: "share", label: "Participación", numeric: true },
+    { key: "ficha", label: "Ficha", numeric: false },
   ]
 
   return (
@@ -100,7 +125,7 @@ export default function TerritoryTable({ rows, scope, totalAccidents }: Props) {
         <thead className="sticky top-0 z-10 bg-background">
           <tr className="border-b border-border/70">
             {columns.map((column) => {
-              const sortable = column.key !== "rank"
+              const sortable = column.key !== "rank" && column.key !== "ficha"
               const active = sortable && column.key === sortKey
               const ariaSort = active ? (direction === "asc" ? "ascending" : "descending") : sortable ? "none" : undefined
 
@@ -154,6 +179,19 @@ export default function TerritoryTable({ rows, scope, totalAccidents }: Props) {
                   {numberFormatter.format(row.fatalities)}
                 </td>
                 <td className="px-3 py-2 text-right align-top tabular-nums">{shareFormatter(share)}</td>
+                <td className="px-3 py-2 align-top">
+                  <Link
+                    to={fichaDestination(row, scope, currentFilters.period)}
+                    // stopPropagation guards the click from any ancestor
+                    // handler; preventDefault is deliberately not called so
+                    // the Link (and the keyboard) navigates normally.
+                    onClick={(event) => event.stopPropagation()}
+                    className="rounded-sm font-mono text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  >
+                    Ver ficha
+                    <span className="sr-only"> de {row.name}</span>
+                  </Link>
+                </td>
               </tr>
             )
           })}

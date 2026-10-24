@@ -30,6 +30,9 @@ test("builds dense zero-filled sections and marks an empty filtered scope", asyn
           persons: { rows: 0, quality: [], sex: [], ages: [] },
         };
       },
+      async loadTerritoryReport() {
+        throw new Error("territory report must not be called");
+      },
     },
     () => new Date("2026-10-10T00:00:00.000Z"),
   );
@@ -97,6 +100,9 @@ test("uses database aggregates for KPIs and stable shares while retaining the co
           },
         };
       },
+      async loadTerritoryReport() {
+        throw new Error("territory report must not be called");
+      },
     },
     () => new Date("2026-10-10T00:00:00.000Z"),
   );
@@ -122,4 +128,52 @@ test("uses database aggregates for KPIs and stable shares while retaining the co
   assert.deepEqual(result.persons.ageBands.map(({ band, count }) => [band, count]), [
     ["0-17", 0], ["18-25", 0], ["26-40", 0], ["41-64", 0], ["65+", 0], ["unknown", 2],
   ]);
+});
+
+test("getTerritoryReport reuses the territory SQL aggregate, sorts rows and totals them", async () => {
+  const service = createDashboardService({
+    async resolveTerritory() {
+      return { scopeLabel: "National (2025)", territoryScope: "region", regionId: null, communeId: null };
+    },
+    async loadSnapshot() {
+      throw new Error("full snapshot must not be loaded for exports");
+    },
+    async loadTerritoryReport() {
+      return {
+        rows: [
+          { code: "XIII", name: "Metropolitana", accidents: 100, fatalities: 2 },
+          { code: "XIV", name: "O'Higgins", accidents: 100, fatalities: 1 },
+          { code: "IX", name: "Araucan\u00eda", accidents: 300, fatalities: 4 },
+        ],
+        regionCode: null,
+        regionName: null,
+      };
+    },
+  });
+
+  const report = await service.getTerritoryReport({ from: "2025-01-01", to: "2025-12-31", regionId: null, communeId: null });
+
+  assert.equal(report.scope, "region");
+  assert.equal(report.scopeLabel, "National (2025)");
+  assert.deepEqual(report.rows.map(({ code }) => code), ["IX", "XIII", "XIV"]);
+  assert.equal(report.totalAccidents, 500);
+});
+
+test("getTerritoryReport rejects dates outside 2025 before touching the repository", async () => {
+  const service = createDashboardService({
+    async resolveTerritory() {
+      throw new Error("must not be called");
+    },
+    async loadSnapshot() {
+      throw new Error("must not be called");
+    },
+    async loadTerritoryReport() {
+      throw new Error("must not be called");
+    },
+  });
+
+  await assert.rejects(
+    service.getTerritoryReport({ from: "2024-01-01", to: "2025-12-31", regionId: null, communeId: null }),
+    /from must be within 2025/,
+  );
 });
