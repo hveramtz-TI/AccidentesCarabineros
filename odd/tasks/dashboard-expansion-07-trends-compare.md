@@ -5,7 +5,7 @@ Execution order: 07
 Risk: 4/5
 Cost: 4/5
 Depends on: EXP-03
-Status: in progress
+Status: done
 
 ## Objective
 
@@ -147,7 +147,7 @@ queries.
     as scope shares.
   - Avoid a chart library; use CSS/inline SVG with accessible fallbacks.
 
-- [ ] T7 — Verify and update the index
+- [x] T7 — Verify and update the index
   - Reconcile trend, heatmap, and compare with independent SQL at national and
     region scope.
   - Check the 4-code limit, out-of-scope rejection, and commune disabled state.
@@ -315,3 +315,12 @@ raw export request requires a new ODD and data-source review.
   exit 0; docker stack rebuilt (`:3200` and `/health` 200). No push.
   Remaining for T7 close: the browser pass (heatmap accessibility, comparator
   disabled-at-commune state, 360 px layout) and the index status flip.
+- **2026-10-24 — L9 (T7 closed, slice done):** the user verified the
+  Tendencias tab in the browser and ordered the close ("cierra EXP-07"),
+  committing the L8 evidence entry themselves (`49056ff`). Final state on
+  `feat/dashboard-expansion-07-trends`: `86037ab` (footer nav) + `3ecd19e` +
+  `68f8ea7` + `a06331b` + `49056ff`, nothing pushed. Backend 109/109 + tsc OK,
+  frontend lint/build OK, live SQL reconciliation recorded in L4/L6. This was
+  the last feature ODD of the dashboard-expansion program (EXP-00…EXP-07 all
+  done). Manual 360 px/keyboard details rest on the shared patterns already
+  browser-approved in EXP-02–06; the new browser pass accepted the tab as-is.
