@@ -113,6 +113,23 @@ filtro, el conteo que devuelve `midnightArtifactCount`) permanecen en su celda
 aparte. Prohibido cualquier afirmación causal hora→siniestro: son asociaciones
 descriptivas.
 
+### 3.14 Comparador territorial (`CMP-1`, EXP-07)
+
+**Participación en el comparador (`GET /api/compare`, ver `compare-api.md`):**
+para cada territorio seleccionado, `share` = `siniestros del territorio /
+total del ALCANCE * 100` (un decimal, `percent()` compartido). El denominador
+es la suma de **todos** los territorios del nivel activo en el filtro (16
+regiones a nivel nacional; todas las comunas del catálogo de la región
+seleccionada), que concilia con `kpis.accidents` del panel — **nunca** la suma
+de los territorios elegidos: seleccionar 4 código no renormaliza a 100 y la UI
+debe rotular la columna como participación sobre el alcance. Territorios con
+`0` son filas reales con `share: 0` (regla `TRR-1`). Tendencias: la misma
+`TRE-1` por territorio, densa sobre el período pedido. Límites: 1..4 códigos
+efectivos (de-dup antes del límite), nivel único por request (nacional→regiones,
+región→comunas, comuna→comparador deshabilitado en UI y `400` en API).
+Prohibido: ranking sintético, scores compuestos, o leer el comparador como
+causalidad (asociaciones descriptivas, mismos caveats de `SER-1`/`TRR-1`).
+
 ## 4. Evidencia de reconciliación entre granos (nacional 2025)
 
 | Resultado | SUM en siniestro | COUNT en persona | Δ |

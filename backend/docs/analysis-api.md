@@ -326,8 +326,10 @@ remove, or change the meaning of `causes`, `vehicles`, `persons`, `trend`,
 ## 8. Non-goals
 
 - No per-tab endpoint, no cause-to-person/vehicle crosstabs (the EXP-05 matrices
-  cross sex × age and role × outcome, both at person grain), no CSV export or
-  comparator (EXP-06/EXP-07).
+  cross sex × age and role × outcome, both at person grain). The territory CSV
+  export lives in `GET /api/dashboard/export.csv` (`reports-api.md`) and the
+  multi-territory comparator in `GET /api/compare` (`compare-api.md`); neither
+  is a section of this response.
 - No chart library, schema change, materialized view, or synthetic fallback.
 - No raw IDs beyond catalog identifiers (`causeId`, `typeId`, `sexId`,
   `qualityId`, `outcomeId`); no PII, no `persona_id` or person rows, no vehicle
