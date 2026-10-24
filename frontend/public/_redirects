@@ -1,6 +1,0 @@
-# Cloudflare Pages SPA fallback (EXP-00 T7).
-# Production frontend hosting is Cloudflare Pages (see README), which serves
-# index.html for client-side routes only through this file. Without it a refresh
-# on a deep link 404s before React can render the route. The local nginx image
-# already covers this with `try_files $uri $uri/ /index.html`.
-/*    /index.html   200
