@@ -30,14 +30,39 @@ export interface DashboardQueryParams {
   communeId?: string
 }
 
-export function buildDashboardUrl(params: DashboardQueryParams): string {
+/** Filter params shared by every dashboard-family endpoint (same wire schema). */
+function buildSearch(params: DashboardQueryParams): string {
   const search = new URLSearchParams()
   if (params.from) search.set("from", params.from)
   if (params.to) search.set("to", params.to)
   if (params.regionId !== undefined) search.set("regionId", String(params.regionId))
   if (params.communeId !== undefined) search.set("communeId", params.communeId)
-  const query = search.toString()
+  return search.toString()
+}
+
+export function buildDashboardUrl(params: DashboardQueryParams): string {
+  const query = buildSearch(params)
   return `${API_BASE_URL}/api/dashboard${query ? `?${query}` : ""}`
+}
+
+/**
+ * GET /api/dashboard/export.csv (EXP-06): the territory CSV carries exactly the
+ * same filter params as the JSON dashboard request.
+ */
+export function buildDashboardExportUrl(params: DashboardQueryParams): string {
+  const query = buildSearch(params)
+  return `${API_BASE_URL}/api/dashboard/export.csv${query ? `?${query}` : ""}`
+}
+
+/**
+ * Request barrier headers for the dashboard API. The token stays module-private
+ * so no caller can accidentally render or log it (EXP-06 download path).
+ */
+export function dashboardRequestHeaders(accept: string): Record<string, string> {
+  return {
+    Accept: accept,
+    Authorization: `Bearer ${CONNECTION_TOKEN}`,
+  }
 }
 
 export async function fetchDashboard(
@@ -48,10 +73,7 @@ export async function fetchDashboard(
   try {
     response = await fetch(buildDashboardUrl(params), {
       method: "GET",
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${CONNECTION_TOKEN}`,
-      },
+      headers: dashboardRequestHeaders("application/json"),
       signal,
     })
   } catch (error) {

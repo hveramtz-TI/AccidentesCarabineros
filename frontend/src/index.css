@@ -312,3 +312,102 @@
   font-size: 10px;
   fill: var(--muted-foreground, #8b9793);
 }
+
+/* EXP-06 T5 — print layout for the /informes report.
+   Tailwind `print:` variants hide the chrome the report page owns; this block
+   covers what utilities cannot cleanly reach: the dark-theme tokens (they flip
+   once, here, to ink-on-paper for every token-based utility), the glass and
+   dot-grid surfaces, the Layout chrome (Header/Footer/nav take no className),
+   the filter forms shared with the Panel, and the table pagination rules.
+   Nothing here touches screen rendering: every rule lives in the print query. */
+@media print {
+  /* Predictable sheet margins without forcing a paper size (A4 and Letter are
+     both used; the report fits either portrait). */
+  @page {
+    margin: 14mm;
+  }
+
+  /* The theme is CSS-first (Tailwind v4): redefining the tokens for print is
+     the single change that turns the whole page into black ink on white. */
+  :root,
+  .dark {
+    color-scheme: light;
+
+    --background: #ffffff;
+    --foreground: #16181d;
+    --card: #ffffff;
+    --card-foreground: #16181d;
+    --popover: #ffffff;
+    --popover-foreground: #16181d;
+    --primary: #0f3d2c;
+    --primary-foreground: #ffffff;
+    --secondary: #16181d;
+    --secondary-foreground: #ffffff;
+    --muted: #f3f4f6;
+    --muted-foreground: #4b5563;
+    --accent: #f5efe6;
+    --accent-foreground: #78350f;
+    --destructive: #991b1b;
+    --destructive-foreground: #ffffff;
+    --border: #9ca3af;
+    --input: #6b7280;
+    --ring: #16181d;
+  }
+
+  html {
+    scrollbar-gutter: auto;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  /* App chrome never belongs on paper (Scope §8): shell header, footer, and
+     the section navigations (main nav, Panel links row, analysis tabs). */
+  header,
+  footer,
+  nav {
+    display: none;
+  }
+
+  /* Filter controls are interactive chrome: the same <form aria-label> renders
+     on the Panel and inside the analysis/report filter sections, where
+     component-level print variants cannot reach them. The report prints its
+     own metadata block instead. */
+  form[aria-label="Filtros del panel"],
+  section[aria-label="Filtros del análisis"] {
+    display: none;
+  }
+
+  /* Surfaces that would mute the ink: the canvas texture and the glass cards. */
+  .dot-grid {
+    background-image: none;
+  }
+
+  .glass-card {
+    background-color: #ffffff;
+    backdrop-filter: none;
+    border-color: #9ca3af;
+  }
+
+  /* Readable tables on paper: real borders for every cell, header rows
+     repeated after a page break, and no row split across pages. Black and
+     white comes from the token flip above — no rule depends on color alone. */
+  table {
+    border-collapse: collapse;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tr {
+    break-inside: avoid;
+  }
+
+  th,
+  td {
+    border: 1px solid #4b5563;
+    background-color: transparent;
+  }
+}

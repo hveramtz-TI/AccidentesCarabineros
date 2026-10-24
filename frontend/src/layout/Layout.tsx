@@ -32,18 +32,25 @@ const NAV_ITEMS: NavigationItem[] = [
   { label: "Panel", icon: LayoutDashboard, to: "/", enabled: true },
   { label: "Mapas", icon: Map, to: "/mapas", enabled: true },
   { label: "Análisis", icon: ScanSearch, to: "/analisis", enabled: true },
-  { label: "Informes", icon: FileChartColumn, to: "/informes", enabled: false },
+  { label: "Informes", icon: FileChartColumn, to: "/informes", enabled: true },
 ]
+
+/** Sections whose content is driven by the URL filters (EXP-03, EXP-06). */
+const FILTER_CARRY_PATHS = new Set(["/analisis", "/informes"])
 
 const Layout = () => {
   const location = useLocation()
-  // Switching into the analysis area keeps the active period/territory filters.
+  // Switching into the analysis or reports area keeps the active
+  // period/territory filters.
   const navigation = NAV_ITEMS.map((item) =>
-    item.to === "/analisis" ? { ...item, to: { pathname: item.to, search: location.search } } : item,
+    typeof item.to === "string" && FILTER_CARRY_PATHS.has(item.to)
+      ? { ...item, to: { pathname: item.to, search: location.search } }
+      : item,
   )
 
   return (
-    <div className="flex min-h-svh min-w-0 flex-col">
+    // print:min-h-0 so the svh floor never adds a blank sheet on paper (EXP-06 T5).
+    <div className="flex min-h-svh min-w-0 flex-col print:min-h-0">
       <Header navigation={navigation} />
       <main className="dot-grid min-w-0 flex-1">
         <RouteErrorBoundary key={location.pathname}>

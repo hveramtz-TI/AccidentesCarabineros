@@ -5,6 +5,7 @@
 ## 1. Superficie
 
 - `GET /api/dashboard` — único endpoint de datos: responde **todas** las secciones aprobadas para un juego de filtros en una sola pasada. Justificación: la consumidora prevista (el dashboard) carga todo junto; dividir por sección multiplicaría consultas SQL y round-trips sin consumidora independiente. No se agregan endpoints sin consumidora real.
+- `GET /api/dashboard/export.csv` — exportación territorial agregada del alcance actual (archivo CSV, no JSON). Contrato completo en `reports-api.md`; mismo guard Bearer, mismos parámetros y mismos cuerpos de error que este documento.
 - `GET /health` — sin cambios (contrato Cloud Run).
 - **No** se expone endpoint de selectores territoriales: el frontend sigue usando el catálogo canónico versionado (`frontend/src/data/oversio-identifiers.json`) hasta que exista un consumidor que lo requiera.
 - Auth: `GET /api/dashboard` exige `Authorization: Bearer <UUID_CONNECTION>` (barrera básica de request, **no** autenticación de usuarios; el valor del frontend es intencionalmente público). Sin token o con token incorrecto → `401 UNAUTHORIZED` antes de validación de query, controlador, y Prisma. Si `UUID_CONNECTION` no está configurado en el backend → `500 AUTH_NOT_CONFIGURED` (fail closed, nunca abierto). `/health` sigue público (healthcheck de Cloud Run/compose). Sin escritura, sin CRUD por tabla.

@@ -23,6 +23,13 @@ interface CategoryCount {
   count: number;
 }
 
+/** Territory rows for the export: raw (unsorted) aggregate plus region metadata. */
+export interface TerritoryReportData {
+  rows: DashboardSnapshot["territories"];
+  regionCode: string | null;
+  regionName: string | null;
+}
+
 export interface DashboardSnapshot {
   totals: {
     accidents: number;
@@ -52,6 +59,7 @@ export interface DashboardSnapshot {
 export interface DashboardRepository {
   resolveTerritory(filters: DashboardFilters): Promise<ResolvedTerritory>;
   loadSnapshot(filters: DashboardFilters, territory: ResolvedTerritory): Promise<DashboardSnapshot>;
+  loadTerritoryReport(filters: DashboardFilters, territory: ResolvedTerritory): Promise<TerritoryReportData>;
   close?(): Promise<void>;
 }
 
@@ -65,8 +73,14 @@ const AGE_BANDS = ["0-17", "18-25", "26-40", "41-64", "65+", "unknown"] as const
 const HOUR_STARTS = [0, 3, 6, 9, 12, 15, 18, 21] as const;
 const VEHICLE_NOTE = "shares no suman 100: un siniestro puede involucrar varios tipos";
 
-function percent(value: number, total: number): number {
+/** Single rounding source for every share the API or the CSV export emits. */
+export function percent(value: number, total: number): number {
   return total === 0 ? 0 : Math.round((value / total) * 1_000) / 10;
+}
+
+/** Canonical territory ordering: accidents DESC, then catalog code ASC. */
+function byTerritoryRank(a: { code: string; accidents: number }, b: { code: string; accidents: number }): number {
+  return b.accidents - a.accidents || (a.code < b.code ? -1 : a.code > b.code ? 1 : 0);
 }
 
 function denseMonths(from: string, to: string, rows: DashboardSnapshot["monthly"]): DashboardResponse["monthlyTrend"] {
@@ -114,9 +128,7 @@ export function createDashboardService(
       const vehicles = sortedCategories(snapshot.vehicles);
       const topVehicles = vehicles.slice(0, 10);
       const otherVehicles = vehicles.slice(10);
-      const territoryRows = [...snapshot.territories].sort(
-        (a, b) => b.accidents - a.accidents || (a.code < b.code ? -1 : a.code > b.code ? 1 : 0),
-      );
+      const territoryRows = [...snapshot.territories].sort(byTerritoryRank);
       const topTerritories = territoryRows.filter((row) => row.accidents > 0).slice(0, 10);
       const outsideTerritories = territoryRows.filter((row) => row.accidents > 0).slice(10);
       const effectiveRegionId = filters.communeId ? territory.regionId : filters.regionId;
@@ -198,6 +210,21 @@ export function createDashboardService(
             count: snapshot.persons.ages.find((row) => row.band === band)?.count ?? 0,
           })),
         },
+      };
+    },
+
+    async getTerritoryReport(filters) {
+      validateDashboardFilters(filters);
+      const territory = await repository.resolveTerritory(filters);
+      const report = await repository.loadTerritoryReport(filters, territory);
+      const rows = [...report.rows].sort(byTerritoryRank);
+      return {
+        scope: territory.territoryScope,
+        scopeLabel: territory.scopeLabel,
+        regionCode: report.regionCode,
+        regionName: report.regionName,
+        rows,
+        totalAccidents: rows.reduce((sum, row) => sum + row.accidents, 0),
       };
     },
   };
@@ -322,6 +349,21 @@ function createPrismaDashboardRepository(prisma: PrismaClient = sharedPrisma): D
           ages,
         },
       };
+    },
+
+    async loadTerritoryReport(filters, territory) {
+      const { rows } = await queryTerritories(prisma, filters, territory);
+      let regionCode: string | null = null;
+      let regionName: string | null = null;
+      if (territory.regionId !== null) {
+        const region = await prisma.region.findUnique({
+          where: { regionId: territory.regionId },
+          select: { numeroRomano: true, nombreNormal: true },
+        });
+        regionCode = region?.numeroRomano ?? null;
+        regionName = region?.nombreNormal ?? null;
+      }
+      return { rows, regionCode, regionName };
     },
   };
 }

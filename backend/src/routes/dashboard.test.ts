@@ -50,7 +50,7 @@ const emptyResponse: DashboardResponse = {
 const auth = { authorization: "Bearer test-token" };
 
 test("GET /api/dashboard returns the full payload and no-store for an injected service", async (t) => {
-  const app = buildApp({ logger: false, authToken: "test-token", dashboardService: { async getDashboard() { return emptyResponse; } } });
+  const app = buildApp({ logger: false, authToken: "test-token", dashboardService: { async getDashboard() { return emptyResponse; }, async getTerritoryReport() { throw new Error("must not be called"); } } });
   t.after(() => app.close());
 
   const response = await app.inject({ method: "GET", headers: auth, url: "/api/dashboard?unknown=ignored" });
@@ -62,7 +62,7 @@ test("GET /api/dashboard returns the full payload and no-store for an injected s
 });
 
 test("GET /api/dashboard returns documented validation errors", async (t) => {
-  const app = buildApp({ logger: false, authToken: "test-token", dashboardService: { async getDashboard() { throw new Error("must not be called"); } } });
+  const app = buildApp({ logger: false, authToken: "test-token", dashboardService: { async getDashboard() { throw new Error("must not be called"); }, async getTerritoryReport() { throw new Error("must not be called"); } } });
   t.after(() => app.close());
 
   const response = await app.inject({ method: "GET", headers: auth, url: "/api/dashboard?from=2025-04-01&to=2025-03-31" });
@@ -74,7 +74,7 @@ test("GET /api/dashboard returns documented validation errors", async (t) => {
 });
 
 test("GET /api/dashboard rejects malformed dates and unsupported region IDs", async (t) => {
-  const app = buildApp({ logger: false, authToken: "test-token", dashboardService: { async getDashboard() { throw new Error("must not be called"); } } });
+  const app = buildApp({ logger: false, authToken: "test-token", dashboardService: { async getDashboard() { throw new Error("must not be called"); }, async getTerritoryReport() { throw new Error("must not be called"); } } });
   t.after(() => app.close());
 
   for (const query of ["from=2025-2-01", "regionId=17", "communeId=not-a-commune"]) {
@@ -86,7 +86,7 @@ test("GET /api/dashboard rejects malformed dates and unsupported region IDs", as
 });
 
 test("GET /api/dashboard sanitizes service failures", async (t) => {
-  const app = buildApp({ logger: false, authToken: "test-token", dashboardService: { async getDashboard() { throw new Error("secret SQL details"); } } });
+  const app = buildApp({ logger: false, authToken: "test-token", dashboardService: { async getDashboard() { throw new Error("secret SQL details"); }, async getTerritoryReport() { throw new Error("secret SQL details"); } } });
   t.after(() => app.close());
 
   const response = await app.inject({ method: "GET", headers: auth, url: "/api/dashboard" });

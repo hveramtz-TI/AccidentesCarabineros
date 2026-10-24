@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
 
 import { createDashboardController } from "../controllers/dashboard-controller.js";
+import { createExportCsvController } from "../controllers/export-csv-controller.js";
 import { createDashboardService } from "../services/dashboard-service.js";
 import type { DashboardService } from "../types/dashboard-api.js";
 import { applyApiGuard, baseFilterSchema } from "./api-guard.js";
@@ -22,6 +23,10 @@ const dashboardRoutes: FastifyPluginAsync<DashboardRouteOptions> = async (fastif
   fastify.addHook("onClose", async () => service.close?.());
 
   fastify.get("/api/dashboard", { schema: { querystring: baseFilterSchema } }, createDashboardController(service));
+
+  // Aggregate territory CSV export. Same encapsulated plugin, so the shared
+  // guard, no-store header, filter schema, and error mapping apply unchanged.
+  fastify.get("/api/dashboard/export.csv", { schema: { querystring: baseFilterSchema } }, createExportCsvController(service));
 };
 
 export default dashboardRoutes;

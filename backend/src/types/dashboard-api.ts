@@ -56,8 +56,30 @@ export interface DashboardResponse {
   };
 }
 
+export interface TerritoryReportRow {
+  code: string;
+  name: string;
+  accidents: number;
+  fatalities: number;
+}
+
+/**
+ * Aggregate territory report for the CSV export: rows carry the same shape and
+ * ordering as `dashboard-api` `territories.all`, plus the resolved region
+ * metadata needed for `codigo_region`/`region` columns.
+ */
+export interface TerritoryReport {
+  scope: "region" | "commune";
+  scopeLabel: string;
+  regionCode: string | null;
+  regionName: string | null;
+  rows: TerritoryReportRow[];
+  totalAccidents: number;
+}
+
 export interface DashboardService {
   getDashboard(filters: DashboardFilters): Promise<DashboardResponse>;
+  getTerritoryReport(filters: DashboardFilters): Promise<TerritoryReport>;
   close?(): Promise<void>;
 }
 

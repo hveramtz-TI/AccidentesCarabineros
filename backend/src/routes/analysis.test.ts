@@ -12,7 +12,7 @@ import type {
 } from "../services/analysis-service.js";
 import type { ResolvedTerritory } from "../services/dashboard-service.js";
 import { DashboardValidationError } from "../types/dashboard-api.js";
-import type { DashboardFilters, DashboardResponse } from "../types/dashboard-api.js";
+import type { DashboardFilters, DashboardResponse, TerritoryReport } from "../types/dashboard-api.js";
 import type { AnalysisResponse, AnalysisService } from "../types/insights-api.js";
 import type { MetaResponse } from "../types/meta-api.js";
 
@@ -389,7 +389,10 @@ test("registering /api/analysis keeps the sibling protected routes reachable", a
     logger: false,
     authToken: TOKEN,
     analysisService: trackingService(),
-    dashboardService: { async getDashboard() { return { route: "dashboard" } as unknown as DashboardResponse; } },
+    dashboardService: {
+      async getDashboard() { return { route: "dashboard" } as unknown as DashboardResponse; },
+      async getTerritoryReport() { return { scope: "region", scopeLabel: "National (2025)", regionCode: null, regionName: null, rows: [], totalAccidents: 0 } satisfies TerritoryReport; },
+    },
     metaService: { async getMeta() { return { route: "meta" } as unknown as MetaResponse; } },
   });
   t.after(() => app.close());
@@ -401,6 +404,11 @@ test("registering /api/analysis keeps the sibling protected routes reachable", a
   const meta = await app.inject({ method: "GET", url: "/api/meta", headers: auth });
   assert.equal(meta.statusCode, 200);
   assert.deepEqual(meta.json(), { route: "meta" });
+
+  // The static sibling /api/dashboard must not shadow the CSV export route.
+  const csv = await app.inject({ method: "GET", url: "/api/dashboard/export.csv", headers: auth });
+  assert.equal(csv.statusCode, 200);
+  assert.equal(csv.headers["content-type"], "text/csv; charset=utf-8");
 });
 
 test("GET /api/analysis sanitizes service failures without database details", async (t) => {

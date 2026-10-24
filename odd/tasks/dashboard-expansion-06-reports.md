@@ -5,7 +5,7 @@ Execution order: 06
 Risk: 3/5
 Cost: 4/5
 Depends on: EXP-00, EXP-02
-Status: planned
+Status: in progress
 
 ## Objective
 
@@ -94,14 +94,14 @@ and no heavy report worker on the 1 GB / 1 vCPU service.
 
 ## Tasks
 
-- [ ] T1 — Fix the CSV contract
+- [x] T1 — Fix the CSV contract
   - Confirm the territory dataset, column order, Spanish headers, numeric
     format, and zero-row behavior with the user.
   - Document the endpoint, filename, caps, and sanitization in
     `backend/docs/reports-api.md`.
   - Decide whether `participacion` uses a dot or comma; keep it consistent.
 
-- [ ] T2 — Implement the CSV endpoint
+- [x] T2 — Implement the CSV endpoint
   - Reuse the shared guard and dashboard filter schema.
   - Reuse the dashboard territory aggregate; expose a shared helper from the
     dashboard service if needed rather than duplicating the SQL.
@@ -110,7 +110,7 @@ and no heavy report worker on the 1 GB / 1 vCPU service.
   - Enforce the row and byte caps; return `400` before streaming if exceeded.
   - Set the content headers and `no-store`; `401` before any query.
 
-- [ ] T3 — Add backend tests
+- [x] T3 — Add backend tests
   - Header, BOM, CRLF, quoting, and numeric formatting.
   - Formula injection for `=`, `+`, `-`, `@`, tab, and CR.
   - Row count and totals reconcile with `/api/dashboard`.
@@ -119,7 +119,7 @@ and no heavy report worker on the 1 GB / 1 vCPU service.
   - Auth, validation, content type, filename, and cache header.
   - No raw IDs or PII in the output.
 
-- [ ] T4 — Build `/informes`
+- [x] T4 — Build `/informes`
   - Add the route and enable the Informes nav item.
   - Read URL filters, request `/api/dashboard`, and render header, KPI summary,
     and a capped preview table.
@@ -127,13 +127,13 @@ and no heavy report worker on the 1 GB / 1 vCPU service.
   - Add the print button and a print-only report header.
   - Handle loading, error, empty scope, and retry.
 
-- [ ] T5 — Add print styles
+- [x] T5 — Add print styles
   - Add `@media print` rules that hide chrome and controls, force readable
     colors, repeat table headers, and avoid row splits.
   - Ensure the report fits A4 portrait; landscape is not required.
   - Verify no clipped columns and no blank first page.
 
-- [ ] T6 — Add the Mapas ficha link
+- [x] T6 — Add the Mapas ficha link
   - Add a “Ficha territorial” link per table row with region/commune params.
   - Keep sorting and keyboard behavior unchanged; the link must not trigger row
     sort.
@@ -194,3 +194,102 @@ server-side PDF requires a new, separate ODD.
 
 - **2026-10-23 — ODD created:** CSV contract, report page, print rules, Mapas
   link, caps, and acceptance defined; implementation not started.
+- **2026-10-24 — L1 (kickoff, verbatim):** "okey puedes empezar con
+  @odd/tasks/dashboard-expansion-06-reports.md". Branch
+  `feat/dashboard-expansion-06-reports` from `main` (`d5dbca3`).
+- **2026-10-24 — L2 (T1 contract fixed, gates resolved with the user):**
+  - Columns exactly as in Scope §1, header row in Spanish, one row per
+    territory of the dashboard aggregate (`territories.all` semantics:
+    national scope = 16 regions; region scope = the region's catalog communes
+    incl. zeros; commune scope = that one row), sorted accidents DESC then code
+    ASC — same order as `/api/dashboard`.
+  - `nivel` values: `Región` for region rows, `Comuna` for commune rows.
+    National rows leave `codigo_comuna` and `comuna` empty; region/commune rows
+    carry the selected region's roman identifier in `codigo_region` (region
+    lookup for region scope; the `XIII-1` code prefix for commune scope).
+  - **Number format (user chose comma, es-CL):** `siniestros`/`fallecidos` are
+    plain integers without thousands separators; `participacion` has exactly
+    one decimal with a comma (`45,2`), and because RFC 4180 separates fields
+    with commas, the `participacion` cell is **always quoted** (`"45,2"`).
+    Share denominator = total accidents of the current scope = sum of the
+    exported rows' siniestros (reconciles with `kpis.accidents`); zero-total
+    scopes emit `0,0`.
+  - Text sanitization (formula injection) prefixes `'` to cells starting with
+    `=`, `+`, `-`, `@`, tab, or CR, applied to every text cell including
+    names; quoting rules then apply to the sanitized value.
+  - Filename fixed: `accidentes-2025-territorios.csv` (no date stamp, user
+    confirmed default). Print identity: no logo, institutional text header.
+  - Caps: >346 rows or >50 KB serialized → `400` with the shared
+    `VALIDATION_ERROR` body (field `export`, reason `too_large`), never
+    truncated. A no-territory scope returns header-only with `200`.
+  - Reuse: shared helper on the dashboard service over the existing
+    `queryTerritories`/`resolveTerritory` SQL (no duplicated SQL, no fact rows
+    in Node). Auth/CORS/`no-store` inherited from `applyApiGuard` on the
+    dashboard plugin; success response overrides `Content-Type` to
+    `text/csv; charset=utf-8` and keeps `Cache-Control: no-store`.
+  - Frontend download must go through `fetch` + blob because the API requires
+    the `Authorization: Bearer` header; a plain anchor would 401. "Descargar
+    CSV" button carries the current URL filters to the endpoint and reuses the
+    fixed filename.
+- **2026-10-24 — Route declaration:** T2/T3 delegated (backend writer,
+  parallel unit a) and T4/T5/T6 delegated (frontend writer, parallel unit b);
+  disjoint edit surfaces, parent owns git and the seam check (T7).
+- **2026-10-24 — L4 (delegation abandoned, user override, verbatim):**
+  "mejor hazlo por 1 no hagas por orquestador si no por build". Both delegated
+  writers died in the runtime (one empty result, one `Task cancelled` after
+  provider validation errors); the frontend writer had already left partial
+  files on disk. From this point the PARENT implements directly — the ODD stays
+  tracked, but no writer/verifier subagents are launched for this slice. The
+  crashed frontend diff was fully re-reviewed file by file, completed where
+  needed, and is treated as parent-owned work (single-authorship review).
+- **2026-10-24 — L5 (T2/T3 backend evidence):** parent-implemented
+  test-first. `src/routes/export-csv.test.ts` written first; RED observed
+  (404). Implementation: `lib/csv.ts` (BOM/CRLF/RFC 4180 serializer,
+  formula-injection prefix, 346/50 KB limit errors),
+  `controllers/export-csv-controller.ts` (row mapping, share via the exported
+  single-source `percent()`, JSON error bodies), route registered inside the
+  dashboard plugin so `applyApiGuard`/`baseFilterSchema`/error mapping apply
+  unchanged; service gained `getTerritoryReport` reusing `resolveTerritory` +
+  `queryTerritories` + a new `loadTerritoryReport` (region `numeroRomano`/
+  `nombreNormal` lookup), and the territory comparator was extracted to
+  `byTerritoryRank` shared with `getDashboard` (same ordering source). Every
+  existing `DashboardService` fake gained the method (build caught one more
+  fake in `analysis.test.ts`, whose reachability test now also asserts
+  `/api/dashboard/export.csv` does not shadow `/api/dashboard`).
+  `npm test` → 86/86 pass (74 before + 10 export + 2 service).
+  `npm run build` → exit 0. `backend/docs/reports-api.md` documents the full
+  contract (Spanish, matching `dashboard-api.md`) + a cross-link in that file's
+  §1. New test file added to the explicit `test` script.
+- **2026-10-24 — L6 (T4/T5/T6 frontend evidence):** `/informes` lazy route +
+  nav enabled (the Layout now carries `location.search` into both `/analisis`
+  and `/informes`); `use-reports-page.ts` keeps the URL-as-filter-store rule
+  through the existing `useDashboardQuery` (no second data layer); presentational
+  `components/reports/*` (header, KPI summary with explicit empty-scope card,
+  preview table over `territories.items` with the all-rows CSV note, actions
+  with classified Spanish download failures); CSV download via `fetch` + blob
+  + object URL with the fixed filename (`csv-download.ts`), because the
+  endpoint is Bearer-protected. `index.css` `@media print` flips the CSS-first
+  tokens to ink-on-paper once, hides header/footer/nav/glass/dot-grid and the
+  real filter markup (`form[aria-label="Filtros del panel"]`,
+  `section[aria-label="Filtros del análisis"]` — the parent corrected the
+  worker's dead `form[...]` selector for the analysis section), repeats table
+  headers, avoids row splits, and `print:min-h-0` on the shell prevents a
+  blank sheet. `TerritoryTable` adds a non-sortable "Ficha" column linking to
+  `/informes` through `filtersToSearchParams` (never hand-built query strings,
+  period preserved, `stopPropagation` without `preventDefault` so keyboard and
+  sorting stay intact). `npm run lint` → 0 errors; `npm run build` → exit 0.
+- **2026-10-24 — L7 (T7 live reconciliation, executed):** rebuilt
+  `docker compose up -d --build`; with `Bearer`: `200`,
+  `text/csv; charset=utf-8`, `attachment; filename="accidentes-2025-territorios.csv"`,
+  `no-store`, `nosniff`; bytes start `ef bb bf`, every line CRLF-terminated.
+  National: 16 rows, sums exactly `73,081` siniestros / `1,507` fallecidos
+  against SQL and `/api/dashboard` KPIs; XIII row `20293,350,"27,8"`.
+  Region XIII: 52 rows = 52 catalog communes, sums `20293/350`; top rows
+  identical to SQL (Puente Alto `1662,8,"8,2"`, San Bernardo `1491,15,"7,3"`).
+  Commune XIII-1: single row `502,4,"100,0"`. Zero-accident commune I-2
+  (Camiña): `0,0,"0,0"` — zero stays distinguishable. Missing/bad Bearer →
+  `401`; `regionId=17` → `400` `regionId is invalid`; `from=2024` → `400`
+  `from must be within 2025`; all with the shared JSON bodies. Scratch CSVs
+  kept under `/tmp/opencode/exp06/` (outside the repo, not committed).
+  Remaining for the user: open the CSV in a spreadsheet and print-preview
+  `/informes` (A4, repeated headers, hidden chrome) in the browser.
