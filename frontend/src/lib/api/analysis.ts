@@ -15,6 +15,38 @@ export interface AnalysisCauseRow {
   share: number
 }
 
+/** Mirrors the backend `AnalysisSeverityBucket` (siniestro-level buckets, SEV-1). */
+export type AnalysisSeverityBucket = "fatal" | "serious" | "minor" | "onlyIlesos" | "unknown"
+
+export interface AnalysisVehicleTypeRow {
+  typeId: number
+  name: string
+  /** Distinct siniestros of this type — never vehicle rows. */
+  siniestros: number
+  /**
+   * siniestros / totalSiniestros * 100, one decimal. Non-additive across
+   * types: one siniestro can involve several types, so shares may sum above 100.
+   */
+  share: number
+}
+
+export interface AnalysisVehicleSeverityRow {
+  typeId: number
+  name: string
+  severity: AnalysisSeverityBucket
+  siniestros: number
+}
+
+export interface AnalysisVehiclesSection {
+  /** Scope siniestro count; always equals `causes.totalAccidents`. */
+  totalSiniestros: number
+  /** Siniestros with no vehicle row. A coverage note, never a type. */
+  withoutVehicleRows: number
+  byType: AnalysisVehicleTypeRow[]
+  /** Per type these rows reconcile exactly with that type's `byType.siniestros`. */
+  byTypeSeverity: AnalysisVehicleSeverityRow[]
+}
+
 export interface AnalysisFilters {
   from: string
   to: string
@@ -30,6 +62,12 @@ export interface AnalysisApiResponse {
     totalAccidents: number
     rows: AnalysisCauseRow[]
   }
+  /**
+   * Added by EXP-04. Typed as required (the backend always sends it), but the
+   * tab must stay defensive: a stale server without this section returns
+   * `undefined` at runtime.
+   */
+  vehicles: AnalysisVehiclesSection
 }
 
 export interface AnalysisQueryParams {

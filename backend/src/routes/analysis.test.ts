@@ -3,7 +3,11 @@ import test from "node:test";
 
 import { buildApp } from "../app.js";
 import { createAnalysisService } from "../services/analysis-service.js";
-import type { AnalysisCauseCount, AnalysisRepository } from "../services/analysis-service.js";
+import type {
+  AnalysisCauseCount,
+  AnalysisRepository,
+  AnalysisVehicleSeverityCount,
+} from "../services/analysis-service.js";
 import type { ResolvedTerritory } from "../services/dashboard-service.js";
 import { DashboardValidationError } from "../types/dashboard-api.js";
 import type { DashboardFilters, DashboardResponse } from "../types/dashboard-api.js";
@@ -30,8 +34,24 @@ function catalogRows(overrides: AnalysisCauseCount[] = []): AnalysisCauseCount[]
   });
 }
 
-function repositoryWith(rows: AnalysisCauseCount[], territory: ResolvedTerritory = NATIONAL) {
-  const state = { resolved: 0, loaded: 0, lastFilters: null as DashboardFilters | null };
+/** Vehicle-side fixture rows, mirroring what the SQL aggregates return per (type, severity). */
+interface VehicleFixture {
+  severityRows?: AnalysisVehicleSeverityCount[];
+  withoutVehicleRows?: number;
+}
+
+function repositoryWith(
+  rows: AnalysisCauseCount[],
+  territory: ResolvedTerritory = NATIONAL,
+  vehicles: VehicleFixture = {},
+) {
+  const state = {
+    resolved: 0,
+    loaded: 0,
+    vehicleLoaded: 0,
+    withoutLoaded: 0,
+    lastFilters: null as DashboardFilters | null,
+  };
   const repository: AnalysisRepository = {
     async resolveTerritory() {
       state.resolved += 1;
@@ -41,6 +61,14 @@ function repositoryWith(rows: AnalysisCauseCount[], territory: ResolvedTerritory
       state.loaded += 1;
       state.lastFilters = filters;
       return rows;
+    },
+    async loadVehicleSeverityCounts() {
+      state.vehicleLoaded += 1;
+      return vehicles.severityRows ?? [];
+    },
+    async loadSiniestrosWithoutVehicleCount() {
+      state.withoutLoaded += 1;
+      return vehicles.withoutVehicleRows ?? 0;
     },
   };
   return { repository, state };
@@ -54,6 +82,12 @@ function analysisResponse(): AnalysisResponse {
     causes: {
       totalAccidents: 0,
       rows: [],
+    },
+    vehicles: {
+      totalSiniestros: 0,
+      withoutVehicleRows: 0,
+      byType: [],
+      byTypeSeverity: [],
     },
   };
 }
@@ -187,6 +221,12 @@ test("GET /api/analysis maps unknown region and commune IDs to 400 not_found", a
     },
     async loadCauseCounts() {
       throw new Error("aggregate must not run after territory resolution fails");
+    },
+    async loadVehicleSeverityCounts() {
+      throw new Error("vehicle aggregate must not run after territory resolution fails");
+    },
+    async loadSiniestrosWithoutVehicleCount() {
+      throw new Error("coverage aggregate must not run after territory resolution fails");
     },
   };
   const app = appWith(createAnalysisService(repository, NOW));
@@ -369,5 +409,257 @@ test("ties sort by name and zero-accident causes keep share 0", async (t) => {
     body.causes.rows.slice(2).every((row) => row.accidents === 0 && row.share === 0),
     "the zero-accident catalog tail must stay present with share 0",
   );
+});
+
+// ---------------------------------------------------------------------------
+// EXP-04 — vehicles section. `causes` must stay byte-for-byte additive.
+// ---------------------------------------------------------------------------
+
+const VEHICLE_MATRIX: AnalysisVehicleSeverityCount[] = [
+  { typeId: 12, name: "AUTOMOVIL", severity: "fatal", siniestros: 3 },
+  { typeId: 12, name: "AUTOMOVIL", severity: "serious", siniestros: 2 },
+  { typeId: 12, name: "AUTOMOVIL", severity: "minor", siniestros: 1 },
+  { typeId: 12, name: "AUTOMOVIL", severity: "onlyIlesos", siniestros: 59 },
+  { typeId: 20, name: "MOTOCICLETA", severity: "onlyIlesos", siniestros: 25 },
+];
+
+test("vehicles is additive: causes keeps its exact shape and values", async (t) => {
+  const rows = catalogRows([
+    { causeId: 2, name: "CAUSA B", accidents: 40 },
+    { causeId: 1, name: "CAUSA A", accidents: 40 },
+    { causeId: 3, name: "CAUSA C", accidents: 5 },
+  ]);
+  const { repository } = repositoryWith(rows, NATIONAL, {
+    severityRows: VEHICLE_MATRIX,
+    withoutVehicleRows: 2,
+  });
+  const app = appWith(createAnalysisService(repository, NOW));
+  t.after(() => app.close());
+
+  const response = await app.inject({ method: "GET", url: "/api/analysis", headers: auth });
+  const body = response.json() as AnalysisResponse;
+
+  assert.equal(response.statusCode, 200);
+  // The pre-EXP-04 envelope: schemaVersion, meta, filters, causes — unchanged.
+  assert.deepEqual(Object.keys(body).sort(), ["causes", "filters", "meta", "schemaVersion", "vehicles"]);
+  assert.equal(body.schemaVersion, 1);
+  assert.equal(body.meta.generatedAt, "2026-10-23T12:34:56.000Z");
+  assert.deepEqual(body.filters, { from: "2025-01-01", to: "2025-12-31", regionId: null, communeId: null });
+  assert.equal(body.causes.totalAccidents, 85);
+  assert.equal(body.causes.rows.length, 70);
+  assert.deepEqual(body.causes.rows.slice(0, 3).map((row) => row.causeId), [1, 2, 3]);
+  assert.deepEqual(body.causes.rows.find((row) => row.causeId === 4), {
+    causeId: 4,
+    name: "CAUSA 04",
+    accidents: 0,
+    share: 0,
+  });
+
+  // The vehicles section is present and its own invariants hold.
+  assert.equal(body.vehicles.totalSiniestros, body.causes.totalAccidents);
+  assert.equal(body.vehicles.withoutVehicleRows, 2);
+  assert.deepEqual(body.vehicles.byType, [
+    { typeId: 12, name: "AUTOMOVIL", siniestros: 65, share: 76.5 },
+    { typeId: 20, name: "MOTOCICLETA", siniestros: 25, share: 29.4 },
+  ]);
+  assert.deepEqual(body.vehicles.byTypeSeverity, VEHICLE_MATRIX);
+});
+
+test("one siniestro under two types counts once per type and breaks additivity", async (t) => {
+  const rows = catalogRows([{ causeId: 1, name: "CAUSA A", accidents: 1 }]);
+  // The scope's single siniestro has vehicle rows in two different types; the
+  // SQL aggregates deduplicate per type, so each type reports exactly 1.
+  const { repository } = repositoryWith(rows, NATIONAL, {
+    severityRows: [
+      { typeId: 12, name: "AUTOMOVIL", severity: "fatal", siniestros: 1 },
+      { typeId: 20, name: "MOTOCICLETA", severity: "fatal", siniestros: 1 },
+    ],
+    withoutVehicleRows: 0,
+  });
+  const app = appWith(createAnalysisService(repository, NOW));
+  t.after(() => app.close());
+
+  const response = await app.inject({ method: "GET", url: "/api/analysis", headers: auth });
+  const body = response.json() as AnalysisResponse;
+
+  assert.equal(body.vehicles.totalSiniestros, 1);
+  assert.deepEqual(body.vehicles.byType, [
+    { typeId: 12, name: "AUTOMOVIL", siniestros: 1, share: 100 },
+    { typeId: 20, name: "MOTOCICLETA", siniestros: 1, share: 100 },
+  ]);
+  // Documented non-additivity: rows sum above the total and shares above 100.
+  assert.ok(
+    body.vehicles.byType.reduce((sum, row) => sum + row.siniestros, 0) >= body.vehicles.totalSiniestros,
+  );
+  assert.ok(body.vehicles.byType.reduce((sum, row) => sum + row.share, 0) > 100);
+  // No grand-total or cumulative field may invite the additive misreading.
+  assert.equal(Object.keys(body.vehicles).sort().join(","), "byType,byTypeSeverity,totalSiniestros,withoutVehicleRows");
+});
+
+test("vehicle shares divide by totalSiniestros and round to one decimal", async (t) => {
+  const rows = catalogRows([{ causeId: 1, name: "CAUSA A", accidents: 20000 }]);
+  const { repository } = repositoryWith(rows, NATIONAL, {
+    severityRows: [
+      // 14010/20000 = 70.05 % must render as 70.1 (the causes rounding rule).
+      { typeId: 12, name: "AUTOMOVIL", severity: "onlyIlesos", siniestros: 14010 },
+      { typeId: 20, name: "MOTOCICLETA", severity: "fatal", siniestros: 6665 },
+    ],
+    withoutVehicleRows: 0,
+  });
+  const app = appWith(createAnalysisService(repository, NOW));
+  t.after(() => app.close());
+
+  const response = await app.inject({ method: "GET", url: "/api/analysis", headers: auth });
+  const body = response.json() as AnalysisResponse;
+
+  // Denominator is the scope total (20000), NOT the sum of type rows (20675):
+  // 14010/20000 -> 70.1 (vs 67.8 under the wrong denominator).
+  assert.deepEqual(body.vehicles.byType, [
+    { typeId: 12, name: "AUTOMOVIL", siniestros: 14010, share: 70.1 },
+    { typeId: 20, name: "MOTOCICLETA", siniestros: 6665, share: 33.3 },
+  ]);
+});
+
+test("the severity matrix reconciles per type and exposes unknown only when fed", async (t) => {
+  const rows = catalogRows([{ causeId: 1, name: "CAUSA A", accidents: 13 }]);
+  const { repository } = repositoryWith(rows, NATIONAL, {
+    severityRows: [
+      { typeId: 12, name: "AUTOMOVIL", severity: "fatal", siniestros: 1 },
+      { typeId: 12, name: "AUTOMOVIL", severity: "serious", siniestros: 2 },
+      { typeId: 12, name: "AUTOMOVIL", severity: "minor", siniestros: 3 },
+      { typeId: 12, name: "AUTOMOVIL", severity: "onlyIlesos", siniestros: 4 },
+      { typeId: 20, name: "MOTOCICLETA", severity: "fatal", siniestros: 1 },
+      { typeId: 20, name: "MOTOCICLETA", severity: "unknown", siniestros: 2 },
+    ],
+    withoutVehicleRows: 0,
+  });
+  const app = appWith(createAnalysisService(repository, NOW));
+  t.after(() => app.close());
+
+  const response = await app.inject({ method: "GET", url: "/api/analysis", headers: auth });
+  const body = response.json() as AnalysisResponse;
+
+  // Row sum per type reconciles exactly with that type's byType.siniestros.
+  for (const typeRow of body.vehicles.byType) {
+    const matrixSum = body.vehicles.byTypeSeverity
+      .filter((row) => row.typeId === typeRow.typeId)
+      .reduce((sum, row) => sum + row.siniestros, 0);
+    assert.equal(matrixSum, typeRow.siniestros, `type ${typeRow.typeId} must reconcile`);
+  }
+  assert.deepEqual(
+    body.vehicles.byType.map((row) => ({ typeId: row.typeId, siniestros: row.siniestros })),
+    [
+      { typeId: 12, siniestros: 10 },
+      { typeId: 20, siniestros: 3 },
+    ],
+  );
+  // The unknown bucket exists only where the data fed it.
+  assert.deepEqual(
+    body.vehicles.byTypeSeverity
+      .filter((row) => row.severity === "unknown")
+      .map((row) => row.typeId),
+    [20],
+  );
+  // Bucket keys stay inside the approved vocabulary.
+  const approved = new Set(["fatal", "serious", "minor", "onlyIlesos", "unknown"]);
+  assert.ok(body.vehicles.byTypeSeverity.every((row) => approved.has(row.severity)));
+});
+
+test("withoutVehicleRows surfaces the repository value and never becomes a type", async (t) => {
+  const rows = catalogRows([{ causeId: 1, name: "CAUSA A", accidents: 5 }]);
+  const { repository } = repositoryWith(rows, NATIONAL, {
+    severityRows: [{ typeId: 12, name: "AUTOMOVIL", severity: "fatal", siniestros: 5 }],
+    withoutVehicleRows: 3,
+  });
+  const app = appWith(createAnalysisService(repository, NOW));
+  t.after(() => app.close());
+
+  const response = await app.inject({ method: "GET", url: "/api/analysis", headers: auth });
+  const body = response.json() as AnalysisResponse;
+
+  assert.equal(body.vehicles.withoutVehicleRows, 3);
+  assert.deepEqual(body.vehicles.byType, [
+    { typeId: 12, name: "AUTOMOVIL", siniestros: 5, share: 100 },
+  ]);
+});
+
+test("an empty scope returns a present vehicles section with empty lists and zeros", async (t) => {
+  const { repository } = repositoryWith(catalogRows());
+  const app = appWith(createAnalysisService(repository, NOW));
+  t.after(() => app.close());
+
+  const response = await app.inject({ method: "GET", url: "/api/analysis", headers: auth });
+  const body = response.json() as AnalysisResponse;
+
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(body.vehicles, {
+    totalSiniestros: 0,
+    withoutVehicleRows: 0,
+    byType: [],
+    byTypeSeverity: [],
+  });
+});
+
+test("the full 38-type × 5-bucket matrix stays under the 100 KB cap", async (t) => {
+  const severities = ["fatal", "serious", "minor", "onlyIlesos", "unknown"] as const;
+  const severityRows: AnalysisVehicleSeverityCount[] = [];
+  for (let typeId = 1; typeId <= 38; typeId += 1) {
+    for (const [index, severity] of severities.entries()) {
+      severityRows.push({
+        typeId,
+        name: `VEHICULO DE PRUEBA ${String(typeId).padStart(2, "0")} CON NOMBRE LARGO`,
+        severity,
+        siniestros: 1_000 + typeId * 10 + index,
+      });
+    }
+  }
+  const { repository } = repositoryWith(catalogRows([{ causeId: 1, name: "CAUSA A", accidents: 20000 }]), NATIONAL, {
+    severityRows,
+    withoutVehicleRows: 2,
+  });
+  const app = appWith(createAnalysisService(repository, NOW));
+  t.after(() => app.close());
+
+  const response = await app.inject({ method: "GET", url: "/api/analysis", headers: auth });
+
+  assert.equal(response.statusCode, 200);
+  const body = response.json() as AnalysisResponse;
+  assert.equal(body.vehicles.byType.length, 38);
+  assert.equal(body.vehicles.byTypeSeverity.length, 190);
+  assert.ok(Buffer.byteLength(response.body, "utf8") < 100 * 1024);
+});
+
+test("the matrix is re-ordered canonically even when the repository returns shuffled cells", async (t) => {
+  const { repository } = repositoryWith(catalogRows([{ causeId: 1, name: "CAUSA A", accidents: 90 }]), NATIONAL, {
+    severityRows: [
+      { typeId: 20, name: "MOTOCICLETA", severity: "onlyIlesos", siniestros: 25 },
+      { typeId: 12, name: "AUTOMOVIL", severity: "minor", siniestros: 1 },
+      { typeId: 12, name: "AUTOMOVIL", severity: "fatal", siniestros: 3 },
+      { typeId: 12, name: "AUTOMOVIL", severity: "onlyIlesos", siniestros: 59 },
+      { typeId: 12, name: "AUTOMOVIL", severity: "serious", siniestros: 2 },
+      { typeId: 20, name: "MOTOCICLETA", severity: "unknown", siniestros: 0 },
+    ],
+    withoutVehicleRows: 0,
+  });
+  const app = appWith(createAnalysisService(repository, NOW));
+  t.after(() => app.close());
+
+  const response = await app.inject({ method: "GET", url: "/api/analysis", headers: auth });
+  const body = response.json() as AnalysisResponse;
+
+  // byType: siniestros DESC (AUTOMOVIL 65 > MOTOCICLETA 25) — the zero-sum
+  // unknown cell is dropped and never becomes a type row.
+  assert.deepEqual(body.vehicles.byType, [
+    { typeId: 12, name: "AUTOMOVIL", siniestros: 65, share: 72.2 },
+    { typeId: 20, name: "MOTOCICLETA", siniestros: 25, share: 27.8 },
+  ]);
+  // Matrix order: byType rank first, then fatal→serious→minor→onlyIlesos→unknown.
+  assert.deepEqual(body.vehicles.byTypeSeverity, [
+    { typeId: 12, name: "AUTOMOVIL", severity: "fatal", siniestros: 3 },
+    { typeId: 12, name: "AUTOMOVIL", severity: "serious", siniestros: 2 },
+    { typeId: 12, name: "AUTOMOVIL", severity: "minor", siniestros: 1 },
+    { typeId: 12, name: "AUTOMOVIL", severity: "onlyIlesos", siniestros: 59 },
+    { typeId: 20, name: "MOTOCICLETA", severity: "onlyIlesos", siniestros: 25 },
+  ]);
 });
 

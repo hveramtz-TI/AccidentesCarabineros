@@ -5,7 +5,7 @@ Execution order: 04
 Risk: 3/5
 Cost: 3/5
 Depends on: EXP-03
-Status: planned
+Status: in_progress
 
 ## Objective
 
@@ -83,58 +83,104 @@ non-additive type shares.
 
 ## Tasks
 
-- [ ] T1 — Confirm semantics and catalog
-  - Verify the vehicle-type normalization and the number of distinct types.
-  - Verify the siniestro-level severity definition, the four keys/labels
-    (`fatal`, `serious`, `minor`, `onlyIlesos`), and unknown-severity handling.
-  - Verify the 2 siniestros without vehicle rows.
-  - If severity is person-level only, stop and open a separate decision.
+- [x] T1 — Confirm semantics and catalog
+  - Evidence (live DB, before implementation): `tipo_vehiculo` holds 38 types,
+    all 38 appear in `vehiculo` nationally; severity is siniestro-level
+    (`fallecidos`, `lesionados_graves`, `lesionados_menos_graves`,
+    `lesionados_leves`, `ilesos` on `siniestro`); exactly 0 all-zero-severity
+    siniestros (the `unknown` bucket is defensive only); exactly 2 siniestros
+    without vehicle rows. The stop gate never fired: severity is not
+    person-level.
 
-- [ ] T2 — Extend the analysis contract
-  - Add `vehicles` to `AnalysisResponse` and the frontend mirror.
-  - Document the non-additivity rule, denominator, and severity grain in
-    `backend/docs/analysis-api.md`; add the type × severity definition to
-    `backend/docs/dashboard-metrics.md`.
+- [x] T2 — Extend the analysis contract
+  - Evidence: `vehicles` added to `backend/src/types/insights-api.ts`
+    (`totalSiniestros`, `withoutVehicleRows`, `byType`, `byTypeSeverity`) and
+    mirrored in `frontend/src/lib/api/analysis.ts`; documented in
+    `backend/docs/analysis-api.md` (§vehicles, additive rule, reconciliation,
+    non-additivity, measured payload) with the type × severity definition added
+    as `VEI-2` in `backend/docs/dashboard-metrics.md`.
 
-- [ ] T3 — Implement the aggregate
-  - Add the by-type query with `COUNT(DISTINCT siniestro_id)`.
-  - Add the type × severity query with the same distinct rule.
-  - Compute shares in one pass; keep deterministic ordering (siniestros desc,
-    then type).
-  - Compute `withoutVehicleRows` from the scope.
-  - Preserve the EXP-03 cause query and response shape.
+- [x] T3 — Implement the aggregate
+  - Evidence: `backend/src/services/analysis-service.ts` adds two aggregates
+    fetched with `Promise.all` next to the cause query: per (type, severity)
+    `COUNT(DISTINCT siniestro_id)` with a severity CASE that is **verbatim** the
+    dashboard's approved `querySeverity` (plus `ELSE unknown`, which replaces
+    the dashboard's `allZero` discard and keeps the partition exhaustive), and
+    `withoutVehicleRows` via `NOT EXISTS` with the same territory clause
+    (renamed `siniestroTerritoryClause`, body unchanged). `byType` is derived by
+    summing each type's matrix cells: the buckets partition siniestros, so the
+    sum equals `COUNT(DISTINCT siniestro_id)` structurally.
+    `totalSiniestros` reuses `causes.totalAccidents` (safe: `causa_id` is
+    NOT NULL/FK, zero NULLs verified). Shares use the existing `percent` helper.
+  - Deviation declared: the ODD constraint says "one or two queries"; the
+    endpoint now runs territory + 3 aggregates (4 round-trips, 0.16 s national,
+    0.01 s commune). The intent — aggregate in SQL, no fact rows in Node — is
+    met; the literal count is not. Not hidden, not smuggled: recorded here.
 
-- [ ] T4 — Add backend tests
-  - Sum of type rows may exceed the total; assert the caveat and denominator.
-  - Each type count equals an independent `COUNT(DISTINCT)` SQL check.
-  - Severity matrix reconciles per type, including an unknown/coverage bucket.
-  - `withoutVehicleRows` equals the known baseline for the full dataset.
-  - Auth, validation, empty scope, payload size, and response shape.
-  - Existing cause tests remain green.
+- [x] T4 — Add backend tests
+  - Evidence: +8 tests in `backend/src/routes/analysis.test.ts` (additivity of
+    `causes`, distinct-per-type counting through a two-type overlap, share
+    rounding parity, matrix reconciliation, coverage rows, empty scope, shape,
+    plus the verifier's durable probe: shuffled repository cells are
+    re-ordered canonically and zero cells never surface). Existing 15 analysis
+    tests untouched in content (the diff only extends fixtures).
+    `npm test` → 65 tests, 65 pass, 0 fail. RED observed first (7 failures),
+    then GREEN.
 
-- [ ] T5 — Build the Vehículos tab
-  - Enable the tab and register `/analisis/vehiculos`.
-  - Add the type table with rank, type, siniestros, and share.
-  - Add the severity matrix with sticky header and mobile horizontal scroll.
-  - Add a prominent non-additivity caveat and a coverage note for missing rows.
-  - Use accessible table semantics, numeric alignment, and `tabular-nums`.
-  - Handle loading, error, empty scope, and missing `vehicles` defensively.
+- [x] T5 — Build the Vehículos tab
+  - Evidence: `frontend/src/pages/analysis-vehicles-page.tsx` +
+    `vehicle-type-table.tsx` + `vehicle-severity-matrix.tsx`; tab enabled in
+    `analysis-layout.tsx` and routed lazily in `App.tsx`; the page is
+    presentational (outlet context only, zero fetches), the non-additivity
+    disclosure renders **before** any numbers, there is deliberately **no
+    cumulative column and no Pareto line** (cumulative over non-additive data
+    would lie), `unknown` columns appear only when fed, the Total column equals
+    `byType.siniestros` by construction, `withoutVehicleRows` is a coverage
+    sentence and never a type row, the skeleton mirrors the real sections, and
+    a stale server without `vehicles` renders a status message instead of
+    crashing.
 
-- [ ] T6 — Verify and update the index
-  - Compare type counts with SQL for national and one commune.
-  - Prove shares can exceed 100% and that the UI does not total them.
-  - Run backend tests/build and frontend lint/build.
-  - Record evidence in the index.
+- [ ] T6 — Verify and update the index — checks done, browser pass pending
+  - Evidence: national API `byType[0]` = AUTOMOVIL 51,207 / 70.1 %; per-type and
+    per-bucket counts match independent SQL cell-by-cell in four scopes
+    (national 38 types/137 cells, XIII 36/107, XIII-1 19/42, Q3 36/109); the
+    dashboard's own independent `queryVehicles` top-10 matches the analysis
+    top-10 item-for-item; `withoutVehicleRows`: national 2 / Q3 1 / XIII-1 0;
+    payload 20,165 B < 100 KB; `causes` section byte-identical to the baseline
+    reconstruction in all five probed scopes; auth/validation/cache identical
+    (`private, max-age=60`, 401/400 bodies unchanged).
+    Independent verification (`gentle-ai-verify`, baseline `a5654ad`, dual
+    `mktemp` scratch): **0 blockers, 7/7 acceptance PASS, central MECE claim
+    VERIFIED**; its advisories were fixed (doc `typeId` example corrected to
+    the real 1; the durable ordering test added).
+  - Risk: item 3 (extends a consumed public contract; the additive rule is the
+    whole point of later tabs) — mitigated by the byte-identical `causes`
+    differential and the additivity test.
+  - **Still open:** browser pass (disclosure reading order, matrix horizontal
+    scroll at 360 px, tab switching keeps filters) and the declared gaps
+    inherited from EXP-03 (`statement_timeout`).
 
 ## Acceptance criteria
 
-- `GET /api/analysis` includes `vehicles` without changing `causes`.
-- Each type count uses distinct siniestros and matches independent SQL.
-- Type shares use the scope total and are labeled non-additive.
-- The severity matrix reconciles per type and exposes missing severity.
-- `withoutVehicleRows` is visible and not treated as a type.
-- The Vehículos tab works with URL filters and shares one analysis request.
-- Backend tests/build and frontend lint/build pass.
+- [x] `GET /api/analysis` includes `vehicles` without changing `causes` —
+  byte-identical `causes` section vs the baseline, verified in 5 scopes.
+- [x] Each type count uses distinct siniestros and matches independent SQL —
+  cell-by-cell MATCH-ALL in four scopes, plus the dual-type siniestro probe
+  (id 146164 counted once per type).
+- [x] Type shares use the scope total and are labeled non-additive — every share
+  recomputed matches; the disclosure precedes the numbers; no grand total of
+  type rows exists anywhere (grep-proved).
+- [x] The severity matrix reconciles per type and exposes missing severity —
+  cells sum to `byType.siniestros` structurally and live; `unknown` rendered
+  only when fed.
+- [x] `withoutVehicleRows` is visible and not treated as a type.
+- [x] The Vehículos tab works with URL filters and shares one analysis request —
+  static proof (layout owns the only query; key is the four filters; tab link
+  carries `location.search`); click-through is part of the browser pass.
+- [ ] Browser-only half of the criteria (scroll at 360 px, reading order,
+  filter-preserving tab click) not yet exercised.
+- [x] Backend tests/build and frontend lint/build pass — 65/65, tsc clean,
+  eslint clean, `analysis-vehicles-page-*.js` 12.25 kB / 3.51 kB gzip.
 
 ## Checks
 
@@ -170,3 +216,11 @@ extends the same analysis endpoint.
 
 - **2026-10-23 — ODD created:** vehicle contract, distinct-count semantics,
   non-additivity caveat, and acceptance defined; implementation not started.
+- **2026-10-23 — T1-T5 implemented and verified:** catalog/semantics gate passed
+  live first; the endpoint extended additively (two aggregates + derived
+  `byType`); 8 new tests; tab built without cumulative/Pareto by design.
+  Independent verification: 0 blockers, MECE claim VERIFIED cell-by-cell, 7/7
+  acceptance PASS; its two actionable advisories applied. Compose stack rebuilt:
+  `/analisis/vehiculos` → 200 and the chunk is real `application/javascript`.
+  Status stays `in_progress` until the browser pass.
+

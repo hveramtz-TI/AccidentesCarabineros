@@ -33,10 +33,10 @@ interface AnalysisTab {
   enabled: boolean
 }
 
-/** Only Causas ships in EXP-03; the rest enable in EXP-04/05/07. */
+/** Causas (EXP-03) and Vehículos (EXP-04) are live; the rest enable in EXP-05/07. */
 const ANALYSIS_TABS: AnalysisTab[] = [
   { label: "Personas", to: "personas", enabled: false },
-  { label: "Vehículos", to: "vehiculos", enabled: false },
+  { label: "Vehículos", to: "vehiculos", enabled: true },
   { label: "Causas", to: "causas", enabled: true },
   { label: "Tendencias", to: "tendencias", enabled: false },
 ]
@@ -97,8 +97,9 @@ export default function AnalysisLayout() {
           Análisis de siniestros
         </h1>
         <p className="max-w-prose text-sm leading-6 text-muted-foreground">
-          Detalle completo de las causas de siniestros viales en el alcance
-          seleccionado, incluida la cola larga que no aparece en el Top 10.
+          Detalle completo de las causas y de los tipos de vehículo de los
+          siniestros viales en el alcance seleccionado, incluida la cola larga
+          que no aparece en el Top 10.
         </p>
       </header>
 

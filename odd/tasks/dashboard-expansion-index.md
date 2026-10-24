@@ -69,7 +69,7 @@ reviewable. This index is the only source of execution order.
 | 00 | [EXP-00 Foundation](./dashboard-expansion-00-foundation.md) | prerequisite | Router, shell, URL state, shared guard, lazy routes | 3 | 3 | 6* | — | done |
 | 01 | [EXP-02 Map table](./dashboard-expansion-02-map-table.md) | #1 Mapas | `/mapas` table replaces KPIs; reuse dashboard | 2 | 2 | 4 | EXP-00 | done |
 | 02 | [EXP-01 Methodology](./dashboard-expansion-01-methodology.md) | #3 Metodología | `/metodologia` + `/api/meta` | 2 | 3 | 5 | EXP-00 | done |
-| 03 | [EXP-03 Causes](./dashboard-expansion-03-causes.md) | #6 Causas | `/api/analysis` skeleton + all causes | 3 | 3 | 6 | EXP-00 | in_progress |
+| 03 | [EXP-03 Causes](./dashboard-expansion-03-causes.md) | #6 Causas | `/api/analysis` skeleton + all causes | 3 | 3 | 6 | EXP-00 | done |
 | 04 | [EXP-04 Vehicles](./dashboard-expansion-04-vehicles.md) | #5 Vehículos | Analysis `vehicles` + type×severity | 3 | 3 | 6 | EXP-03 | planned |
 | 05 | [EXP-05 Persons](./dashboard-expansion-05-persons.md) | #4 Personas | Analysis `persons` + crosstabs | 3 | 3 | 6 | EXP-03 | planned |
 | 06 | [EXP-06 Reports](./dashboard-expansion-06-reports.md) | #2 Informes | Preview + CSV + print | 3 | 4 | 7 | EXP-00, EXP-02 | planned |
@@ -237,4 +237,17 @@ EXP-06 must wait for EXP-00 and EXP-02.
   verification: 0 blockers, 8/8 acceptance PASS; URL-filter preservation and two
   regression tests added afterwards. Declared gap: no `statement_timeout` (shared
   Prisma client, measured 2.6–18.6 ms). Remaining: browser pass, then commit.
+- **2026-10-23 — EXP-03 closed (`b848580` + `a5654ad`):** browser pass approved by
+  the user; the visual review items 1-4 were applied and committed, items 5-6 stay
+  open decisions. Next: EXP-04 (Vehículos), whose T1 data gate already passed
+  (38 catalog types all present nationally, siniestro-level severity with zero
+  all-unknown rows, baseline of 2 siniestros without vehicle rows).
+- **2026-10-23 — EXP-04 implemented (`in_progress`):** `vehicles` added to
+  `/api/analysis` (two aggregates, `byType` derived from the MECE severity
+  matrix, `totalSiniestros` reusing `causes.totalAccidents`); `/analisis/vehiculos`
+  tab with disclosure-first layout, no cumulative, no Pareto. 65/65 backend,
+  payload 20,165 B. Independent verification: 0 blockers; the `causes` section
+  is byte-identical to baseline in 5 scopes; SQL matched cell-by-cell in 4
+  scopes; the query-count deviation (4 round-trips vs "one or two") is declared,
+  not hidden. Remaining: browser pass, then commit.
 

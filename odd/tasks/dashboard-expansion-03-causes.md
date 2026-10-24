@@ -5,7 +5,7 @@ Execution order: 03
 Risk: 3/5
 Cost: 3/5
 Depends on: EXP-00
-Status: in_progress
+Status: done
 
 ## Objective
 
@@ -128,7 +128,7 @@ contract instead of four ad-hoc endpoints.
     order in `analysis-causes-page.tsx`, so a search narrows the visible rows
     without renumbering or recomputing the cumulative.
 
-- [ ] T6 — Verify and update the index — data/build checks done, browser pass pending
+- [x] T6 — Verify and update the index
   - Evidence: live `/api/analysis` vs `/api/dashboard` and independent SQL agree
     on every probed scope: national `73081`, `regionId=13` `20293`, `communeId=XIII-1`
     `502` (34 zero causes), Q3 `17767`, empty `I-2` `0` with all 70 rows at
@@ -231,4 +231,9 @@ EXP-07 (Tendencias, order 07) is the final feature and also extends `/api/analys
   (bar scaling by share) and 6 (capitalized display names) stay open decisions.
   `npm run lint` and `npm run build` pass (`analysis-causes-page` 14.10 kB /
   4.64 kB gzip); container rebuilt, chunk confirmed as `application/javascript`.
+- **2026-10-23 — EXP-03 closed:** the user approved `/analisis` on the browser
+  pass after the visual polish (`a5654ad`), including the Pareto boundary at row
+  10 (80.1 %). Remaining declared gaps: keyboard sorting and 360 px were not
+  exercised; the `statement_timeout` gap stands as declared. Open decisions 5
+  (bar scaling by share) and 6 (capitalized names) stay unresolved on purpose.
 
