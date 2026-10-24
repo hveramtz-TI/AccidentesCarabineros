@@ -22,12 +22,13 @@ No root `package.json`; install and run each app from its own directory.
 
 Backend (`cd backend`):
 
-- `npm test` — `node --import tsx --test`, 31 tests, **needs no database**
-  (routes/services tested through `buildApp({ dashboardService, authToken })`
-  injection).
-- The `test` script lists files explicitly (`src/import/*.test.ts` glob + three
-  named files). **A new test file outside that list silently does not run** —
-  add it to the script.
+- `npm test` — `node --import tsx --test`, 71 tests, **needs no database**
+  (routes/services tested through `buildApp({ dashboardService, metaService,
+  analysisService, authToken })` injection).
+- The `test` script lists files explicitly (`src/import/*.test.ts` glob + the
+  named route/service files, including `api-guard`, `meta`, and `analysis`
+  tests). **A new test file outside that list silently does not run** — add it
+  to the script.
 - Single file: `node --import tsx --test src/services/dashboard-service.test.ts`
 - `npm run build` — `tsc` → `dist/`
 - `npm run dev` — tsx watch, loads `backend/.env` via `--env-file`
@@ -63,9 +64,25 @@ Postgres has no host port), then `docker compose run --rm importer` (profile
 - Metric formulas, national baselines, and mandatory caveats live in
   `backend/docs/dashboard-metrics.md` (approved). The API may not introduce an
   indicator absent from that doc, and no number ships without its caveat. HTTP
-  surface is fixed by `backend/docs/dashboard-api.md`: one `GET /api/dashboard`
-  returning every section in one pass — no endpoint per section, no selector
-  endpoint, unless a real consumer exists.
+  surface is fixed by `backend/docs/dashboard-api.md`, `meta-api.md`, and
+  `analysis-api.md`: `GET /api/dashboard` (one pass, every section),
+  `GET /api/meta` (dataset summary; row counts come from one subselect query,
+  never hard-coded in the frontend), and `GET /api/analysis` — one endpoint
+  extended **additively by section** (`causes`, then `vehicles`, then
+  `persons`); later sections never rename or remove earlier ones, and tabs add
+  no per-section endpoint.
+- Analysis invariants (verified cell-by-cell against SQL, `analysis-api.md`
+  §4): `causes.rows` always holds all 70 catalog causes including zeros, ordered
+  accidents DESC then name, cumulative share computed client-side (Pareto line
+  sits at row 10 nationally); vehicle `byType` is derived from the type ×
+  severity MECE matrix (`COUNT(DISTINCT siniestro_id)` semantics, shares may
+  sum over 100% by design, no cumulative); `persons` marginals (`rows`,
+  `bySex`, `byAge`, `unknownAge`, `unknownSex`) derive from the sex × age and
+  role × outcome matrices at **person grain** (XIII-1: 1,065 persons over 502
+  siniestros); `byAge` is dense (six bands incl. zeros) while matrix cells drop
+  zeros; unknown sex is catalog row 3 `SE IGNORA` (never a NULL), 23,918 unknown
+  ages; `SE DA A LA FUGA` is a real fourth role; `resultado_persona` is
+  person-level, distinct from siniestro severity (PER-2 documents the mapping).
 - Fixed vocabularies to reuse, not redefine (`backend/src/services/dashboard-service.ts`):
   severity keys `fatal | serious | minor | onlyIlesos`; `AGE_BANDS` = `0-17`,
   `18-25`, `26-40`, `41-64`, `65+`, `unknown`; 3-hour buckets starting `0,3,…,21`.
@@ -132,12 +149,18 @@ Postgres has no host port), then `docker compose run --rm importer` (profile
   `noUnusedLocals` / `noUnusedParameters`, `allowImportingTsExtensions`.
 - **Routing is `react-router` v7** (`BrowserRouter` + `Routes` in `src/App.tsx`).
   `src/pages/*-page.tsx` are routed pages (`/` = Panel, `/mapas` = map +
-  `TerritoryTable`), `src/routes/route-error-boundary.tsx` and
+  `TerritoryTable`, `/metodologia` = footer-only methodology, `/analisis` =
+  redirect to `/analisis/causas`; tabs `causas`/`vehiculos`/`personas` are live,
+  `tendencias` still disabled), `src/routes/route-error-boundary.tsx` and
   `src/routes/route-fallback.tsx` keep one broken or lazy page from blanking the
   shell (both live in `src/layout/Layout.tsx`, so a new section is one `<Route>`
-  plus one nav flag), and `Layout.tsx` owns the nav table (Mapas enabled;
-  Análisis/Informes are `enabled: false` placeholders). Panel keeps the base
-  document title; other pages call `usePageEffects(pageTitle("…"))`. Dashboard
+  plus one nav flag), and `Layout.tsx` owns the nav table (Panel, Mapas, and
+  Análisis enabled; Informes is the only `enabled: false` placeholder).
+  `src/routes/analysis-layout.tsx` owns the **single** `useAnalysisQuery` and
+  shares data through the router outlet context — tab pages are presentational
+  and never fetch; tab links carry `location.search` so URL filters survive
+  navigation. Panel keeps the base document title; other pages call
+  `usePageEffects(pageTitle("…"))`. Dashboard
   filters live in the URL (`period`, `region`, `commune`), parsed and serialized
   by `src/lib/filters-url.ts` and read through `src/hooks/use-url-filters.ts` —
   never add a separate filter store. `src/hooks/use-dashboard-workspace.ts` owns

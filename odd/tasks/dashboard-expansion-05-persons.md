@@ -5,7 +5,7 @@ Execution order: 05
 Risk: 3/5
 Cost: 3/5
 Depends on: EXP-03
-Status: in_progress
+Status: done
 
 ## Objective
 
@@ -132,7 +132,7 @@ explicit instead of hiding them in a chart.
     recomputed from visible cells), the coverage note, the defensive
     `!data.persons` branch, and a skeleton mirroring the sections.
 
-- [ ] T6 — Verify and update the index — checks done, browser pass pending
+- [x] T6 — Verify and update the index
   - Evidence: independent verification (`gentle-ai-verify`, baseline
     `52fd101`): **0 blockers, 7/7 acceptance PASS, all 5 central claims
     VERIFIED**. MECE cell-by-cell vs SQL with zero mismatches in five scopes
@@ -151,10 +151,11 @@ explicit instead of hiding them in a chart.
     additivity of `causes`/`vehicles` is the load-bearing guarantee) and item 6
     for the tab. Mitigated by the envelope test, the verifier's code-identity
     proof of the untouched section builders, and the live totals check.
-  - **Open:** browser pass (matrix reading at 360 px, unknown-row visibility,
-    tab-switch filter carry). The one thing the verifier could not run host-side
-    is a live byte-diff of the baseline payload (Postgres has no host port); it
-    proved additivity by code identity instead — recorded honestly.
+  - Browser pass completed: the user approved `/analisis/personas` (grain
+    disclosure, matrices, unknown-row visibility, tab-switch filter carry).
+    The one thing the verifier could not run host-side is a live byte-diff of
+    the baseline payload (Postgres has no host port); it proved additivity by
+    code identity instead — recorded honestly.
 
 ## Acceptance criteria
 
@@ -169,8 +170,8 @@ explicit instead of hiding them in a chart.
 - [x] The tab never labels person counts as accidents and never mixes the two
   axes — grain disclosure precedes all numbers; every unit says "personas".
 - [x] URL filters apply; the tab shares the layout's analysis request (single
-  owner, key unchanged, tab link carries `location.search`); click-through is
-  part of the browser pass.
+  owner, key unchanged, tab link carries `location.search`); click-through was
+  approved on the user's browser pass.
 - [x] Backend tests/build and frontend lint/build pass — 71/71, tsc, eslint,
   vite all clean.
 
@@ -215,4 +216,7 @@ extend `/api/analysis` additively.
   Independent verification: 0 blockers, 7/7 PASS, all five central claims
   VERIFIED. Compose stack rebuilt both containers; `/analisis/personas` serves
   200. Status stays `in_progress` until the browser pass.
+- **2026-10-24 — EXP-05 closed (`41f51d3`):** user approved the browser pass;
+  declared gaps unchanged (statement_timeout inherited; baseline byte-diff
+  replaced by code-identity proof).
 

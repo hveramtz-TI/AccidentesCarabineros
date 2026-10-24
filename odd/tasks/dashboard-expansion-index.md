@@ -71,7 +71,7 @@ reviewable. This index is the only source of execution order.
 | 02 | [EXP-01 Methodology](./dashboard-expansion-01-methodology.md) | #3 Metodología | `/metodologia` + `/api/meta` | 2 | 3 | 5 | EXP-00 | done |
 | 03 | [EXP-03 Causes](./dashboard-expansion-03-causes.md) | #6 Causas | `/api/analysis` skeleton + all causes | 3 | 3 | 6 | EXP-00 | done |
 | 04 | [EXP-04 Vehicles](./dashboard-expansion-04-vehicles.md) | #5 Vehículos | Analysis `vehicles` + type×severity | 3 | 3 | 6 | EXP-03 | planned |
-| 05 | [EXP-05 Persons](./dashboard-expansion-05-persons.md) | #4 Personas | Analysis `persons` + crosstabs | 3 | 3 | 6 | EXP-03 | in_progress |
+| 05 | [EXP-05 Persons](./dashboard-expansion-05-persons.md) | #4 Personas | Analysis `persons` + crosstabs | 3 | 3 | 6 | EXP-03 | done |
 | 06 | [EXP-06 Reports](./dashboard-expansion-06-reports.md) | #2 Informes | Preview + CSV + print | 3 | 4 | 7 | EXP-00, EXP-02 | planned |
 | 07 | [EXP-07 Trends](./dashboard-expansion-07-trends-compare.md) | #7 Tendencias | Trend + weekday×3-hour + comparator | 4 | 4 | 8 | EXP-03 | planned |
 
@@ -259,5 +259,16 @@ EXP-06 must wait for EXP-00 and EXP-02.
   unknown rows visible, totals from marginals. 71/71 backend, payloads ≤ 23.6 KB.
   Independent verification: 0 blockers, 7/7 acceptance PASS, 5/5 central claims
   VERIFIED (cell-by-cell vs SQL in five scopes; XIII-1 proves 1,065 persons over
-  502 siniestros). Browser pass pending, then commit.
+  502 siniestros). Browser pass approved and committed (`41f51d3`); EXP-05 closed.
+- **2026-10-24 — Session checkpoint (EXP-00…EXP-05 done):** branch
+  `feat/dashboard-expansion-00-foundation` holds 12 commits (`41f51d3` HEAD):
+  foundation, `/mapas`, `/api/meta` + `/metodologia`, `/api/analysis` with
+  `causes` + `vehicles` + `persons` tabs, `AGENTS.md` refreshed twice. Every
+  slice independently verified with 0 blockers; browser passes approved by the
+  user. Declared gaps: keyboard/360 px details per ODD, and the
+  `statement_timeout` gap (shared Prisma client, measured ≤ ~0.2 s). Remaining
+  ranked: EXP-06 Informes (`/informes` + `/api/reports` preview, CSV, print —
+  depends EXP-00+EXP-02, both done) and EXP-07 Tendencias (extends
+  `/api/analysis` additively). Next session: read `AGENTS.md` + this index, then
+  start EXP-06.
 
