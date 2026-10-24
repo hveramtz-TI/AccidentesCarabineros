@@ -121,17 +121,24 @@ Postgres has no host port), then `docker compose run --rm importer` (profile
 - CORS is a hand-rolled `onRequest` hook in `backend/src/app.ts` (allowlist from
   `CORS_ALLOWED_ORIGINS`, defaults `http://localhost:3200,http://localhost:5173`).
   Preflight `OPTIONS` answers 204 before auth, and the error handler keeps CORS
-  headers so browsers can read `400/401/500`. Do not add `@fastify/cors`.
+  headers so browsers can read `400/401/500`. Do not add `@fastify/cors`. The
+  production allowlist must include the deployed frontend origin
+  (`*.workers.dev` subdomain or its custom domain).
 - Env files are three different things: root `.env` = compose interpolation;
   `backend/.env` = `npm run dev`/`db:check`; `frontend/.env.local` = Vite dev.
   All ignored. Never commit token values; `backend/src/database/.env` (old
   MySQL creds) is still reachable in history (`9bdba01`, `5778e93`) — do not
   recreate that file.
 - Prisma uses a **single** `DATABASE_NEON_URL` with no `DIRECT_URL`, so it must
-  be the Neon **direct (non-pooled)** endpoint: `prisma migrate deploy` runs from
-  the container startup CMD (`sh -c "prisma migrate deploy && exec node dist/server.js"`),
-  which is also why health checks need a long grace period. Base image is
-  `node:22.23.4-slim`, not alpine — Prisma engines need glibc.
+  be the Neon **direct (non-pooled)** endpoint. The image CMD is serve-only
+  (`node dist/server.js`): Fly migrates via the `fly.toml`
+  `[deploy] release_command`, and local compose keeps migrate-then-serve through
+  the backend service `command:` override — which is why the compose health
+  check still needs a long grace period on first boot. Base image is
+  `node:24.22.1-slim`, not alpine — Prisma engines need glibc. The Node security
+  floor is one contract: when the base image moves to a patched release, bump
+  the `backend/package.json` `engines.node` floor and both `backend/` and
+  `frontend/` `.node-version` pins in the same change.
 - `buildApp()` is the only composition point; `server.ts` is the only place that
   calls `listen`. Bind `0.0.0.0` + injected `PORT`.
 
@@ -194,10 +201,15 @@ Postgres has no host port), then `docker compose run --rm importer` (profile
 
 ## Deployment notes
 
-- Production targets are Cloud Run (API) + Cloudflare Pages (SPA) + Neon (DB);
-  production deploy is still an open ODD item
-  (`odd/tasks/production-deployment-neon-cloud-run-pages.md`). A `fly.toml` also
-  exists (`backend-dawn-meadowland-5739`, 1 GB / 1 shared vCPU) from an earlier
+- Production targets are Cloud Run (API) + Cloudflare Workers static assets
+  (SPA, Worker `accidentescarabineros`) + Neon (DB); production deploy is still
+  an open ODD item (`odd/tasks/production-deployment-neon-cloud-run-pages.md`,
+  whose Pages target predates the current Workers deployment). The frontend
+  deploy config is `frontend/wrangler.jsonc` (`assets.directory: ./dist`,
+  `not_found_handling: single-page-application`). Do not add `_redirects`:
+  `/* /index.html 200` loops under Workers Assets and the API rejects it
+  (`100324`). A `fly.toml` also exists
+  (`backend-dawn-meadowland-5739`, 1 GB / 1 shared vCPU) from an earlier
   trial — confirm the target before touching deploy config, and never deploy,
   push, open a PR, or run remote operations without explicit user authorization.
 - The API container and Neon branch previews assume 1 GB / 1 shared vCPU: keep

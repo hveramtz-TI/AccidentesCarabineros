@@ -1,3 +1,5 @@
+import { createHash, timingSafeEqual } from "node:crypto";
+
 import type { FastifyInstance } from "fastify";
 
 /**
@@ -52,6 +54,16 @@ interface FieldFailure {
   message: string;
 }
 
+/**
+ * Constant-time bearer comparison. Hashing both sides first normalizes their
+ * lengths, so `timingSafeEqual` never throws on a shorter or longer header.
+ */
+function bearerMatches(header: string | undefined, token: string): boolean {
+  const expected = createHash("sha256").update(`Bearer ${token}`).digest();
+  const received = createHash("sha256").update(header ?? "").digest();
+  return timingSafeEqual(expected, received);
+}
+
 /** Fastify schema rejection, shaped like the documented validation body. */
 function fromSchemaRejection(error: unknown): FieldFailure | null {
   const validation =
@@ -87,11 +99,10 @@ export function applyApiGuard(fastify: FastifyInstance, options: ApiGuardOptions
   fastify.addHook("preValidation", async (request, reply) => {
     if (!options.authToken) {
       return reply.code(500).send({
-        error: { code: "AUTH_NOT_CONFIGURED", message: "UUID_CONNECTION is not set on the backend" },
+        error: { code: "AUTH_NOT_CONFIGURED", message: "authentication is not configured on the server" },
       });
     }
-    const header = request.headers.authorization;
-    if (header !== `Bearer ${options.authToken}`) {
+    if (!bearerMatches(request.headers.authorization, options.authToken)) {
       return reply.code(401).send({ error: { code: "UNAUTHORIZED", message: "missing or invalid bearer token" } });
     }
   });

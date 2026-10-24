@@ -185,7 +185,7 @@ test("GET /api/analysis fails closed when UUID_CONNECTION is unset", async (t) =
 
   assert.equal(response.statusCode, 500);
   assert.deepEqual(response.json(), {
-    error: { code: "AUTH_NOT_CONFIGURED", message: "UUID_CONNECTION is not set on the backend" },
+    error: { code: "AUTH_NOT_CONFIGURED", message: "authentication is not configured on the server" },
   });
   assert.equal(service.calls, 0);
 });

@@ -5,10 +5,15 @@
 
 app = 'backend-dawn-meadowland-5739'
 primary_region = 'gru'
+kill_signal = 'SIGTERM'
+kill_timeout = 30
 
 [build]
   dockerfile = 'backend/Dockerfile'
   ignorefile = '.dockerignore'
+
+[deploy]
+  release_command = './node_modules/.bin/prisma migrate deploy'
 
 [http_service]
   internal_port = 8080
@@ -23,7 +28,8 @@ primary_region = 'gru'
     path = '/health'
     interval = '15s'
     timeout = '5s'
-    # Headroom for `prisma migrate deploy` in the container CMD on cold start.
+    # Headroom for cold start; migrations run in the release command before
+    # the machine boots.
     grace_period = '60s'
 
 [[vm]]

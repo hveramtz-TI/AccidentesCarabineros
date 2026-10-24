@@ -124,7 +124,7 @@ test("GET /api/meta fails closed without UUID_CONNECTION and never calls the ser
 
   assert.equal(response.statusCode, 500);
   assert.deepEqual(response.json(), {
-    error: { code: "AUTH_NOT_CONFIGURED", message: "UUID_CONNECTION is not set on the backend" },
+    error: { code: "AUTH_NOT_CONFIGURED", message: "authentication is not configured on the server" },
   });
   assert.equal(state.calls, 0);
 });

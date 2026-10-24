@@ -58,8 +58,9 @@ test("the shared guard fails closed when no token is configured", async (t) => {
   });
   assert.equal(response.statusCode, 500);
   assert.deepEqual(response.json(), {
-    error: { code: "AUTH_NOT_CONFIGURED", message: "UUID_CONNECTION is not set on the backend" },
+    error: { code: "AUTH_NOT_CONFIGURED", message: "authentication is not configured on the server" },
   });
+  assert.equal(response.body.includes("UUID_CONNECTION"), false);
   assert.equal(calls.reached, false);
 });
 

@@ -49,6 +49,14 @@ export function buildApp(opts: BuildAppOptions = {}): FastifyInstance {
     }
   });
 
+  // Baseline browser hardening on every response, including hook rejections
+  // (401/500) and the public health check.
+  app.addHook("onSend", async (_request, reply) => {
+    reply.header("X-Content-Type-Options", "nosniff");
+    reply.header("Referrer-Policy", "no-referrer");
+    reply.header("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  });
+
   // CORS headers must survive route-level errors, otherwise the browser
   // reports an opaque network failure instead of the real 400/401/500.
   app.setErrorHandler((error, request, reply) => {

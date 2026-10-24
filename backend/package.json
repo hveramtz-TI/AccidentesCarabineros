@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24.22.1"
+  },
   "scripts": {
     "dev": "node --env-file=.env --import tsx --watch src/server.ts",
     "build": "tsc",
@@ -12,17 +15,17 @@
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:import": "cd .. && node backend/dist/import/cli.js",
-    "test": "node --import tsx --test src/import/*.test.ts src/services/dashboard-service.test.ts src/routes/dashboard.test.ts src/routes/dashboard-auth.test.ts src/routes/api-guard.test.ts src/routes/meta.test.ts src/routes/analysis.test.ts"
+    "test": "node --import tsx --test src/import/*.test.ts src/services/dashboard-service.test.ts src/routes/dashboard.test.ts src/routes/dashboard-auth.test.ts src/routes/api-guard.test.ts src/routes/hardening.test.ts src/routes/meta.test.ts src/routes/analysis.test.ts"
   },
   "dependencies": {
     "@prisma/client": "6.19.3",
     "exceljs": "^4.4.0",
-    "fastify": "^5.12.5"
+    "fastify": "^5.12.7",
+    "prisma": "6.19.3"
   },
   "devDependencies": {
     "@flydotio/dockerfile": "^0.7.10",
-    "@types/node": "^22.0.0",
-    "prisma": "6.19.3",
+    "@types/node": "^24.19.2",
     "tsx": "^4.0.0",
     "typescript": "~5.9.0"
   }

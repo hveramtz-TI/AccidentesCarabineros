@@ -1,58 +1,30 @@
 ---
-name: Obsidian Telemetry Engine
+name: Obsidian Telemetry
 colors:
+  background: '#0A0B0D'
   surface: '#121316'
-  surface-dim: '#121316'
-  surface-bright: '#38393c'
-  surface-container-lowest: '#0d0e11'
-  surface-container-low: '#1b1b1f'
-  surface-container: '#1f1f23'
-  surface-container-high: '#292a2d'
-  surface-container-highest: '#343538'
-  on-surface: '#e3e2e6'
-  on-surface-variant: '#bacbbe'
-  inverse-surface: '#e3e2e6'
-  inverse-on-surface: '#2f3034'
-  outline: '#849589'
-  outline-variant: '#3b4a41'
-  surface-tint: '#00e297'
-  primary: '#6dffba'
+  surface-raised: '#18191B'
+  on-surface: '#E4F1EB'
+  on-surface-muted: 'rgba(228, 241, 235, 0.6)'
+  outline: 'rgba(255, 255, 255, 0.08)'
+  outline-strong: 'rgba(255, 255, 255, 0.12)'
+  primary: '#00E599'
   on-primary: '#003822'
-  primary-container: '#00e599'
-  on-primary-container: '#00613e'
-  inverse-primary: '#006c46'
-  secondary: '#bdf4ff'
-  on-secondary: '#00363d'
-  secondary-container: '#00e3fd'
-  on-secondary-container: '#00616d'
-  tertiary: '#dbe8e2'
-  on-tertiary: '#27332f'
-  tertiary-container: '#bfccc6'
-  on-tertiary-container: '#4b5752'
-  error: '#ffb4ab'
-  on-error: '#690005'
-  error-container: '#93000a'
-  on-error-container: '#ffdad6'
-  primary-fixed: '#4dffb2'
-  primary-fixed-dim: '#00e297'
-  on-primary-fixed: '#002112'
-  on-primary-fixed-variant: '#005234'
-  secondary-fixed: '#9cf0ff'
-  secondary-fixed-dim: '#00daf3'
-  on-secondary-fixed: '#001f24'
-  on-secondary-fixed-variant: '#004f58'
-  tertiary-fixed: '#d8e5e0'
-  tertiary-fixed-dim: '#bdc9c4'
-  on-tertiary-fixed: '#131e1a'
-  on-tertiary-fixed-variant: '#3d4945'
-  background: '#121316'
-  on-background: '#e3e2e6'
-  surface-variant: '#343538'
-  surface-base: '#0A0B0D'
-  surface-subtle: '#18191B'
-  hazard-amber: '#FFB224'
-  incident-crimson: '#FF385C'
-  border-glow: '#00E59933'
+  secondary: '#00E3FD'
+  on-secondary: '#00363D'
+  warning: '#FFB224'
+  destructive: '#FF385C'
+  on-destructive: '#28000A'
+  ring: '#00E599'
+  chart-1: '#00E599'
+  chart-2: '#00B87D'
+  chart-3: '#5B9683'
+  chart-4: '#8B9793'
+  chart-5: '#C3CCC9'
+  map-bin-1: '#1C2F2A'
+  map-bin-2: '#24463C'
+  map-bin-3: '#2F6A56'
+  map-zero: '#14151A'
 typography:
   display-lg:
     fontFamily: Geist
@@ -72,12 +44,6 @@ typography:
     fontWeight: '600'
     lineHeight: 40px
     letterSpacing: -0.02em
-  headline-lg-mobile:
-    fontFamily: Geist
-    fontSize: 26px
-    fontWeight: '600'
-    lineHeight: 32px
-    letterSpacing: -0.02em
   headline-md:
     fontFamily: Geist
     fontSize: 22px
@@ -87,15 +53,15 @@ typography:
   headline-sm:
     fontFamily: Geist
     fontSize: 18px
-    fontWeight: '500'
+    fontWeight: '600'
     lineHeight: 24px
-    letterSpacing: -0.01em
+    letterSpacing: -0.02em
   body-lg:
     fontFamily: Inter
     fontSize: 16px
     fontWeight: '400'
     lineHeight: 24px
-    letterSpacing: -0.01em
+    letterSpacing: 0em
   body-md:
     fontFamily: Inter
     fontSize: 14px
@@ -114,12 +80,6 @@ typography:
     fontWeight: '400'
     lineHeight: 20px
     letterSpacing: 0em
-  code-sm:
-    fontFamily: JetBrains Mono
-    fontSize: 11px
-    fontWeight: '400'
-    lineHeight: 16px
-    letterSpacing: 0.02em
   label-md:
     fontFamily: JetBrains Mono
     fontSize: 12px
@@ -134,10 +94,10 @@ typography:
     letterSpacing: 0.08em
 rounded:
   sm: 0.125rem
-  DEFAULT: 0.25rem
-  md: 0.375rem
+  md: 0.25rem
   lg: 0.5rem
   xl: 0.75rem
+  2xl: 1rem
   full: 9999px
 spacing:
   gutter: 1rem
@@ -151,87 +111,131 @@ spacing:
   space-xl: 2rem
 ---
 
-## Brand & Style
+# Design System: Obsidian Telemetry
 
-This design system targets infrastructure engineers, distributed systems operators, and data intelligence architects managing mission-critical cloud pipelines and high-throughput real-time telemetry. The platform evokes absolute technical precision, mission readiness, and zero-latency operational clarity. The interface treats raw data as high-fidelity instrument readouts rather than marketing surfaces.
+**Project ID:** local — synthesized from the `frontend/` implementation and design assets; no Stitch project is bound to this workspace.
 
-The visual direction merges **Technical High-Contrast Minimalism** with **Tactical Glassmorphism**. Deep obsidian and jet surfaces provide an uncompromising void where vibrant neon chromatic accents communicate operational status, resource velocity, and incident severity. Structural layouts are disciplined and compact, relying on subtle micro-borders, subdued inner glows, and layered glass cards to anchor complex statistical monitors, query editors, and geospatial node maps without visual fatigue.
+## 1. Visual Theme & Atmosphere
 
-## Colors
+Obsidian Telemetry is a **sober, instrument-grade analytics environment** for reading road-safety data published by Carabineros de Chile. It serves analysts and operational readers who compare accident indicators across periods, regions, and communes, so the interface behaves like a calibrated dashboard rather than a marketing surface: dark, quiet, dense with meaning, and free of decorative noise.
 
-The chromatic architecture is constructed to maximize contrast on pure dark surfaces while avoiding visual blur:
+The mood is **operational clarity under low light**. A near-black obsidian canvas recedes behind floating glass panels, hairline borders, and a faint dot-grid plane. Color is a signal, never an ornament: emerald marks what is active, selected, or healthy; amber marks caution; crimson marks failure or destruction. Most of the screen is neutral so a single emerald value can carry attention without competing with itself.
 
-- **Primary (`#00E599`)**: The signature Neon emerald. Applied intentionally for active states, operational runtime health (200 OK), query performance indicators, and primary execution calls.
-- **Secondary (`#00E5FF`)**: Pure electric cyan. Reserved for geospatial vectors, data streams, throughput metrics, and telemetry connection states.
-- **Tertiary (`#E4F1EB`)**: An icy mint-white off-neutral. Deployed for elevated surface highlights, structural hairline dividers, and high-readability scalar titles.
-- **Neutral (`#121316`)**: The baseline carbon surface foundation, tuned cooler than pure black to allow `#0A0B0D` canvas wells to recede beneath elevated instrument tiles.
+The aesthetic fuses **technical high-contrast minimalism** with **tactical glassmorphism**. Surfaces are translucent and stratified instead of heavily shadowed. Typography is compact and squared-off, with monospaced numerals that hold their position while data refreshes. The result should feel institutional and trustworthy — public-service software with the precision of an operations console, not a consumer app.
 
-### Contextual Status & Telemetry Scale
-- **Hazard Amber (`#FFB224`)**: P99 latency regressions, queue saturation, and threshold warnings.
-- **Incident Crimson (`#FF385C`)**: Node failure, network partition, threshold breach, and destructive actions.
-- **Text & Contrast Strategy**: Primary text uses `#FFFFFF` for display heads and `#E4F1EB` for body typography. Subdued values and metadata use `rgba(228, 241, 235, 0.6)`. Borders default to `rgba(255, 255, 255, 0.08)` or `border-glow` (`rgba(0, 229, 153, 0.2)`) on active focus.
+Spanish (`es-CL`) is the interface language, including number formatting and dates. Copy is plain, factual, and discloses data scope; it never dramatizes casualties.
 
-## Typography
+## 2. Color Palette & Roles
 
-The typographic hierarchy balances modern engineering efficiency with clinical scannability:
+### Foundations
 
-- **Headlines & Display (Geist)**: Delivers tight, contemporary geometric kerning that handles dense data dashboards without visual clutter. Display scales use negative letter-spacing to reinforce architectural density.
-- **Body & Paragraphs (Inter)**: The primary vehicle for interface copy, technical documentation, and complex multi-column metadata grids. Excellent rendering fidelity at sub-14px sizes.
-- **Labels, Telemetry, and Metrics (JetBrains Mono)**: Exclusively drives metric counters, query consoles, hash strings, IP ranges, and system state labels. Tabular numeric figures (`tnum`) must remain forced on all monospace representations to eliminate layout shift during live stream refreshes.
+- **Obsidian Canvas (#0A0B0D):** The page plane and deepest layer. Maps, charts, and the dot-grid overlay sit directly on it. It is the reference against which every raised surface reads as elevated.
+- **Carbon Surface (#121316):** The standard panel and card fill, rendered at 85% opacity with a 16px backdrop blur. Used for the floating header, KPI tiles, filter groups, and chart cards.
+- **Raised Surface (#18191B):** The next stratum for popovers, menus, secondary controls, inset areas, and tooltip boxes. Frequently used at 95% opacity when it floats above content.
+- **Icy Text (#E4F1EB):** Primary reading color on dark surfaces. A cool mint-white that avoids the harshness of pure white across long analytical sessions.
+- **Muted Icy Text (rgba(228, 241, 235, 0.6)):** Secondary copy, labels, captions, axis ticks, and metadata. Never used for the single most important value in a view.
+- **Hairline Outline (rgba(255, 255, 255, 0.08)):** Structural separators and panel edges. A second, slightly stronger input outline (rgba(255, 255, 255, 0.12)) defines interactive fields.
+- **Deep Emerald Ink (#003822):** Text and icons placed on a solid emerald fill. It preserves contrast without introducing a second hue.
 
-## Layout & Spacing
+### Signal Accents
 
-Layouts adhere to an explicit, high-density 12-column grid configured for horizontal real estate utilization on ultra-wide data terminals and multi-pane developer workflows:
+- **Signal Emerald (#00E599):** The signature accent and the only primary action color. Applied to active navigation, selected regions, focus rings, primary buttons, loaded-series indicators, and the top choropleth bin. A hover halo (`0 0 16px rgba(0, 229, 153, 0.4)`) is the system's one atmospheric glow.
+- **Electric Cyan (#00E3FD):** A secondary accent reserved for informational emphasis and complementary data roles. It never competes with emerald for the primary action.
+- **Hazard Amber (#FFB224):** Warnings, thresholds, and attention states. Usually expressed as amber text on a 12% amber wash rather than a saturated fill.
+- **Incident Crimson (#FF385C):** Destructive actions, critical states, and failure messaging. Like amber, it appears as tinted text and borders on dark surfaces, not as a large crimson block.
 
-- **Grid & Gutters**: Standard desktop implementations utilize a fluid 12-column container with 16px (`gutter`) to 24px (`gutter-lg`) gutters. Breakpoint adaptations compress columns to 8 for tablet dashboards and 4 for mobile viewports.
-- **Telemetry Shell**: Primary navigation relies on a persistent left-hand collapsible icon rail (64px collapsed, 240px expanded) paired with an analytical split view: visual workspace on the left (60-70% width) and real-time inspector or code canvas on the right (30-40% width).
-- **Rhythm**: Element padding and control gaps scale strictly along a 4px/8px modular cadence. Inner metric cards favor tight padding (`space-md`) to ensure dense dashboards remain above the fold.
+### Data Visualization Ramp
 
-## Elevation & Depth
+- **Emerald (#00E599), Green (#00B87D), Teal-Gray (#5B9683), Gray (#8B9793), Light Gray (#C3CCC9):** A deliberately **monochrome gray-to-emerald ramp**. Series are distinguished by lightness plus labels, legends, and line styles — never by hue alone. This keeps the dashboard readable for color-vision deficiencies and prevents a rainbow-chart look.
+- **Severity logic:** Harm cools toward gray as it increases. Fatal outcomes use gray, serious injuries teal-gray, minor injuries green, and uninjured-only outcomes emerald. Category names are always labeled, so color is reinforcement, not the message.
 
-Visual depth is achieved through translucent structural stratification rather than heavy, diffuse cast shadows:
+### Territory Choropleth
 
-1. **Base Layer (Canvas)**: Hex `#0A0B0D`. The deep backdrop anchor. Geospatial charts and topology graphs render directly onto this plane, punctuated by an optional 1px dot-grid overlay (`rgba(255, 255, 255, 0.04)` at 24px intervals).
-2. **Surface Layer (Cards & Panels)**: Background `#121316` rendered at 85% opacity with `backdrop-filter: blur(16px)`. Bordered by a hairline 1px stroke of `rgba(255, 255, 255, 0.08)`.
-3. **Elevated Overlays (Flyouts, Menus, Modals)**: Background `#18191B` at 95% opacity with an intense localized border glow (`0 0 0 1px rgba(0, 229, 153, 0.25)`) and a directional vertical drop shadow of `0 16px 32px -8px rgba(0, 0, 0, 0.8)`.
-4. **Neon Atmospheric Radiance**: Interactive active states and critical alerts project controlled neon halos via `box-shadow: 0 0 20px -4px var(--accent-glow)`. Diffusions must remain tight and subdued to preserve surgical instrument aesthetics.
+- **Bins (#1C2F2A → #24463C → #2F6A56 → #00B87D → #00E599):** Quantile steps of the same gray-to-emerald family, tuned to stay legible on the obsidian plane.
+- **No-Accident Territory (#14151A):** A loaded zero, visually quieter than the lowest positive bin.
+- **No-Data Territory (transparent with a dashed outline):** A failed join or unavailable series. It must never be confused with zero; dashed strokes carry that distinction.
 
-## Shapes
+### Contrast Strategy
 
-The platform adopts a soft-geometric, precision-machined edge language (Level 1):
+Primary values use full Icy Text; supporting labels drop to 60% opacity; placeholders and disabled navigation drop further. Borders stay at or below 12% white so structure is felt before it is seen. No gradients are used as decoration, and no second accent palette is introduced.
 
-- **Interactive Nodes, Buttons, & Inputs**: Standard corner radius of `0.25rem` (4px). This low radius delivers structural, enterprise-grade firmness.
-- **Containers, Metric Cards, & Panels**: Intermediate radius of `0.5rem` (`rounded-lg` / 8px). Corners stay clean without softening into consumer-app roundness.
-- **Pills, Badges, & Status Indicators**: Dedicated full-radius encapsulation (`rounded-full` / 9999px) strictly for real-time status lozenges (e.g., active node counts, HTTP response chips) to visually separate metadata tokens from rectangular cards.
+## 3. Typography Rules
 
-## Components
+- **Geist for headings and identity.** Dashboard title, section headings, card titles, and institutional labels use the variable Geist family with tight negative tracking (`-0.02em`). The geometry is compact and contemporary, which keeps dense analytical screens from feeling soft or editorial. Section headings are sentence case, left-aligned, and sized around 18px semibold.
+- **Inter for reading and controls.** Body copy, filter labels, navigation, descriptive text, and footer disclosures use Inter. It is chosen for rendering fidelity at 12–16px and for staying calm when set in multi-column metadata.
+- **JetBrains Mono for telemetry.** Every metric label, metric value, select value, chart description, map tooltip, version string, and tabular figure uses JetBrains Mono. Tabular numerals are mandatory on all monospace text so live data refreshes do not shift layout.
+- **Micro-label cadence.** The `metric-label` style is 10px, 500 weight, 14px line height, `0.08em` tracking, uppercase, and muted. It behaves like a silkscreen label on hardware: small, tracked, and unmistakably a label rather than content.
+- **Metric readouts.** KPI values are monospaced, tabular, semibold, and set around 30px with tight tracking. They are the loudest typographic element in a card and should remain the only element at that weight in their immediate area.
+- **Chart typography.** Axis ticks sit at 10–11px, chart descriptions at 12px monospace muted, and value labels directly on bars at 10px monospace. Chart titles stay in Geist at 16px medium.
+- **Hierarchy rule.** Weight and family — not color — create hierarchy. Accent color is reserved for state, selection, and data encoding.
+
+## 4. Component Stylings
 
 ### Buttons
-- **Primary**: Solid `#00E599` background, `#0A0B0D` bold typography (`Geist` or `JetBrains Mono`). Hover initiates a subtle brightness increase and an emerald atmospheric halo (`0 0 16px rgba(0, 229, 153, 0.4)`). Active state applies a scale transform of `0.98`.
-- **Secondary / Ghost**: Semi-transparent `#18191B` background, 1px border of `rgba(255, 255, 255, 0.12)`, text `#E4F1EB`. Hover transitions the border to `#00E599` with text turning white.
-- **Destructive**: `#18191B` background with a 1px border of `#FF385C66` and text `#FF385C`. Active trigger evokes an incident crimson outer glow.
 
-### Telemetry Cards & Metric Monitors
-- High-performance glass containers with 8px radius, `#121316` fill at 85% opacity, and a 1px edge stroke of `rgba(255, 255, 255, 0.06)`.
-- Cards feature a dual-line header: uppercase micro-label in `label-sm` (`JetBrains Mono`) tracking system identifiers, followed by large metric readouts in `display-sm` (`tnum` monospace figures). Sparklines or trend vectors sit flush against the card bottom with zero margin.
+- **Primary:** Solid Signal Emerald with Deep Emerald Ink text. Corners are softly squared (8px). Hover raises brightness and adds the emerald atmospheric halo; press applies a `0.98` scale. Primary buttons are rare and always the single most consequential action in their region.
+- **Secondary and outline:** Transparent or raised-surface fill with a 1px hairline border and Icy Text. Hover moves the surface one step lighter rather than changing hue.
+- **Ghost:** No border or fill until hover, when it receives the raised surface. Used for tertiary navigation and icon actions.
+- **Destructive:** Crimson text on a low-opacity crimson wash with a crimson-tinted border. It reads as a warning, not as a filled red button.
+- **Sizing:** Compact data controls sit at 32–36px height; navigation items and map zoom controls maintain a minimum 44×44px target. Disabled controls stay visible but drop to 50% opacity and lose pointer events.
 
-### Chips & Status Badges
-- Pill-shaped (`rounded-full`), height of 20px-24px, inner padding `2px 8px`.
-- Composed of an 8px glowing indicator pip accompanied by `label-sm` monospaced copy.
-- Variants:
-  - *Healthy*: Pip `#00E599`, background `rgba(0, 229, 153, 0.08)`, border `rgba(0, 229, 153, 0.2)`.
-  - *Warning*: Pip `#FFB224`, background `rgba(255, 178, 36, 0.08)`, border `rgba(255, 178, 36, 0.2)`.
-  - *Critical*: Pip `#FF385C`, background `rgba(255, 56, 92, 0.08)`, border `rgba(255, 56, 92, 0.2)`.
+### Cards and Containers
 
-### Input Fields & Query Terminals
-- Box model built on 4px radius, `#0A0B0D` fill, and a 1px border of `rgba(255, 255, 255, 0.12)`. Text renders in `code-md` (`JetBrains Mono`).
-- Focus state eliminates standard browser outlines, applying a crisp border switch to `#00E599` backed by an internal ambient glow: `box-shadow: 0 0 0 1px #00E599, 0 0 12px rgba(0, 229, 153, 0.2)`.
-- Placeholder values use muted slate `rgba(228, 241, 235, 0.3)`.
+- **Glass card:** Carbon Surface at 85% opacity, 16px backdrop blur, 1px edge at 6–8% white, and an 8px corner radius. Cards carry **no drop shadow**; elevation comes from translucency and the hairline edge.
+- **KPI tiles:** Four tiles in a 2×2 desktop grid. Each opens with a tracked monospace micro-label, then a large tabular value, then a sparkline that sits flush against the card's bottom edge with no padding. Loading uses a pulsing muted block at the value's exact height, so nothing shifts when data arrives.
+- **Chart cards:** Geist title, monospace muted scope description, and a fixed-height chart body (around 256px). Titles and body heights are mirrored by skeletons during loading.
+- **Section framing:** Major dashboard regions are separated by a single hairline rule (`border-border/70`) plus generous vertical padding, not by nested boxes.
 
-### Checkboxes & Segmented Controls
-- **Checkboxes**: 16x16px squares with 3px corner radius. Unchecked state is `#0A0B0D` with a 1px hairline border. Checked state transitions to a solid `#00E599` fill containing an obsidian micro-checkmark.
-- **Segmented Analytical Switchers**: Obsidian trough (`#0A0B0D`) housing 4px radius tabs. Selected state lifts via `#18191B` background, white text, and a fine 1px `rgba(255, 255, 255, 0.12)` border.
+### Inputs and Forms
 
-### Data Grids & Inspector Lists
-- Striped density: rows maintain a strict 36px height for analytical scans. Bottom dividers use hairline `rgba(255, 255, 255, 0.04)`.
-- Hover triggers a flat background illumination of `rgba(255, 255, 255, 0.02)`. Key columns (IDs, timestamps, latencies) render in `JetBrains Mono` with status color-coding.
+- **Selects:** 36px height, 8px radius, near-black obsidian fill, 1px input outline, and monospace 12px value text. The label above is a `metric-label` micro-label, never a floating placeholder.
+- **Focus:** Focus replaces the browser outline with a crisp emerald border plus an internal ambient glow (`0 0 0 1px #00E599, 0 0 12px rgba(0, 229, 153, 0.2)`).
+- **Cascade behavior:** Filters read Period → Region → Commune. Changing the region resets the commune; selecting a region on the map applies the same cascade, so both entry points stay consistent.
+- **Disabled and invalid:** Disabled fields drop to 50% opacity; invalid fields shift their border and ring to crimson.
+
+### Status Chips
+
+- **Shape:** Pill-shaped, 20px tall, `2px 8px` padding, 10px uppercase monospace with `0.08em` tracking.
+- **Healthy:** Emerald text on an 8% emerald wash with a 20% emerald border.
+- **Warning:** Amber text on an 8% amber wash with a 20% amber border.
+- **Critical:** Crimson text on an 8% crimson wash with a 20% crimson border.
+- Chips describe state, never volume; they are not used as decorative tags.
+
+### Header and Navigation
+
+- **Floating glass header:** Sticky at the top, inset from the viewport edges by 16px on small screens and 40px from the `md` breakpoint. It is a glass card, not a full-bleed bar, so the dot-grid canvas remains visible around it.
+- **Brand lockup:** The Carabineros mark paired with the collaboration mark, followed by the Geist title “Siniestros viales de Chile” and the micro-label “Análisis de siniestros viales”.
+- **Navigation:** Compact items with 16px Lucide icons and 14px Inter labels. The active item uses a 10% emerald wash with emerald text; unavailable items are visibly disabled and carry the suffix “(Próximamente)” instead of behaving like dead links.
+- **Mobile:** The header simplifies to a centered brand mark and a hamburger sheet. The 64px collapsed / 240px expanded rail dimensions are retained only for the secondary sidebar primitive, not for the primary header.
+
+### Interactive Map
+
+- **Canvas:** Transparent by design; region fills are painted directly on the obsidian plane. Regions are separated by 1px white strokes.
+- **States:** Hover raises brightness; selection thickens the stroke to 2.5px emerald and lifts brightness; unselected regions dim to 32% while a filter is active; no-data regions use a `4 3` dashed outline and remain non-interactive.
+- **Tooltip:** Raised surface at 95% opacity with an emerald-tinted border, monospace value text in emerald, and a soft directional shadow (`0 8px 20px rgba(0, 0, 0, 0.8)`) — the only pronounced shadow in the system.
+- **Zoom:** Plus and minus controls sit on the raised surface with a hairline border, switch the border to emerald on hover, keep a 44×44px target, and carry accessible names. Map animation and transitions are removed when reduced motion is requested.
+
+### Charts, Tables, and Tabs
+
+- **Line charts:** 2px strokes; solid emerald for accidents, dashed teal-gray for injuries, dashed green for serious injuries, and gray with small dots for fatalities. Horizontal-only dashed grid lines, no vertical grid, no tick marks.
+- **Bar charts:** 2px top corner radius, severity-cooled fills, and monospace value labels above each bar.
+- **Tables:** Fixed-height analytical rows, hairline bottom dividers, muted hover wash, and key columns (IDs, dates, counts) in monospace.
+- **Tabs:** Compact segmented control in a muted trough; the selected tab settles onto a darker inset fill, switches to full-strength text, and gains a hairline border.
+
+### Footer
+
+- **Institutional surface:** Carbon Surface at 75% opacity above a top hairline border. Three zones: institutional resources, data provenance and scope, and the Government of Chile mark with the collaboration lockup.
+- **Disclosure tone:** The footer states the official source, the 2025 period, that figures are aggregate, and that the visualization does not imply institutional endorsement. These statements are part of the design contract, not optional copy.
+- **Utility strip:** A final hairline-separated row carries the project name and a monospace “Versión 0.1” marker.
+
+## 5. Layout Principles
+
+- **Application shell:** A full-height column — sticky floating header, flexible dot-grid main area, institutional footer. The shell never scrolls horizontally; panels absorb width changes instead.
+- **Content rhythm:** Page padding is 16px on small screens and 40px from the `md` breakpoint. Grid gaps are 16px. Internal card padding is 12–16px, and all spacing follows a 4px/8px cadence. Density is intentional: analytical cards should keep their primary readout above the fold.
+- **Desktop workspace (1024px and wider):** The first view is a two-pane dashboard row. The Chile map occupies the left half, pinned to roughly the viewport height with 40px outer gutters. The right half stacks a filter card above a 2×2 KPI grid. This 50/50 split is the signature composition.
+- **Analytical section:** Below the first view, charts use a 7-column grid — trend chart across 4 columns, severity distribution across 3 — followed by a full-width territory ranking. Section headings and hairline rules introduce each region.
+- **Mobile and tablet (below 1024px):** Everything stacks: a 60vh map block, the filter card, one-column KPIs that become two columns at `sm`, then single-column charts. The map remains first because territory is the primary mental model.
+- **Width strategy:** Content is fluid rather than fixed. The footer caps its inner grid at 1600px; dashboard panels do not, so ultra-wide screens gain analysis space instead of empty margins. Prefer `w-full` over viewport units to avoid scrollbar-induced overflow.
+- **Elevation order:** Canvas → glass cards → raised overlays. Never introduce a fourth visual layer; deeper nesting is expressed with hairlines and spacing, not with more shadows.
+- **Motion:** Motion is functional only — chart entry, hover brightness, and surface transitions. All animation, transitions, and smooth scrolling collapse to near-zero duration under `prefers-reduced-motion`.
+- **Accessibility:** Focus is always visible through the emerald ring. Color never carries meaning alone: series use line style plus legend, map bins use labels plus tooltip values, and severity uses labeled categories. Interactive targets respect 44px where the control is a primary touch affordance.

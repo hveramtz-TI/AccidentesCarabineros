@@ -1,13 +1,13 @@
 # Production-shaped image for the Fastify API + Excel importer (Cloud Run
 # container contract: bind 0.0.0.0 + injected $PORT, default 8080).
-# Base is node:22.23.4-slim, NOT alpine: Prisma query engines need glibc.
+# Base is node:24.22.1-slim, NOT alpine: Prisma query engines need glibc.
 #
 # The build context MUST be the repo root, because the canonical territory
 # catalog lives under frontend/src/data/:
 #   docker build -f backend/Dockerfile .
 # The root .dockerignore governs that context.
 
-FROM node:22.23.4-slim AS build
+FROM node:24.22.1-slim AS build
 WORKDIR /app
 # The OpenSSL CLI lets Prisma detect/download the matching engine on slim images.
 RUN apt-get update \
@@ -20,8 +20,11 @@ RUN npm run db:generate
 # Rest of the sources; the root .dockerignore keeps node_modules/dist/.env/xlsx out.
 COPY backend/ ./
 RUN npm run build
+# Keep the generated @prisma/client and the `prisma` CLI (a production
+# dependency for Fly's release command), but drop the build-only toolchain.
+RUN npm prune --omit=dev
 
-FROM node:22.23.4-slim AS runtime
+FROM node:24.22.1-slim AS runtime
 ENV NODE_ENV=production \
     PORT=8080
 WORKDIR /app
@@ -29,9 +32,10 @@ WORKDIR /app
 RUN apt-get update \
     && apt-get install -y --no-install-recommends openssl \
     && rm -rf /var/lib/apt/lists/*
-# Full node_modules from the build stage: it must include the `prisma` CLI
-# (startup CMD below runs `migrate deploy`) and the generated @prisma/client
-# engines. Trade-off: the image ships devDependencies too.
+# Production node_modules from the build stage: `npm prune --omit=dev` ran
+# after the build, so build-only tooling (tsx, @types/node, @flydotio/dockerfile)
+# is gone. The generated @prisma/client engines and the `prisma` CLI (Fly release
+# command) remain; `typescript` stays only as a Prisma transitive dependency.
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist ./dist
 COPY --from=build --chown=node:node /app/prisma ./prisma
@@ -41,6 +45,7 @@ COPY --chown=node:node frontend/src/data/oversio-identifiers.json /app/catalog/o
 # Non-root: uid 1000 is the `node` user and what Cloud Run accepts.
 USER node
 EXPOSE 8080
-# Migrate-then-serve is the default COMMAND, not an ENTRYPOINT, so the compose
-# `importer` one-shot can override `command:` and reuse this same image.
-CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy && exec node dist/server.js"]
+# Serve only. Fly runs migrations from `[deploy] release_command`; local compose
+# keeps migrate-then-serve via the backend service `command:` override. CMD (not
+# ENTRYPOINT) lets the compose `importer` one-shot reuse this image.
+CMD ["node", "dist/server.js"]
