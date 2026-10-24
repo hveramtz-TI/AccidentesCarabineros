@@ -2,10 +2,12 @@ import Fastify from "fastify";
 import type { FastifyInstance } from "fastify";
 
 import analysisRoutes from "./routes/analysis.js";
+import compareRoutes from "./routes/compare.js";
 import dashboardRoutes from "./routes/dashboard.js";
 import metaRoutes from "./routes/meta.js";
 import type { DashboardService } from "./types/dashboard-api.js";
 import type { AnalysisService } from "./types/insights-api.js";
+import type { CompareService } from "./types/compare-api.js";
 import type { MetaService } from "./types/meta-api.js";
 
 const DEFAULT_CORS_ORIGINS = Object.freeze(["http://localhost:3200", "http://localhost:5173"]);
@@ -19,6 +21,8 @@ export interface BuildAppOptions {
   metaService?: MetaService;
   /** Deterministic analysis-service seam for API tests and alternate hosts. */
   analysisService?: AnalysisService;
+  /** Deterministic comparator-service seam for API tests and alternate hosts. */
+  compareService?: CompareService;
   /** Expected Bearer token for protected API routes; unset means auth is not configured. */
   authToken?: string | null;
   /** Exact browser origins allowed by the CORS allowlist. */
@@ -86,6 +90,11 @@ export function buildApp(opts: BuildAppOptions = {}): FastifyInstance {
 
   app.register(analysisRoutes, {
     service: opts.analysisService,
+    authToken: opts.authToken !== undefined ? opts.authToken : process.env.UUID_CONNECTION ?? null,
+  });
+
+  app.register(compareRoutes, {
+    service: opts.compareService,
     authToken: opts.authToken !== undefined ? opts.authToken : process.env.UUID_CONNECTION ?? null,
   });
 

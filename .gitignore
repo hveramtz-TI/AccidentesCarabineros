@@ -35,3 +35,5 @@ pnpm-debug.log*
 /Siniestros_2025(1).xlsx
 /Vehiculos_2025(1).xlsx
 /carabineros_de_chile.png
+# Wrangler local dev state
+**/.wrangler/

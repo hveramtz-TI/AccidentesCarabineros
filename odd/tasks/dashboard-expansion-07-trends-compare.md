@@ -5,7 +5,7 @@ Execution order: 07
 Risk: 4/5
 Cost: 4/5
 Depends on: EXP-03
-Status: planned
+Status: done
 
 ## Objective
 
@@ -98,26 +98,26 @@ queries.
 
 ## Tasks
 
-- [ ] T1 — Confirm time semantics and comparison scope
+- [x] T1 — Confirm time semantics and comparison scope
   - Verify the month and weekday derivation, the week start, and the 3-hour
     buckets against `backend/docs/dashboard-metrics.md`.
   - Verify the 234 midnight records and the missing-time count.
   - Confirm the comparator level rule (national → regions; region → communes;
     commune scope → disabled).
 
-- [ ] T2 — Extend the analysis contract
+- [x] T2 — Extend the analysis contract
   - Add `trend` and `weekdayHours` to `AnalysisResponse` and the frontend mirror.
   - Document zero-filled series, the 00–03 caveat, and reconcile rules in
     `backend/docs/analysis-api.md`; add the weekday × 3-hour definition to
     `backend/docs/dashboard-metrics.md`.
 
-- [ ] T3 — Implement trend and heatmap aggregates
+- [x] T3 — Implement trend and heatmap aggregates
   - Add a monthly aggregate with zero-filled months.
   - Add a weekday × bucket aggregate with zero-filled cells and an unknown
     bucket if needed.
   - Keep `causes`, `vehicles`, and `persons` unchanged.
 
-- [ ] T4 — Implement `/api/compare`
+- [x] T4 — Implement `/api/compare`
   - Add the route through the shared guard.
   - Validate 1–4 codes against the current level; reject unknown/out-of-scope
     codes with `400`.
@@ -127,7 +127,7 @@ queries.
     `backend/docs/compare-api.md`; add the comparator-share definition to
     `backend/docs/dashboard-metrics.md`.
 
-- [ ] T5 — Add backend tests
+- [x] T5 — Add backend tests
   - Monthly sums equal scope totals; zero months are present.
   - Heatmap sums equal scope totals; midnight falls in 00–03; any unknown-time
     row reconciles.
@@ -136,7 +136,7 @@ queries.
   - Compare totals reconcile with SQL; auth, validation, payload, and headers.
   - Existing analysis tests remain green.
 
-- [ ] T6 — Build the Tendencias tab
+- [x] T6 — Build the Tendencias tab
   - Enable the tab and register `/analisis/tendencias`.
   - Render the monthly trend with a table fallback and labels.
   - Render the heatmap with visible counts, keyboard/table access, and the
@@ -147,7 +147,7 @@ queries.
     as scope shares.
   - Avoid a chart library; use CSS/inline SVG with accessible fallbacks.
 
-- [ ] T7 — Verify and update the index
+- [x] T7 — Verify and update the index
   - Reconcile trend, heatmap, and compare with independent SQL at national and
     region scope.
   - Check the 4-code limit, out-of-scope rejection, and commune disabled state.
@@ -205,3 +205,122 @@ raw export request requires a new ODD and data-source review.
 
 - **2026-10-23 — ODD created:** trend, heatmap, comparator, caps, and acceptance
   defined; implementation not started.
+- **2026-10-24 — L1 (kickoff, verbatim):** "vamos por el EXP 7" + "okey, estas
+  modo orquestador". Branch `feat/dashboard-expansion-07-trends` created from
+  `main` (`5beba23`, EXP-06 merged via PR #17). Execution continues the
+  user-ordered direct inline mode from EXP-06 (no writer/verifier subagents;
+  parent builds and verifies).
+- **2026-10-24 — L2 (T1 done, data verification + gates closed):**
+  - SQL evidence on the live compose DB: `siniestro.hora` is **NOT NULL** in
+    all 73,081 rows → the ODD's `unknown`-bucket branch does **not** fire;
+    `weekdayHours` is exactly 56 dense cells (7×8). Exactly **234** rows have
+    `hora = 00:00:00` (they stay in 00–03 with disclosure). `EXTRACT(ISODOW
+    FROM fecha)` yields 1..7 cleanly (Mon=1). No national zero-accident months
+    in 2025, but dense zero-filled months stay mandatory for filtered scopes.
+  - User decision gates closed (user chose the proposed defaults): **week
+    starts Monday** (ISO 1=Lunes…7=Domingo, es-CL labels client-side);
+    **comparison level inferred from filters** (national→regions,
+    region→communes, commune→UI hides comparator and the API answers `400`);
+    **`codes` is a comma list, de-duplicated before the 1–4 check**;
+    **comparator share uses the scope total, not the selection sum**; max 4 and
+    no chart library remain locked by the ODD.
+  - T1 semantics also fix the API shapes recorded in the plan: `trend.months`
+    (12 dense rows + totals), `weekdayHours.cells` (56 dense cells +
+    `midnightArtifactCount` + total), compare envelope `{schemaVersion, meta,
+    level, filters, territories[]}` with a 12-point `trend` per territory.
+- **2026-10-24 — Route declaration:** all tasks direct inline (parent); the
+  Writer trigger never fires because the user ordered build-mode explicitly
+  (L1). Slices: backend-analysis sections → backend-compare → frontend tab.
+- **2026-10-24 — L3 (T2/T3 evidence, analysis sections implemented):**
+  backend-implemented test-first. `analysis.test.ts` extended with 7 EXP-07
+  tests over a `TimeFixture` (sparse monthly rows + sparse weekday×bucket cells
+  + midnight count) and a consistent fixture (causes total = monthly sum =
+  cell sum = 10). RED observed (trend/weekdayHours absent → 6 fails), then
+  GREEN. `insights-api.ts` gained `AnalysisTrendSection` + `
+  AnalysisWeekdayHoursSection`; `createAnalysisService` added
+  `loadMonthlyTrend` + `loadWeekdayHourCells` to `Promise.all` and two pure
+  builders: `buildTrendSection` (dense UTC months over `from..to`, the
+  dashboard's approved `SER-1`/denseMonths walk) and
+  `buildWeekdayHoursSection` (56 dense cells, weekday 1..7 × buckets 0..21,
+  Monday first). Prisma repo reuses `siniestroTerritoryClause`/`countNumber`;
+  monthly = `to_char(fecha,'YYYY-MM')` count + COALESCE fatality sum; heatmap =
+  one `GROUP BY EXTRACT(ISODOW), (HOUR/3)*3` aggregate plus a paired
+  `COUNT(*) FILTER (hora = TIME '00:00:00')`. `causes`/`vehicles`/`persons`
+  untouched (guard key-list updated additively to 8 keys). Frontend mirror
+  `lib/api/analysis.ts` gained the same two sections (required + defensive
+  comment, matching EXP-04/05). Docs: `analysis-api.md` §4.6/§4.7 + additive
+  rule + cache note; `dashboard-metrics.md` §3.13 (`TRE-1`, `HOU-2`).
+  `npm test` → 93/93 (86 + 7); `npm run build` → exit 0. Frontend lint 0
+  errors, build exit 0.
+- **2026-10-24 — L4 (live reconciliation, analysis sections):** rebuilt
+  backend; `GET /api/analysis` national now returns 12 dense months summing
+  exactly `73,081`/`1,507` (= `causes.totalAccidents` = panel KPIs) and 56
+  heatmap cells summing `73,081`, `midnightArtifactCount` 234. Cell (5,15) =
+  2,265 and (1,0) = 361 matched independent SQL; months 2025-01/02 matched SQL
+  row-for-row (6040/143, 5458/118). Q3 scope returns exactly Jul/Aug/Sep
+  summing 17,767 in both sections with its own midnight count 64. National
+  payload 26,809 bytes (< 100 KB cap). Scratch under `/tmp/opencode/exp07/`
+  (outside the repo).
+- **2026-10-24 — L5 (T4/T5 evidence, /api/compare):** direct build,
+  test-first. `src/routes/compare.test.ts` written first (RED: module
+  missing, then 3 assertion corrections that were TEST errors: 5 entries of
+  one code de-dup to 4 and pass the cap — the cap test now uses 5 DISTINCT
+  codes; a two-region selection legitimately sums to ~100 because it covers
+  the whole scope — the assertion now pins each share against the scope total
+  73,081; `regionId=99` is caught by the schema before the service, so the
+  not_found test uses an in-range unknown id). Semantics fixed while writing:
+  shape-invalid → `invalid_format` before any query; right shape but not in
+  the level's catalog → `not_found`; commune code whose roman prefix is not
+  the selected region → `out_of_scope`; commune scope → `not_supported` before
+  any query; trends runs only AFTER every code passed membership (totals
+  aggregate doubles as the level catalog: one read gives codes, names, totals
+  and the scope denominator). New `types/compare-api.ts`,
+  `services/compare-service.ts` (dense months reuse the approved UTC walk;
+  `percent()` shared), `routes/compare.ts` (shared guard; success overwrites
+  to `private, max-age=60`), `app.ts` registration + `compareService` seam,
+  test file added to the explicit `test` script. Docs: new
+  `backend/docs/compare-api.md`, `dashboard-metrics.md` §3.14 (`CMP-1`), and
+  `analysis-api.md` §8 rewritten to point at both new endpoints.
+  `npm test` → 109/109 (93 + 16); `npm run build` → exit 0.
+- **2026-10-24 — L6 (live reconciliation, compare):** rebuilt backend.
+  `codes=XIII,XV` → XIII `20293/350 share 27.8`, XV `1603/27 share 2.2` (over
+  national total 73,081), 12 dense points, XV `2025-01=127` matched SQL;
+  region XIII `codes=XIII-32,XIII-1` → `1662 → 8.2` and `502 → 2.5` against
+  the REGION total (not the selection), both matching SQL exactly. Rejection
+  matrix via curl: dup-under-cap `200`, `XX` → `not_found`, `xiii` →
+  `invalid_format`, absent → `required`, `regionId=13&codes=XV-1` →
+  `out_of_scope`, commune scope → `not_supported`, `from=2026` →
+  `out_of_range`; headers `private, max-age=60` + nosniff, payload 1,717 B,
+  no token → `401`.
+- **2026-10-24 — L7 (T6 evidence, frontend):** `lib/api/compare.ts` (mirror
+  types + auth'd fetch), `hooks/use-compare.ts` (level derivation + opt-in
+  query keyed by filters+codes), three components under
+  `components/analysis/`: `trend-monthly-bars` (counts printed per column,
+  `details`-disclosed month/fatality table), `weekday-hour-heatmap` (the
+  matrix IS a `<table>` with day/bucket/grand totals and the 00:00 disclosure
+  line; shading is six decorative `color-mix` steps in `index.css` — never
+  the only channel), `territory-comparator` (chips from the local catalog,
+  aria-pressed, max 4 with disabled rest, level pruning DONE BY DERIVATION
+  not by a setState-in-effect (eslint `react-hooks/set-state-in-effect`),
+  sparkline `aria-hidden` + explicit "Mes pico" column, shares labeled over
+  scope). Page `analysis-trends-page.tsx` presentational, defensive on stale
+  server sections; tab enabled in order in `analysis-layout.tsx`; lazy route
+  in `App.tsx`; `monthLabel` shared in `lib/month-label.ts`.
+  `npm run lint` → 0 errors; `npm run build` → exit 0;
+  chunk `analysis-trends-page-*.js` emitted.
+- **2026-10-24 — L8 (commits, user-approved):** committed on
+  `feat/dashboard-expansion-07-trends` after explicit permission — `3ecd19e`
+  (backend trend + weekdayHours), `68f8ea7` (`/api/compare`), `a06331b`
+  (Tendencias tab). Suite 109/109, `tsc` build exit 0, frontend lint 0 / build
+  exit 0; docker stack rebuilt (`:3200` and `/health` 200). No push.
+  Remaining for T7 close: the browser pass (heatmap accessibility, comparator
+  disabled-at-commune state, 360 px layout) and the index status flip.
+- **2026-10-24 — L9 (T7 closed, slice done):** the user verified the
+  Tendencias tab in the browser and ordered the close ("cierra EXP-07"),
+  committing the L8 evidence entry themselves (`49056ff`). Final state on
+  `feat/dashboard-expansion-07-trends`: `86037ab` (footer nav) + `3ecd19e` +
+  `68f8ea7` + `a06331b` + `49056ff`, nothing pushed. Backend 109/109 + tsc OK,
+  frontend lint/build OK, live SQL reconciliation recorded in L4/L6. This was
+  the last feature ODD of the dashboard-expansion program (EXP-00…EXP-07 all
+  done). Manual 360 px/keyboard details rest on the shared patterns already
+  browser-approved in EXP-02–06; the new browser pass accepted the tab as-is.

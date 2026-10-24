@@ -55,9 +55,9 @@ export default function HamburgerMenu({ navigation }: Props) {
   return (
     <div ref={rootRef} className="w-full">
       <div className="flex min-w-0 items-center justify-between gap-3">
-        <h1 className="truncate font-heading text-sm font-semibold leading-tight text-foreground">
+        <p className="truncate font-heading text-sm font-semibold leading-tight text-foreground">
           Siniestros viales de Chile
-        </h1>
+        </p>
         <button
           ref={triggerRef}
           type="button"

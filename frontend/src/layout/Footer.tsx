@@ -1,12 +1,29 @@
 import { ArrowUpRight } from "lucide-react"
-import { Link } from "react-router"
+import { Link, useLocation } from "react-router"
 import gobiernoLogo from "@/assets/LogoGobierno de Chile.svg"
 import CollaborationMark from "./CollaborationMark"
 
+/**
+ * Footer section links (EXP-06 follow-up). The set mirrors the header nav;
+ * `/analisis` and `/informes` carry the active URL filters exactly like
+ * `Layout.tsx` does, so a filtered view never silently resets on the user.
+ */
+const SECTION_LINKS: Array<{ label: string; to: string; carryFilters: boolean }> = [
+  { label: "Panel", to: "/", carryFilters: false },
+  { label: "Mapas", to: "/mapas", carryFilters: false },
+  { label: "Análisis", to: "/analisis", carryFilters: true },
+  { label: "Informes", to: "/informes", carryFilters: true },
+]
+
+const LINK_CLASS =
+  "inline-flex min-h-11 items-center gap-2 rounded-md text-sm text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+
 const Footer = () => {
+  const location = useLocation()
+
   return (
     <footer className="mt-8 shrink-0 border-t border-border bg-card/75">
-      <div className="mx-auto grid max-w-[1600px] gap-8 px-4 py-8 sm:grid-cols-2 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_auto] lg:px-8">
+      <div className="mx-auto grid max-w-[1600px] gap-8 px-4 py-8 sm:grid-cols-2 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1fr)_auto] lg:px-8">
         <section aria-labelledby="footer-resources-title" className="space-y-3">
           <h2
             id="footer-resources-title"
@@ -16,7 +33,7 @@ const Footer = () => {
           </h2>
           <a
             href="https://www.carabineros.cl/"
-            className="inline-flex min-h-11 items-center gap-2 rounded-md text-sm text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+            className={LINK_CLASS}
           >
             Carabineros de Chile
             <ArrowUpRight aria-hidden="true" size={14} />
@@ -39,12 +56,33 @@ const Footer = () => {
             La visualización no implica respaldo institucional de Carabineros
             de Chile.
           </p>
-          <Link
-            to="/metodologia"
-            className="inline-flex min-h-11 items-center gap-2 rounded-md text-sm text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
-          >
+          <Link to="/metodologia" className={LINK_CLASS}>
             Metodología
           </Link>
+        </section>
+
+        <section aria-labelledby="footer-navigation-title" className="space-y-3">
+          <h2
+            id="footer-navigation-title"
+            className="font-heading text-sm font-semibold text-foreground"
+          >
+            Navegación
+          </h2>
+          <nav aria-label="Secciones del análisis" className="flex flex-col items-start">
+            {SECTION_LINKS.map((link) => (
+              <Link
+                key={link.label}
+                to={
+                  link.carryFilters && location.search
+                    ? { pathname: link.to, search: location.search }
+                    : link.to
+                }
+                className={LINK_CLASS}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
         </section>
 
         <div className="flex items-center gap-3 lg:justify-self-end">

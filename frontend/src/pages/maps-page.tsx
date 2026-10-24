@@ -13,14 +13,15 @@ import DashboardStatus from "@/components/dashboard/dashboard-status"
 import MapExplorer from "@/components/map/map-explorer"
 import TerritoryTable from "@/components/map/territory-table"
 import { useDashboardWorkspace } from "@/hooks/use-dashboard-workspace"
-import { usePageEffects, pageTitle } from "@/hooks/use-page-effects"
+import { usePageMeta } from "@/hooks/use-page-meta"
 import { useUrlFilters } from "@/hooks/use-url-filters"
 import { adaptDashboardResponse } from "@/lib/dashboard-adapter"
+import { hasActiveFilters } from "@/lib/filters-url"
 
 export default function MapsPage() {
-  usePageEffects(pageTitle("Mapas"))
-
   const [filters, setFilters] = useUrlFilters()
+  usePageMeta("maps", { filtered: hasActiveFilters(filters) })
+
   const { query, regionSeries, regionSeriesState, loading } = useDashboardWorkspace(filters)
 
   const data = useMemo(
@@ -38,14 +39,19 @@ export default function MapsPage() {
       />
 
       <section aria-labelledby="map-table-title" className="min-w-0">
-        <h2
+        <h1
           id="map-table-title"
           data-page-heading
           tabIndex={-1}
-          className="mb-4 border-b border-border/70 pb-3 font-heading text-lg font-semibold text-foreground outline-none"
+          className="mb-3 border-b border-border/70 pb-3 font-heading text-lg font-semibold text-foreground outline-none"
         >
-          Mapa y tabla territorial
-        </h2>
+          Mapa de siniestros viales de Chile 2025
+        </h1>
+        <p className="mb-4 max-w-prose text-sm leading-6 text-muted-foreground">
+          Mapa coroplético y tabla ordenable de los siniestros viales de Chile
+          2025. Compara regiones y comunas por siniestros, fallecidos y
+          lesionados.
+        </p>
         <MapExplorer
           filters={filters}
           onFiltersChange={setFilters}

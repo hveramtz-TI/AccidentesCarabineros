@@ -53,6 +53,11 @@ export function parseFilters(searchParams: URLSearchParams): DashboardFilters {
   return { ...DEFAULT_FILTERS, period }
 }
 
+/** True when the URL carries at least one non-default filter. */
+export function hasActiveFilters(filters: DashboardFilters): boolean {
+  return filtersToSearchParams(filters).toString() !== ""
+}
+
 /** Serializes only the non-default filters so the bare URL stays readable. */
 export function filtersToSearchParams(filters: DashboardFilters): URLSearchParams {
   const searchParams = new URLSearchParams()

@@ -73,7 +73,7 @@ reviewable. This index is the only source of execution order.
 | 04 | [EXP-04 Vehicles](./dashboard-expansion-04-vehicles.md) | #5 Vehículos | Analysis `vehicles` + type×severity | 3 | 3 | 6 | EXP-03 | planned |
 | 05 | [EXP-05 Persons](./dashboard-expansion-05-persons.md) | #4 Personas | Analysis `persons` + crosstabs | 3 | 3 | 6 | EXP-03 | done |
 | 06 | [EXP-06 Reports](./dashboard-expansion-06-reports.md) | #2 Informes | Preview + CSV + print | 3 | 4 | 7 | EXP-00, EXP-02 | done |
-| 07 | [EXP-07 Trends](./dashboard-expansion-07-trends-compare.md) | #7 Tendencias | Trend + weekday×3-hour + comparator | 4 | 4 | 8 | EXP-03 | planned |
+| 07 | [EXP-07 Trends](./dashboard-expansion-07-trends-compare.md) | #7 Tendencias | Trend + weekday×3-hour + comparator | 4 | 4 | 8 | EXP-03 | done |
 
 \* EXP-00 is a hard prerequisite and is excluded from the idea ranking; it runs
 before the lower-scored feature slices by design.
@@ -290,4 +290,25 @@ EXP-06 must wait for EXP-00 and EXP-02.
   `dashboard-collaboration-ui-refresh.md`, `mobile-hamburger-menu.md`, and
   `seo-indexability-and-growth.md` (appeared from the crashed writer's
   protocol; never requested, never committed).
+- **2026-10-24 — Session checkpoint (EXP-07 done — PROGRAM COMPLETE):** the
+  EXP-06 branch merged to `main` via PR #17 (`5beba23`). EXP-07 executed
+  direct-inline on `feat/dashboard-expansion-07-trends` (footer nav `86037ab`
+  first): `/api/analysis` gained `trend` (dense months, `SER-1`/`TRE-1`) and
+  `weekdayHours` (56 dense ISO cells, Monday first, `midnightArtifactCount`
+  234 — `hora` is NOT NULL, so no unknown bucket exists); new
+  `GET /api/compare` (`compare-api.md`, `CMP-1`): 1–4 de-duplicated codes at
+  the filter-implied level, `400` matrix (`required`/`too_many_codes`/
+  `invalid_format`/`not_found`/`out_of_scope`/`not_supported`), shares over
+  the scope total, 12-point trends per territory; Tendencias tab live with
+  CSS bars + disclosed table fallback, heatmap-as-`<table>`, and the opt-in
+  comparator (chips from the local catalog, pruned by derivation, hidden at
+  commune scope). Live reconciliation exact against SQL (XIII 27.8 national;
+  XIII-32 8.2 within the region; XV Jan 127). 109/109 backend + tsc,
+  frontend lint/build green, user browser pass approved and the user made the
+  evidence commit (`49056ff`). Commits `3ecd19e`+`68f8ea7`+`a06331b`+`49056ff`
+  unpushed; push/PR is the user's call. All eight EXP slices are `done`;
+  remaining open threads: the SEO ODD (reviewed, adoptable with F1–F4,
+  awaiting Phase 1 gates: prerender strategy, HTTPS on *.workers.dev, Fly vs
+  Cloud Run target) and the standing untracked leftovers (2 screenshots,
+  collaboration/mobile ODDs, the SEO doc itself once its fate is decided).
 

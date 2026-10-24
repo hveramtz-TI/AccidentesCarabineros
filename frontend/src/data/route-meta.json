@@ -1,0 +1,78 @@
+{
+  "origin": "https://accidentescarabineros.hveramtz-inf.workers.dev",
+  "siteName": "AccidentesCarabineros",
+  "routes": {
+    "home": {
+      "path": "/",
+      "title": "Siniestros viales de Chile 2025 | AccidentesCarabineros",
+      "description": "Siniestros viales registrados en Chile durante 2025: mapa por región y comuna, víctimas, gravedad y causas a partir de datos oficiales de Carabineros.",
+      "h1": "Siniestros viales de Chile 2025",
+      "intro": "Panel de análisis de los siniestros de tránsito registrados por Carabineros de Chile en 2025. Explora el mapa por región y comuna, los indicadores de víctimas y la gravedad de cada siniestro.",
+      "noindex": false
+    },
+    "maps": {
+      "path": "/mapas",
+      "title": "Mapa de siniestros viales de Chile 2025 | AccidentesCarabineros",
+      "description": "Mapa y tabla territorial de los siniestros viales de Chile 2025 por región y comuna, con conteos exactos, ranking y filtros por período.",
+      "h1": "Mapa de siniestros viales de Chile 2025",
+      "intro": "Mapa coroplético y tabla ordenable de los siniestros viales de Chile 2025. Compara regiones y comunas por siniestros, fallecidos y lesionados.",
+      "noindex": false
+    },
+    "analysis-causes": {
+      "path": "/analisis/causas",
+      "title": "Causas de siniestros viales en Chile 2025 | AccidentesCarabineros",
+      "description": "Las 70 causas del catálogo de siniestros viales de Chile 2025, con participación sobre el total del alcance y análisis de Pareto por territorio.",
+      "h1": "Causas de siniestros viales",
+      "intro": "Catálogo completo de causas de siniestros viales en Chile 2025, con las categorías sin registros y la participación acumulada dentro del alcance.",
+      "noindex": false
+    },
+    "analysis-vehicles": {
+      "path": "/analisis/vehiculos",
+      "title": "Vehículos en siniestros viales de Chile 2025 | AccidentesCarabineros",
+      "description": "Tipos de vehículo involucrados en los siniestros viales de Chile 2025 y su relación con la gravedad, con participaciones no aditivas.",
+      "h1": "Vehículos involucrados en siniestros viales",
+      "intro": "Tipos de vehículo involucrados en los siniestros viales de Chile 2025 y su relación con la gravedad del siniestro.",
+      "noindex": false
+    },
+    "analysis-persons": {
+      "path": "/analisis/personas",
+      "title": "Personas en siniestros viales de Chile 2025 | AccidentesCarabineros",
+      "description": "Personas lesionadas y fallecidas en siniestros viales de Chile 2025 por sexo, edad y rol, con datos agregados a escala de persona.",
+      "h1": "Personas involucradas en siniestros viales",
+      "intro": "Personas involucradas en los siniestros viales de Chile 2025, agregadas por sexo, edad y rol dentro del siniestro.",
+      "noindex": false
+    },
+    "analysis-trends": {
+      "path": "/analisis/tendencias",
+      "title": "Tendencias de siniestros viales 2025 | AccidentesCarabineros",
+      "description": "Evolución mensual y por día y hora de los siniestros viales de Chile 2025, con comparación entre territorios del alcance seleccionado.",
+      "h1": "Tendencias de siniestros viales",
+      "intro": "Evolución mensual y por día y hora de los siniestros viales de Chile 2025, con comparación entre territorios.",
+      "noindex": false
+    },
+    "methodology": {
+      "path": "/metodologia",
+      "title": "Metodología y calidad del dato | AccidentesCarabineros",
+      "description": "Fuente, cobertura, definiciones, calidad y limitaciones del panel de siniestros viales de Chile 2025. Sin cifras sintéticas ni imputaciones.",
+      "h1": "Metodología y calidad del dato",
+      "intro": "Cómo se construye el panel de siniestros viales de Chile 2025: fuente, cobertura, universo de registros, definiciones aprobadas, calidad del dato y limitaciones.",
+      "noindex": false
+    },
+    "reports": {
+      "path": "/informes",
+      "title": "Informe territorial de siniestros viales 2025 | AccidentesCarabineros",
+      "description": "Informe territorial de los siniestros viales de Chile 2025 con indicadores agregados, descarga CSV y versión imprimible por región y comuna.",
+      "h1": "Informe territorial — Siniestros de tránsito 2025",
+      "intro": "Informe territorial de los siniestros viales de Chile 2025 con indicadores agregados, descarga CSV y versión imprimible.",
+      "noindex": false
+    },
+    "not-found": {
+      "path": null,
+      "title": "Página no encontrada | AccidentesCarabineros",
+      "description": "La dirección solicitada no corresponde a ninguna sección del panel de siniestros viales de Chile 2025.",
+      "h1": "Página no encontrada",
+      "intro": "La dirección que abriste no corresponde a ninguna sección del panel. Vuelve al inicio para ver el mapa y los indicadores de siniestros viales de Chile 2025.",
+      "noindex": true
+    }
+  }
+}

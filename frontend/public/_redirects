@@ -1,0 +1,4 @@
+# Canonical entry points for duplicate URLs found in the live audit.
+# Trailing slashes are normalised by assets.html_handling = drop-trailing-slash.
+/analisis /analisis/causas 301
+/MAPAS /mapas 301
