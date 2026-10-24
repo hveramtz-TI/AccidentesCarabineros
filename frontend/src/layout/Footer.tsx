@@ -105,7 +105,7 @@ const Footer = () => {
       <div className="border-t border-border/70 bg-background/60">
         <div className="mx-auto flex max-w-[1600px] flex-col gap-2 px-4 py-4 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <span>AccidentesCarabineros · Análisis de siniestros viales</span>
-          <span className="font-mono tabular-nums">Versión 0.1</span>
+          <span className="font-mono tabular-nums">Versión 1.0</span>
         </div>
       </div>
     </footer>
