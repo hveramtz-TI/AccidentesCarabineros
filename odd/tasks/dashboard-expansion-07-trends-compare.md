@@ -308,3 +308,10 @@ raw export request requires a new ODD and data-source review.
   in `App.tsx`; `monthLabel` shared in `lib/month-label.ts`.
   `npm run lint` → 0 errors; `npm run build` → exit 0;
   chunk `analysis-trends-page-*.js` emitted.
+- **2026-10-24 — L8 (commits, user-approved):** committed on
+  `feat/dashboard-expansion-07-trends` after explicit permission — `3ecd19e`
+  (backend trend + weekdayHours), `68f8ea7` (`/api/compare`), `a06331b`
+  (Tendencias tab). Suite 109/109, `tsc` build exit 0, frontend lint 0 / build
+  exit 0; docker stack rebuilt (`:3200` and `/health` 200). No push.
+  Remaining for T7 close: the browser pass (heatmap accessibility, comparator
+  disabled-at-commune state, 360 px layout) and the index status flip.
