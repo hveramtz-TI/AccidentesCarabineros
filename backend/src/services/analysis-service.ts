@@ -4,7 +4,9 @@
  * `/api/analysis` returns every catalog cause, including the zero-accident tail,
  * from one LEFT JOIN aggregate, plus the vehicle-type distribution and the
  * type × severity matrix from two more SQL aggregates, plus the person-grain
- * sex × age and role × outcome crosstabs from two further SQL aggregates. Fact
+ * sex × age and role × outcome crosstabs from two further SQL aggregates, plus
+ * the EXP-07 monthly trend and the dense weekday × 3-hour heatmap from two more
+ * (the heatmap loader pairs its cells with the exact-midnight count). Fact
  * rows never leave PostgreSQL. Validation is the dashboard's own
  * `validateDashboardFilters`, so `/api/analysis` and `/api/dashboard` reject the
  * same inputs with the same 400 contract.
@@ -20,9 +22,23 @@ import type {
   AnalysisResponse,
   AnalysisService,
   AnalysisSeverityBucket,
+  AnalysisTrendMonth,
+  AnalysisTrendSection,
   AnalysisVehicleSeverityRow,
+  AnalysisWeekdayHourCell,
+  AnalysisWeekdayHoursSection,
 } from "../types/insights-api.js";
 import { validateDashboardFilters, type ResolvedTerritory } from "./dashboard-service.js";
+
+/** Re-exported so repository fakes can name the wire row shapes directly. */
+export type { AnalysisTrendMonth, AnalysisWeekdayHourCell } from "../types/insights-api.js";
+export type AnalysisWeekdayHourCellCount = AnalysisWeekdayHourCell;
+
+/** One sparse read of the weekday × 3-hour aggregate plus the midnight count. */
+export interface AnalysisWeekdayHoursAggregate {
+  cells: AnalysisWeekdayHourCellCount[];
+  midnightArtifactCount: number;
+}
 
 export interface AnalysisCauseCount {
   causeId: number;
@@ -78,6 +94,8 @@ export interface AnalysisRepository {
   loadSiniestrosWithoutVehicleCount(filters: DashboardFilters, territory: ResolvedTerritory): Promise<number>;
   loadSexAgeCounts(filters: DashboardFilters, territory: ResolvedTerritory): Promise<AnalysisPersonSexAgeCount[]>;
   loadQualityOutcomeCounts(filters: DashboardFilters, territory: ResolvedTerritory): Promise<AnalysisPersonQualityOutcomeCount[]>;
+  loadMonthlyTrend(filters: DashboardFilters, territory: ResolvedTerritory): Promise<AnalysisTrendMonth[]>;
+  loadWeekdayHourCells(filters: DashboardFilters, territory: ResolvedTerritory): Promise<AnalysisWeekdayHoursAggregate>;
   close?(): Promise<void>;
 }
 
@@ -238,6 +256,64 @@ function buildPersonsSection(
   };
 }
 
+/**
+ * EXP-07 time dimensions. The weekday set is ISO (1 = Monday, user-approved
+ * week start) and the buckets are the dashboard's own 3-hour grid (0, 3, …,
+ * 21; `dashboard-service.ts` HOUR_STARTS). They are repeated here for the same
+ * reason as AGE_BANDS above: sharing them would couple the two services.
+ */
+const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const;
+const HOUR_BUCKETS = [0, 3, 6, 9, 12, 15, 18, 21] as const;
+
+/**
+ * Dense months over the requested period — the same UTC walk the dashboard's
+ * approved `denseMonths` performs, so a filtered quarter returns exactly its
+ * months and the full-year default returns 12.
+ */
+function denseTrendMonths(from: string, to: string, rows: AnalysisTrendMonth[]): AnalysisTrendMonth[] {
+  const byMonth = new Map(rows.map((row) => [row.month, row]));
+  const months: AnalysisTrendMonth[] = [];
+  const cursor = new Date(`${from.slice(0, 7)}-01T00:00:00.000Z`);
+  const end = new Date(`${to.slice(0, 7)}-01T00:00:00.000Z`);
+  while (cursor <= end) {
+    const month = cursor.toISOString().slice(0, 7);
+    months.push(byMonth.get(month) ?? { month, accidents: 0, fatalities: 0 });
+    cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+  }
+  return months;
+}
+
+function buildTrendSection(from: string, to: string, rows: AnalysisTrendMonth[]): AnalysisTrendSection {
+  const months = denseTrendMonths(from, to, rows);
+  return {
+    months,
+    totalAccidents: months.reduce((sum, month) => sum + month.accidents, 0),
+    totalFatalities: months.reduce((sum, month) => sum + month.fatalities, 0),
+  };
+}
+
+/**
+ * 56 dense cells (7 ISO weekdays × 8 buckets), zeros included: `hora` is NOT
+ * NULL across the whole 2025 import (verified live), so every siniestro lands
+ * in exactly one cell and there is deliberately no `unknown`-time cell. The
+ * exact-midnight count rides along unchanged as the disclosure the UI renders
+ * next to the heatmap; those records are never moved out of 00–03.
+ */
+function buildWeekdayHoursSection(aggregate: AnalysisWeekdayHoursAggregate): AnalysisWeekdayHoursSection {
+  const byKey = new Map(aggregate.cells.map((cell) => [`${cell.weekday}:${cell.bucket}`, cell.accidents]));
+  const cells: AnalysisWeekdayHourCell[] = [];
+  for (const weekday of WEEKDAYS) {
+    for (const bucket of HOUR_BUCKETS) {
+      cells.push({ weekday, bucket, accidents: byKey.get(`${weekday}:${bucket}`) ?? 0 });
+    }
+  }
+  return {
+    cells,
+    midnightArtifactCount: aggregate.midnightArtifactCount,
+    totalAccidents: cells.reduce((sum, cell) => sum + cell.accidents, 0),
+  };
+}
+
 export function createAnalysisService(
   repository: AnalysisRepository = createPrismaAnalysisRepository(),
   now: () => Date = () => new Date(),
@@ -247,12 +323,14 @@ export function createAnalysisService(
     async getAnalysis(filters) {
       validateDashboardFilters(filters);
       const territory = await repository.resolveTerritory(filters);
-      const [counts, severityCells, withoutVehicleRows, sexAgeCells, qualityOutcomeCells] = await Promise.all([
+      const [counts, severityCells, withoutVehicleRows, sexAgeCells, qualityOutcomeCells, monthlyRows, weekdayAggregate] = await Promise.all([
         repository.loadCauseCounts(filters, territory),
         repository.loadVehicleSeverityCounts(filters, territory),
         repository.loadSiniestrosWithoutVehicleCount(filters, territory),
         repository.loadSexAgeCounts(filters, territory),
         repository.loadQualityOutcomeCounts(filters, territory),
+        repository.loadMonthlyTrend(filters, territory),
+        repository.loadWeekdayHourCells(filters, territory),
       ]);
       const totalAccidents = counts.reduce((sum, row) => sum + row.accidents, 0);
       // SQL already orders; sorting again keeps the contract deterministic for
@@ -297,6 +375,8 @@ export function createAnalysisService(
         },
         vehicles,
         persons: buildPersonsSection(sexAgeCells, qualityOutcomeCells),
+        trend: buildTrendSection(filters.from, filters.to, monthlyRows),
+        weekdayHours: buildWeekdayHoursSection(weekdayAggregate),
       };
     },
   };
@@ -475,6 +555,54 @@ function createPrismaAnalysisRepository(prisma: PrismaClient = sharedPrisma): An
         outcomeName: row.outcomeName,
         persons: countNumber(row.persons),
       }));
+    },
+
+    async loadMonthlyTrend(filters, territory) {
+      const restriction = siniestroTerritoryClause(territory);
+      // Same siniestro-grain monthly shape the dashboard's approved trend
+      // uses (count + COALESCE'd fatality sum, `to_char(fecha, 'YYYY-MM')`);
+      // only populated months come back and the service densifies.
+      const rows = await prisma.$queryRaw<Array<{ month: string; accidents: bigint; fatalities: bigint }>>(Prisma.sql`
+        SELECT to_char(s.fecha, 'YYYY-MM') AS month,
+          COUNT(*) AS accidents,
+          COALESCE(SUM(s.fallecidos), 0) AS fatalities
+        FROM siniestro s
+        WHERE s.fecha >= ${filters.from}::date AND s.fecha <= ${filters.to}::date${restriction}
+        GROUP BY to_char(s.fecha, 'YYYY-MM')
+        ORDER BY month`);
+      return rows.map((row) => ({
+        month: row.month,
+        accidents: countNumber(row.accidents),
+        fatalities: countNumber(row.fatalities),
+      }));
+    },
+
+    async loadWeekdayHourCells(filters, territory) {
+      const restriction = siniestroTerritoryClause(territory);
+      // ISODOW keeps Monday = 1 in SQL, matching the approved week start; the
+      // bucket is the dashboard's own integer 3-hour floor. hora is NOT NULL
+      // (verified live), so every siniestro lands in exactly one cell.
+      const [cells, midnight] = await Promise.all([
+        prisma.$queryRaw<Array<{ weekday: number; bucket: number; accidents: bigint }>>(Prisma.sql`
+          SELECT EXTRACT(ISODOW FROM s.fecha)::int AS weekday,
+            (EXTRACT(HOUR FROM s.hora)::int / 3) * 3 AS bucket,
+            COUNT(*) AS accidents
+          FROM siniestro s
+          WHERE s.fecha >= ${filters.from}::date AND s.fecha <= ${filters.to}::date${restriction}
+          GROUP BY 1, 2`),
+        prisma.$queryRaw<Array<{ count: bigint }>>(Prisma.sql`
+          SELECT COUNT(*) FILTER (WHERE s.hora = TIME '00:00:00') AS count
+          FROM siniestro s
+          WHERE s.fecha >= ${filters.from}::date AND s.fecha <= ${filters.to}::date${restriction}`),
+      ]);
+      return {
+        cells: cells.map((row) => ({
+          weekday: row.weekday,
+          bucket: row.bucket,
+          accidents: countNumber(row.accidents),
+        })),
+        midnightArtifactCount: countNumber(midnight[0]?.count),
+      };
     },
   };
 }

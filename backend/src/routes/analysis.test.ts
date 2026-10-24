@@ -8,12 +8,14 @@ import type {
   AnalysisPersonQualityOutcomeCount,
   AnalysisPersonSexAgeCount,
   AnalysisRepository,
+  AnalysisTrendMonth,
   AnalysisVehicleSeverityCount,
+  AnalysisWeekdayHourCellCount,
 } from "../services/analysis-service.js";
 import type { ResolvedTerritory } from "../services/dashboard-service.js";
 import { DashboardValidationError } from "../types/dashboard-api.js";
 import type { DashboardFilters, DashboardResponse, TerritoryReport } from "../types/dashboard-api.js";
-import type { AnalysisResponse, AnalysisService } from "../types/insights-api.js";
+import type { AnalysisResponse, AnalysisService, AnalysisWeekdayHourCell } from "../types/insights-api.js";
 import type { MetaResponse } from "../types/meta-api.js";
 
 const TOKEN = "analysis-test-token";
@@ -51,11 +53,50 @@ interface PersonsFixture {
   qualityOutcomeRows?: AnalysisPersonQualityOutcomeCount[];
 }
 
+/**
+ * EXP-07 time-side fixture: sparse monthly rows (the SQL returns only populated
+ * months) and sparse weekday×bucket cells plus the exact-midnight count. The
+ * service is responsible for every density rule these fixtures exercise.
+ */
+interface TimeFixture {
+  monthlyRows?: AnalysisTrendMonth[];
+  weekdayCells?: AnalysisWeekdayHourCellCount[];
+  midnightArtifactCount?: number;
+}
+
+const WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 7] as const;
+const HOUR_BUCKETS = [0, 3, 6, 9, 12, 15, 18, 21] as const;
+
+function denseWeekdayCells(overrides: AnalysisWeekdayHourCellCount[] = []): AnalysisWeekdayHourCell[] {
+  const byKey = new Map(overrides.map((cell) => [`${cell.weekday}:${cell.bucket}`, cell.accidents]));
+  const cells: AnalysisWeekdayHourCell[] = [];
+  for (const weekday of WEEKDAY_ORDER) {
+    for (const bucket of HOUR_BUCKETS) {
+      cells.push({ weekday, bucket, accidents: byKey.get(`${weekday}:${bucket}`) ?? 0 });
+    }
+  }
+  return cells;
+}
+
+function denseMonths(overrides: AnalysisTrendMonth[] = [], from = "2025-01", to = "2025-12"): AnalysisTrendMonth[] {
+  const byMonth = new Map(overrides.map((row) => [row.month, row]));
+  const months: AnalysisTrendMonth[] = [];
+  const cursor = new Date(`${from}-01T00:00:00.000Z`);
+  const end = new Date(`${to}-01T00:00:00.000Z`);
+  while (cursor <= end) {
+    const month = cursor.toISOString().slice(0, 7);
+    months.push(byMonth.get(month) ?? { month, accidents: 0, fatalities: 0 });
+    cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+  }
+  return months;
+}
+
 function repositoryWith(
   rows: AnalysisCauseCount[],
   territory: ResolvedTerritory = NATIONAL,
   vehicles: VehicleFixture = {},
   persons: PersonsFixture = {},
+  time: TimeFixture = {},
 ) {
   const state = {
     resolved: 0,
@@ -64,6 +105,8 @@ function repositoryWith(
     withoutLoaded: 0,
     sexAgeLoaded: 0,
     qualityLoaded: 0,
+    monthlyLoaded: 0,
+    weekdayLoaded: 0,
     lastFilters: null as DashboardFilters | null,
   };
   const repository: AnalysisRepository = {
@@ -91,6 +134,14 @@ function repositoryWith(
     async loadQualityOutcomeCounts() {
       state.qualityLoaded += 1;
       return persons.qualityOutcomeRows ?? [];
+    },
+    async loadMonthlyTrend() {
+      state.monthlyLoaded += 1;
+      return time.monthlyRows ?? [];
+    },
+    async loadWeekdayHourCells() {
+      state.weekdayLoaded += 1;
+      return { cells: time.weekdayCells ?? [], midnightArtifactCount: time.midnightArtifactCount ?? 0 };
     },
   };
   return { repository, state };
@@ -126,6 +177,16 @@ function analysisResponse(): AnalysisResponse {
       ],
       bySexAge: [],
       byQualityOutcome: [],
+    },
+    trend: {
+      months: denseMonths(),
+      totalAccidents: 0,
+      totalFatalities: 0,
+    },
+    weekdayHours: {
+      cells: denseWeekdayCells(),
+      midnightArtifactCount: 0,
+      totalAccidents: 0,
     },
   };
 }
@@ -271,6 +332,12 @@ test("GET /api/analysis maps unknown region and commune IDs to 400 not_found", a
     },
     async loadQualityOutcomeCounts() {
       throw new Error("role × outcome aggregate must not run after territory resolution fails");
+    },
+    async loadMonthlyTrend() {
+      throw new Error("monthly aggregate must not run after territory resolution fails");
+    },
+    async loadWeekdayHourCells() {
+      throw new Error("weekday × hour aggregate must not run after territory resolution fails");
     },
   };
   const app = appWith(createAnalysisService(repository, NOW));
@@ -495,14 +562,17 @@ test("vehicles is additive: causes keeps its exact shape and values", async (t) 
   const body = response.json() as AnalysisResponse;
 
   assert.equal(response.statusCode, 200);
-  // The envelope gains `persons` additively (EXP-05); nothing else changes.
+  // The envelope gains `trend` and `weekdayHours` additively (EXP-07);
+  // nothing earlier changes.
   assert.deepEqual(Object.keys(body).sort(), [
     "causes",
     "filters",
     "meta",
     "persons",
     "schemaVersion",
+    "trend",
     "vehicles",
+    "weekdayHours",
   ]);
   assert.equal(body.schemaVersion, 1);
   assert.equal(body.meta.generatedAt, "2026-10-23T12:34:56.000Z");
@@ -995,6 +1065,160 @@ test("the full 3×6 + 4×5 person matrices stay under the 100 KB cap", async (t)
   assert.equal(body.persons.byAge.length, 6);
   assert.equal(body.persons.bySexAge.length, 18);
   assert.equal(body.persons.byQualityOutcome.length, 20);
+  assert.ok(Buffer.byteLength(response.body, "utf8") < 100 * 1024);
+});
+
+// EXP-07 — trend and weekdayHours. Everything before them stays byte-for-byte
+// additive. These fixtures keep the three siniestro-level sections consistent
+// (causes total = monthly sum = weekday-cell sum = 10) so the reconciliation
+// asserts exercise real sums instead of accidental shapes.
+const TREND_ROWS: AnalysisTrendMonth[] = [
+  { month: "2025-02", accidents: 6, fatalities: 1 },
+  { month: "2025-04", accidents: 4, fatalities: 0 },
+];
+
+const WEEKDAY_CELLS: AnalysisWeekdayHourCellCount[] = [
+  { weekday: 5, bucket: 15, accidents: 5 },
+  { weekday: 1, bucket: 0, accidents: 3 },
+  { weekday: 5, bucket: 0, accidents: 2 },
+];
+
+function timeApp() {
+  const { repository, state } = repositoryWith(
+    catalogRows([{ causeId: 2, name: "CAUSA B", accidents: 10 }]),
+    NATIONAL,
+    {},
+    {},
+    { monthlyRows: TREND_ROWS, weekdayCells: WEEKDAY_CELLS, midnightArtifactCount: 2 },
+  );
+  const app = appWith(createAnalysisService(repository, NOW));
+  return { app, state };
+}
+
+test("the envelope gains only trend and weekdayHours; earlier sections keep their exact values", async (t) => {
+  const { app } = timeApp();
+  t.after(() => app.close());
+
+  const response = await app.inject({ method: "GET", url: "/api/analysis", headers: auth });
+  assert.equal(response.statusCode, 200);
+  const body = response.json() as AnalysisResponse;
+
+  assert.equal(body.causes.totalAccidents, 10);
+  assert.equal(body.causes.rows.length, 70);
+  assert.equal(body.vehicles.totalSiniestros, 10);
+  assert.deepEqual(body.vehicles.byType, []);
+  assert.equal(body.persons.rows, 0);
+  assert.deepEqual(body.persons.byAge.map((band) => band.persons), [0, 0, 0, 0, 0, 0]);
+});
+
+test("trend densifies 2025 into twelve months, keeps zero months, and reconciles to the scope", async (t) => {
+  const { app, state } = timeApp();
+  t.after(() => app.close());
+
+  const response = await app.inject({ method: "GET", url: "/api/analysis", headers: auth });
+  const body = response.json() as AnalysisResponse;
+
+  assert.equal(state.monthlyLoaded, 1);
+  assert.equal(state.resolved, 1, "the new sections never re-resolve the territory");
+  assert.deepEqual(body.trend.months.map(({ month }) => month), [
+    "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06",
+    "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12",
+  ]);
+  assert.deepEqual(body.trend.months[1], { month: "2025-02", accidents: 6, fatalities: 1 });
+  assert.deepEqual(body.trend.months[0], { month: "2025-01", accidents: 0, fatalities: 0 });
+  assert.equal(body.trend.totalAccidents, body.causes.totalAccidents);
+  assert.equal(body.trend.totalFatalities, 1);
+});
+
+test("trend densifies only the requested quarter and sums its own window", async (t) => {
+  const { app } = timeApp();
+  t.after(() => app.close());
+
+  const response = await app.inject({
+    method: "GET",
+    url: "/api/analysis?from=2025-04-01&to=2025-06-30",
+    headers: auth,
+  });
+  const body = response.json() as AnalysisResponse;
+
+  assert.deepEqual(body.trend.months, [
+    { month: "2025-04", accidents: 4, fatalities: 0 },
+    { month: "2025-05", accidents: 0, fatalities: 0 },
+    { month: "2025-06", accidents: 0, fatalities: 0 },
+  ]);
+  assert.equal(body.trend.totalAccidents, 4);
+  assert.equal(body.trend.totalFatalities, 0);
+});
+
+test("weekdayHours densifies 56 cells ordered weekday-ASC then bucket-ASC with Monday first", async (t) => {
+  const { app, state } = timeApp();
+  t.after(() => app.close());
+
+  const response = await app.inject({ method: "GET", url: "/api/analysis", headers: auth });
+  const body = response.json() as AnalysisResponse;
+
+  assert.equal(state.weekdayLoaded, 1);
+  assert.equal(body.weekdayHours.cells.length, 56);
+  assert.deepEqual(body.weekdayHours.cells.slice(0, 8), [
+    { weekday: 1, bucket: 0, accidents: 3 },
+    { weekday: 1, bucket: 3, accidents: 0 },
+    { weekday: 1, bucket: 6, accidents: 0 },
+    { weekday: 1, bucket: 9, accidents: 0 },
+    { weekday: 1, bucket: 12, accidents: 0 },
+    { weekday: 1, bucket: 15, accidents: 0 },
+    { weekday: 1, bucket: 18, accidents: 0 },
+    { weekday: 1, bucket: 21, accidents: 0 },
+  ]);
+  assert.deepEqual(body.weekdayHours.cells.find((cell) => cell.weekday === 5 && cell.bucket === 15), {
+    weekday: 5, bucket: 15, accidents: 5,
+  });
+  assert.equal(body.weekdayHours.totalAccidents, body.causes.totalAccidents);
+  assert.equal(
+    body.weekdayHours.cells.reduce((sum, cell) => sum + cell.accidents, 0),
+    body.weekdayHours.totalAccidents,
+  );
+});
+
+test("exact-midnight records stay inside their 00-03 bucket and are disclosed, not moved", async (t) => {
+  const { app } = timeApp();
+  t.after(() => app.close());
+
+  const response = await app.inject({ method: "GET", url: "/api/analysis", headers: auth });
+  const body = response.json() as AnalysisResponse;
+
+  assert.equal(body.weekdayHours.midnightArtifactCount, 2);
+  // The disclosure says two scope rows are the exact `00:00:00` artifact; both
+  // stay inside their weekday's 00–03 cell (Monday has 3 rows there, Friday 2).
+  // No extra "midnight" cell and no unknown bucket may appear.
+  assert.equal(body.weekdayHours.cells.filter((cell) => cell.bucket === 0).length, 7);
+  assert.deepEqual(body.weekdayHours.cells.find((cell) => cell.weekday === 5 && cell.bucket === 0), {
+    weekday: 5, bucket: 0, accidents: 2,
+  });
+});
+
+test("an empty scope keeps trend and weekdayHours dense with zeros and no division by zero", async (t) => {
+  const { repository } = repositoryWith(catalogRows());
+  const app = appWith(createAnalysisService(repository, NOW));
+  t.after(() => app.close());
+
+  const response = await app.inject({ method: "GET", url: "/api/analysis", headers: auth });
+  const body = response.json() as AnalysisResponse;
+
+  assert.equal(body.trend.months.length, 12);
+  assert.deepEqual(body.trend.months.map(({ accidents, fatalities }) => [accidents, fatalities]), Array.from({ length: 12 }, () => [0, 0]));
+  assert.equal(body.trend.totalAccidents, 0);
+  assert.equal(body.trend.totalFatalities, 0);
+  assert.equal(body.weekdayHours.cells.length, 56);
+  assert.ok(body.weekdayHours.cells.every((cell) => cell.accidents === 0));
+  assert.equal(body.weekdayHours.midnightArtifactCount, 0);
+  assert.equal(body.weekdayHours.totalAccidents, 0);
+});
+
+test("the full envelope with the time sections stays under the 100 KB cap", async (t) => {
+  const { app } = timeApp();
+  t.after(() => app.close());
+
+  const response = await app.inject({ method: "GET", url: "/api/analysis", headers: auth });
   assert.ok(Buffer.byteLength(response.body, "utf8") < 100 * 1024);
 });
 

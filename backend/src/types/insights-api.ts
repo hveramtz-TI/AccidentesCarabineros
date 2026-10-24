@@ -130,6 +130,53 @@ export interface AnalysisPersonsSection {
   byQualityOutcome: AnalysisPersonQualityOutcomeRow[];
 }
 
+/**
+ * EXP-07: one month of the scope's monthly series. Rows come from the SQL
+ * monthly aggregate (siniestro grain, never the person grain) and the service
+ * densifies the requested period: months without siniestros are real rows
+ * with zeros, never gaps.
+ */
+export interface AnalysisTrendMonth {
+  /** `YYYY-MM` in the data's own timezone (the `fecha` date column). */
+  month: string;
+  accidents: number;
+  fatalities: number;
+}
+
+export interface AnalysisTrendSection {
+  /** Dense over `from..to` (12 rows for the default full-year 2025 scope). */
+  months: AnalysisTrendMonth[];
+  /** Sum of `months.accidents`; equals `causes.totalAccidents` for the scope. */
+  totalAccidents: number;
+  /** Sum of `months.fatalities`; equals the scope fatality total. */
+  totalFatalities: number;
+}
+
+/**
+ * EXP-07: one cell of the weekday × 3-hour heatmap. `weekday` is ISO
+ * (1 = Monday … 7 = Sunday, user-approved week start); `bucket` is the
+ * inclusive lower hour of the same 3-hour buckets the dashboard uses
+ * (0, 3, …, 21). The contract is exactly 7 × 8 = 56 dense cells:
+ * `siniestro.hora` is NOT NULL for all 73,081 imported rows (verified live),
+ * so no `unknown`-time bucket exists and none may be added later without a
+ * contract change. Rows with the exact `00:00:00` artifact time stay inside
+ * their 00–03 bucket; `midnightArtifactCount` discloses how many there are.
+ */
+export interface AnalysisWeekdayHourCell {
+  weekday: number;
+  bucket: number;
+  accidents: number;
+}
+
+export interface AnalysisWeekdayHoursSection {
+  /** Always 56 cells, ordered weekday ASC then bucket ASC, zeros included. */
+  cells: AnalysisWeekdayHourCell[];
+  /** Rows with `hora = 00:00:00` inside the scope; disclosure, never a bucket. */
+  midnightArtifactCount: number;
+  /** Sum of `cells.accidents`; equals `causes.totalAccidents` for the scope. */
+  totalAccidents: number;
+}
+
 export interface AnalysisResponse {
   schemaVersion: 1;
   meta: { generatedAt: string };
@@ -143,6 +190,10 @@ export interface AnalysisResponse {
   vehicles: AnalysisVehiclesSection;
   /** EXP-05: person-grain demographics and the two person crosstabs. */
   persons: AnalysisPersonsSection;
+  /** EXP-07: dense monthly accidents + fatalities for the requested period. */
+  trend: AnalysisTrendSection;
+  /** EXP-07: dense weekday (ISO, Monday first) × 3-hour siniestro counts. */
+  weekdayHours: AnalysisWeekdayHoursSection;
 }
 
 export interface AnalysisService {

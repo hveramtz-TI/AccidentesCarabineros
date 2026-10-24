@@ -102,6 +102,49 @@ export interface AnalysisPersonsSection {
   byQualityOutcome: AnalysisPersonQualityOutcomeRow[]
 }
 
+/**
+ * EXP-07: one month of the scope's monthly series (`SER-1` re-exposed, dense
+ * over the requested period — 12 rows for the default full-year scope; a
+ * quarter returns exactly its three months, and zero-accident months are real
+ * rows, never gaps). `totalAccidents` equals `causes.totalAccidents`.
+ */
+export interface AnalysisTrendMonth {
+  /** `YYYY-MM` derived from the `fecha` date column (no timezone shift). */
+  month: string
+  accidents: number
+  fatalities: number
+}
+
+export interface AnalysisTrendSection {
+  months: AnalysisTrendMonth[]
+  totalAccidents: number
+  totalFatalities: number
+}
+
+/**
+ * EXP-07: one cell of the weekday × 3-hour heatmap. `weekday` is ISO (1 =
+ * Monday … 7 = Sunday — the user-approved week start; Spanish labels are a
+ * frontend concern). `bucket` is the inclusive lower hour of the dashboard's
+ * own 3-hour grid (0, 3, …, 21). The section always holds exactly 56 cells
+ * (7 × 8, zeros included): `hora` is NOT NULL across the 2025 import, so no
+ * unknown-time bucket exists or may be added without a contract change. Rows
+ * with the exact `00:00:00` artifact stay in their 00–03 cell;
+ * `midnightArtifactCount` discloses how many the scope has.
+ */
+export interface AnalysisWeekdayHourCell {
+  weekday: number
+  bucket: number
+  accidents: number
+}
+
+export interface AnalysisWeekdayHoursSection {
+  /** Always 56 cells, ordered weekday ASC then bucket ASC. */
+  cells: AnalysisWeekdayHourCell[]
+  midnightArtifactCount: number
+  /** Sum of the 56 cells; equals `causes.totalAccidents` for the scope. */
+  totalAccidents: number
+}
+
 export interface AnalysisFilters {
   from: string
   to: string
@@ -128,6 +171,13 @@ export interface AnalysisApiResponse {
    * this section returns `undefined` at runtime.
    */
   persons: AnalysisPersonsSection
+  /**
+   * Added by EXP-07. Same defensive rule: a stale server without this section
+   * returns `undefined` at runtime.
+   */
+  trend: AnalysisTrendSection
+  /** Added by EXP-07. Same defensive rule as `trend`. */
+  weekdayHours: AnalysisWeekdayHoursSection
 }
 
 export interface AnalysisQueryParams {

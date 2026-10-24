@@ -87,6 +87,32 @@ Caveats: son **filas persona** dentro del mismo filtro territorial/temporal (los
 
 **Matrices de personas (`PER-2`, EXP-05):** dos tablas MECE a **grano persona** (`COUNT(*)` sobre `persona`, un siniestro con N personas aporta N filas), restringidas por la misma cláusula fecha/territorio a través del JOIN con `siniestro`. (a) **Sexo × edad**: `GROUP BY sexo_id` + la CASE de bandas de §3.12 **verbatim** (NULL `edad` → `unknown`; límites 17/18, 25/26, 40/41, 64/65 — medidos: 669/1.307/2.648/2.612/2.973/2.428/1.293/1.221 personas caen en la banda correcta, 0 edades negativas). (b) **Calidad × resultado**: `GROUP BY calidad_persona_id, resultado_persona_id`. Todo lo demás se deriva de esas dos matrices: `rows` es la suma de cualquiera de las dos, `bySex`/`byAge` son marginales exactos, `unknownAge` es la marginal `unknown` (23.918, 16,1 %) y `unknownSex` la marginal `SE IGNORA` (sexo 3; 6.448, 4,3 % — el sexo desconocido es una fila real del catálogo, nunca NULL: 0 personas sin `sexo_id`). Exactitud estructural: cada persona tiene exactamente un sexo, una banda, una calidad y un resultado (FKs NOT NULL sobre catálogos completos), así que ninguna celda puede perder ni duplicar filas — verificado celda por celda contra SQL independiente (nacional 18+19 celdas; XIII-1 13+17 sobre 1.065 personas de 502 siniestros; Q3 35.757). Las bandas con cero se muestran en `byAge`; las celdas cero de las matrices no se emiten (regla EXP-04). El **resultado** (`resultado_persona`: 1 LEVE, 2 ILESO, 3 MENOS GRAVE, 4 FALLECIDO, 5 GRAVE) es a nivel **persona**, semánticamente distinto de la severidad §3.6 (nivel siniestro) usada por `VEI-2`: el puente entre granos es la tabla de reconciliación §4 (p. ej. `fatal` de siniestro ⇔ ≥1 persona FALLECIDO; 1.507 = 1.507). Denominador de las participaciones: `persons.rows`, nunca siniestros — prohibido comparar estos totales 1:1 con conteos de siniestros o compartir eje. Desconocidos visibles como categoría propia; nunca se imputa.
 
+### 3.13 Series temporales del análisis (`TRE-1` y `HOU-2`, EXP-07)
+
+**`TRE-1` Tendencia mensual del análisis:** reutiliza la definición de `SER-1`
+(§3.5) sin cambios — `COUNT(*)` y `SUM(fallecidos)` por `to_char(fecha,
+'YYYY-MM')`, grano siniestro, misma cláusula fecha/territorio. La sección
+`trend` de `GET /api/analysis` es simplemente `SER-1` expuesta en la pestaña de
+tendencias, densificada sobre el período pedido (12 meses con los defaults; un
+trimestre, sus 3 meses): un mes sin siniestros es una fila con `0`, nunca un
+hueco. Reconcilia exacto contra `causes.totalAccidents` y contra el
+`monthlyTrend` del panel para el mismo filtro.
+
+**`HOU-2` Mapa de calor día × franja (`weekdayHours`):** `COUNT(*)` sobre
+`siniestro` agrupado por **día de la semana ISO** (`EXTRACT(ISODOW FROM fecha)`:
+`1 = lunes … 7 = domingo`; inicio de semana en lunes, decisión de usuario
+EXP-07, etiquetas en español solo en el frontend) y la **misma franja de 3
+horas de `HOU-1`** (§3.10, truncado entero `(HOUR/3)*3`). La respuesta contiene
+**exactamente 56 celdas densas** (7 × 8) ordenadas día ASC y luego franja ASC,
+ceros incluidos. No existe cubeta de tiempo desconocido: `hora` es NOT NULL en
+las 73.081 filas importadas (medido en vivo), así que cada siniestro cae en
+exactamente una celda y las 56 suman el total del alcance. Caveat heredado de
+`HOU-1`: los **234 registros con `00:00:00`** (base nacional; en cualquier
+filtro, el conteo que devuelve `midnightArtifactCount`) permanecen en su celda
+00–03 y se informan en la nota junto al heatmap; no se reasignan ni se cuentan
+aparte. Prohibido cualquier afirmación causal hora→siniestro: son asociaciones
+descriptivas.
+
 ## 4. Evidencia de reconciliación entre granos (nacional 2025)
 
 | Resultado | SUM en siniestro | COUNT en persona | Δ |

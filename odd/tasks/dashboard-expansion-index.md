@@ -73,7 +73,7 @@ reviewable. This index is the only source of execution order.
 | 04 | [EXP-04 Vehicles](./dashboard-expansion-04-vehicles.md) | #5 Vehículos | Analysis `vehicles` + type×severity | 3 | 3 | 6 | EXP-03 | planned |
 | 05 | [EXP-05 Persons](./dashboard-expansion-05-persons.md) | #4 Personas | Analysis `persons` + crosstabs | 3 | 3 | 6 | EXP-03 | done |
 | 06 | [EXP-06 Reports](./dashboard-expansion-06-reports.md) | #2 Informes | Preview + CSV + print | 3 | 4 | 7 | EXP-00, EXP-02 | done |
-| 07 | [EXP-07 Trends](./dashboard-expansion-07-trends-compare.md) | #7 Tendencias | Trend + weekday×3-hour + comparator | 4 | 4 | 8 | EXP-03 | planned |
+| 07 | [EXP-07 Trends](./dashboard-expansion-07-trends-compare.md) | #7 Tendencias | Trend + weekday×3-hour + comparator | 4 | 4 | 8 | EXP-03 | in progress |
 
 \* EXP-00 is a hard prerequisite and is excluded from the idea ranking; it runs
 before the lower-scored feature slices by design.

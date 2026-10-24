@@ -218,17 +218,80 @@ approved §3.12 of `dashboard-metrics.md` (`PER-1`/`PER-2`).
   `bySex`, the six `byAge` bands with `persons: 0` and `share: 0` (no division
   by zero), and both matrices empty — never national data.
 
+### 4.6 Sección `trend` (EXP-07)
+
+Distribución mensual de siniestros y fallecidos del **siniestro** (grano de
+siniestro, la misma que el `monthlyTrend` del panel), para el período filtrado.
+
+```jsonc
+"trend": {
+  "months": [
+    { "month": "2025-01", "accidents": 5776, "fatalities": 121 },
+    { "month": "2025-02", "accidents": 5410, "fatalities": 109 }
+    // ... denso sobre from..to
+  ],
+  "totalAccidents": 73081,
+  "totalFatalities": 1507
+}
+```
+
+- `months` es **denso sobre el período pedido**: con los defaults (año 2025
+  completo) son exactamente **12 filas**, enero a diciembre; un trimestre
+  devuelve sus 3 meses. Un mes sin siniestros en el alcance es una fila con
+  `0`, nunca un hueco (regla de denseMonths idéntica al panel).
+- `month` es `YYYY-MM` derivado de `fecha` (columna date, sin zona: no hay
+  desplazamiento posible).
+- `totalAccidents` = suma de `months.accidents` y debe coincidir con
+  `causes.totalAccidents` del mismo alcance; `totalFatalities` = suma de
+  `months.fatalities` y coincide con `kpis.fatalities` del panel para el mismo
+  filtro. Meses sin siniestros aportan `0` a ambas sumas.
+
+### 4.7 Sección `weekdayHours` (EXP-07)
+
+Mapa de calor siniestros por **día de la semana × franja de 3 horas**.
+
+```jsonc
+"weekdayHours": {
+  "cells": [
+    { "weekday": 1, "bucket": 0, "accidents": 315 },
+    { "weekday": 1, "bucket": 3, "accidents": 115 }
+    // ... 56 celdas
+  ],
+  "midnightArtifactCount": 234,
+  "totalAccidents": 73081
+}
+```
+
+- `weekday` usa **ISO-8601**: `1 = lunes … 7 = domingo` (inicio de semana en
+  lunes, decisión de usuario EXP-07). Las etiquetas en español las pone el
+  frontend; la API nunca las renombra.
+- `bucket` es la hora inicial inclusiva de la misma franja de 3 horas del
+  panel (`0, 3, 6, …, 21`), derivada de `hora` con truncado entero.
+- `cells` contiene **exactamente 56 filas** (7 × 8), ordenadas `weekday` ASC
+  y luego `bucket` ASC, con ceros incluidos. `siniestro.hora` es NOT NULL en
+  las 73.081 filas importadas (verificado en vivo), por lo que **no existe ni
+  puede agregarse una cubeta `unknown` de tiempo** sin un cambio de contrato.
+- Los registros con hora exacta `00:00:00` (artefacto conocido del origen)
+  **permanecen en su cubeta 00–03**; `midnightArtifactCount` informa cuántos
+  hay en el alcance para que la UI lo divulgue junto al heatmap. No se
+  remueven, no se reasignan, no son una celda aparte.
+- `totalAccidents` = suma de las 56 celdas = total del alcance; junto con el
+  caveat de medianoche es la misma disciplina de reconciliación del panel.
+- Un alcance vacío devuelve las 56 celdas con `0` y contador de medianoche `0`.
+
 ## 5. Cache policy
 
 `Cache-Control: private, max-age=60` on a successful `200` (it overwrites the
 guard's `no-store`). Rejections and failures keep `no-store`. The payload is
 bounded by the 70-cause catalog, at most 38 vehicle types × 5 severity buckets,
-and the person matrices (at most 3 sexes × 6 bands plus 4 roles × 5 outcomes)
-and stays well under the 100 KB cap (EXP-03 measured 6.5–6.8 KB causes-only;
-EXP-04 measured the national response with `vehicles` at 20,165 bytes; EXP-05
-measured the national response with `persons` at 23,657 bytes — 18 sex × age
-cells and 19 role × outcome cells, the 20th combination being a true zero that
-is never emitted).
+the person matrices (at most 3 sexes × 6 bands plus 4 roles × 5 outcomes), the
+12-row trend and the fixed 56-cell heatmap, and stays well under the 100 KB cap
+(EXP-03 measured 6.5–6.8 KB causes-only; EXP-04 measured the national response
+with `vehicles` at 20,165 bytes; EXP-05 measured the national response with
+`persons` at 23,657 bytes — 18 sex × age cells and 19 role × outcome cells, the
+20th combination being a true zero that is never emitted; EXP-07 adds the two
+dense time series, ≈4 KB fixed-size, with the exact national byte count recorded
+in the ODD evidence at T7).
 
 ## 6. Errors
 
@@ -253,11 +316,12 @@ is never emitted).
 
 ## 7. Additive rule
 
-`causes` is fixed for EXP-03, `vehicles` is fixed for EXP-04, and `persons` is
-fixed for EXP-05. Later tabs add sibling keys (for example `trends`) and may
-add fields inside their own section, but must not rename, remove, or change the
-meaning of `causes`, `vehicles`, `persons`, `totalAccidents`, `share`, or the
-response envelope. `schemaVersion` is bumped only for a breaking change.
+`causes` is fixed for EXP-03, `vehicles` is fixed for EXP-04, `persons` is
+fixed for EXP-05, and `trend` + `weekdayHours` are fixed for EXP-07. Later tabs
+may add sibling keys and fields inside their own section, but must not rename,
+remove, or change the meaning of `causes`, `vehicles`, `persons`, `trend`,
+`weekdayHours`, `totalAccidents`, `share`, or the response envelope.
+`schemaVersion` is bumped only for a breaking change.
 
 ## 8. Non-goals
 
